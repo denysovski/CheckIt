@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="840" height="150" viewBox="0 0 840 150" font-family="-apple-system, Inter, Segoe UI, sans-serif">
+  <g>
+    <rect x="0" y="0" width="160" height="96" rx="16" fill="#FFFFFF" stroke="#E5E5E7"/>
+    <text x="0" y="122" font-size="14" font-weight="600" fill="#1D1D1F">White</text><text x="0" y="141" font-size="12" fill="#6E6E73">#FFFFFF</text>
+  </g>
+  <g transform="translate(170 0)">
+    <rect width="160" height="96" rx="16" fill="#F5F5F7"/>
+    <text y="122" font-size="14" font-weight="600" fill="#1D1D1F">Mist</text><text y="141" font-size="12" fill="#6E6E73">#F5F5F7</text>
+  </g>
+  <g transform="translate(340 0)">
+    <rect width="160" height="96" rx="16" fill="#1D1D1F"/>
+    <text y="122" font-size="14" font-weight="600" fill="#1D1D1F">Ink</text><text y="141" font-size="12" fill="#6E6E73">#1D1D1F</text>
+  </g>
+  <g transform="translate(510 0)">
+    <rect width="160" height="96" rx="16" fill="#0056FF"/>
+    <text y="122" font-size="14" font-weight="600" fill="#1D1D1F">Check Blue</text><text y="141" font-size="12" fill="#6E6E73">#0056FF</text>
+  </g>
+  <g transform="translate(680 0)">
+    <rect width="160" height="96" rx="16" fill="#E0524F"/>
+    <text y="122" font-size="14" font-weight="600" fill="#1D1D1F">Soft Red</text><text y="141" font-size="12" fill="#6E6E73">#E0524F · misses only</text>
+  </g>
+</svg>
