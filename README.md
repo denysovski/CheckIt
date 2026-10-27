@@ -4,46 +4,42 @@
 
 <h1 align="center">Check It</h1>
 
-<p align="center">A calm daily checklist that doesn't let you forget.</p>
+<p align="center">A calm daily checklist for the small things you keep forgetting.</p>
 
 <p align="center"><a href="https://denysovski.github.io/CheckIt/"><b>Open the app →</b></a></p>
 
----
+<img src="docs/landing.png" alt="Check It landing page">
 
-## Idea
+## Why
 
-Small things are the easiest to skip — brushing your teeth twice, interdental brushes, putting your retainer on before bed, uploading today's Pinterest pins, grabbing the new Marvel Rivals clips. Check It keeps them in one quiet list, tells you what *must* happen today, and is honest with you about what you keep skipping.
+I built Check It for my own routine — brushing teeth, interdental brushes, the retainer at night, daily Pinterest uploads, new Marvel Rivals clips. It's open source, so feel free to use it for yours.
 
 ## What it does
 
-- **Daily checklist** — tasks are sorted into *Must do today*, *This week* and *Done*.
-- **Weekly frequency** — every task has its own rhythm: 1–7× a week or specific weekdays, plus several times a day (e.g. teeth 2×).
-- **Goals that end** — "upload pins until 200 are up": progress bar, then the task retires itself.
-- **Custom calendar** — every day is a ring; close it. Tick off a forgotten task retroactively.
-- **Stats & nudges** — completion rate, streaks, weekday patterns and a plain message when you skip something too often.
-- **Browser reminders** — a system notification with your unfinished tasks every time the app opens (set it as your browser's startup page or install it as an app), plus an evening reminder.
-- **Local accounts** — sign up / log in; everything is stored in this browser only (localStorage + IndexedDB, persistent storage requested). Passwords are hashed with PBKDF2.
-- **Onboarding motion** — a short animated tour after registration.
-- **Icons** — custom line glyphs plus brand logos from [SVGL](https://svgl.app).
+- **Checklist** — what's due today, what's left this week, what's done.
+- **Your rhythm** — every day, 3× a week, or only on Mondays.
+- **Links** — one tap to your Pinterest, Meta Business, anything.
+- **Calendar** — see which days you showed up.
+- **Nudges** — it tells you what you skip the most.
+- **Reminders** — a notification when you open the browser.
+- **Light & dark** — follows your system, or pick one.
+
+## Private by design
+
+Everything runs locally in your browser (localStorage + IndexedDB). There's no server and no tracking — nothing is sent to me or anyone else, and no one can see your data. Passwords are hashed on your device. Your data is only gone if you clear this site's data in your browser.
 
 ## Palette
 
 <img src="docs/palette.svg" alt="Palette: White #FFFFFF, Mist #F5F5F7, Ink #1D1D1F, Check Blue #0056FF, Soft Red #E0524F">
 
-White canvas, black components, one quiet blue. Red appears only where something was missed. Typography and spacing follow Apple's [Human Interface Guidelines](https://developer.apple.com/design/human-interface-guidelines/).
+White canvas, black components, one quiet blue. Red only shows up where something was missed. Inspired by Apple's [Human Interface Guidelines](https://developer.apple.com/design/human-interface-guidelines/). Logos by [SVGL](https://svgl.app), motion by [GSAP](https://gsap.com) and [Lenis](https://lenis.darkroom.engineering).
 
 ## Screens
 
 <img src="docs/today.png" alt="Today">
-<img src="docs/calendar.png" alt="Calendar">
+<img src="docs/calendar.png" alt="Calendar (dark)">
+<img src="docs/stats.png" alt="Stats (dark)">
 
-## Run locally
+## License
 
-No build step — plain HTML, CSS and ES modules.
-
-```bash
-python3 -m http.server 8000
-# open http://localhost:8000
-```
-
-Deployed to GitHub Pages on every push to `main`.
+[MIT](LICENSE) — use it, fork it, make it yours.

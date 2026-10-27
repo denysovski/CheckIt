@@ -1,9 +1,9 @@
 // Scheduling, history and statistics.
 
-export const DAY_NAMES = ['Pondělí', 'Úterý', 'Středa', 'Čtvrtek', 'Pátek', 'Sobota', 'Neděle'];
-export const DAY_SHORT = ['Po', 'Út', 'St', 'Čt', 'Pá', 'So', 'Ne'];
-export const MONTHS = ['Leden', 'Únor', 'Březen', 'Duben', 'Květen', 'Červen', 'Červenec', 'Srpen', 'Září', 'Říjen', 'Listopad', 'Prosinec'];
-export const MONTHS_GEN = ['ledna', 'února', 'března', 'dubna', 'května', 'června', 'července', 'srpna', 'září', 'října', 'listopadu', 'prosince'];
+export const DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+export const DAY_SHORT = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+export const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+export const MONTHS_GEN = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
 // ---------- dates (local time, YYYY-MM-DD keys) ----------
 export const pad = (n) => String(n).padStart(2, '0');
@@ -16,7 +16,7 @@ export const weekStart = (k) => addDays(k, -weekday(k));
 export const daysBetween = (a, b) => Math.round((parseKey(b) - parseKey(a)) / 86400000);
 export function prettyDate(k) {
   const d = parseKey(k);
-  return `${DAY_NAMES[weekday(k)]} ${d.getDate()}. ${MONTHS_GEN[d.getMonth()]}`;
+  return `${DAY_NAMES[weekday(k)]}, ${MONTHS_GEN[d.getMonth()]} ${d.getDate()}`;
 }
 
 // ---------- task helpers ----------
@@ -34,13 +34,13 @@ export function activeOn(t, k) {
 }
 
 export function frequencyLabel(t) {
-  const n = perDay(t) > 1 ? ` · ${perDay(t)}× denně` : '';
+  const n = perDay(t) > 1 ? ` · ${perDay(t)}× a day` : '';
   if (isFixed(t)) {
-    if (t.days.length === 7) return 'Každý den' + n;
+    if (t.days.length === 7) return 'Every day' + n;
     return [...t.days].sort().map((d) => DAY_SHORT[d]).join(', ') + n;
   }
-  if (t.perWeek >= 7) return 'Každý den' + n;
-  return `${t.perWeek}× týdně` + n;
+  if (t.perWeek >= 7) return 'Every day' + n;
+  return `${t.perWeek}× a week` + n;
 }
 
 function doneDaysInWeek(data, t, wkStart, untilExclusive) {
@@ -205,7 +205,7 @@ export function weekdayMisses(data, days = 56) {
   return { counts, totals };
 }
 
-// Human insights — the "hele, tohle vynecháváš" messages.
+// Human insights — the "hey, you keep skipping this" messages.
 export function insights(data) {
   const out = [];
   const stats14 = taskStats(data, 14).filter((s) => s.done + s.missed > 0);
@@ -215,28 +215,28 @@ export function insights(data) {
     const pct = Math.round((s.rate ?? 0) * 100);
     const tone = s.missed >= 6 ? 'bad' : 'warn';
     const tips = [
-      'Zkus to navázat na něco, co děláš každý den automaticky.',
-      'Nastav si to na konkrétní čas a drž se ho pár dní po sobě.',
-      'Zmenši to na nejmenší možnou verzi — hlavně začni.',
-      'Dej si to hned ráno, než den uteče.',
+      'Tie it to something you already do every day without thinking.',
+      'Give it a fixed time and stick to it for a few days in a row.',
+      'Shrink it to the smallest possible version — just start.',
+      'Do it first thing in the morning, before the day runs away.',
     ];
     const tip = tips[(s.t.title.length + s.missed) % tips.length];
     out.push({
       tone,
       taskId: s.t.id,
-      title: `Hele, „${s.t.title}“ jsi vynechal ${s.missed}× za poslední 2 týdny.`,
-      body: `Splněno ${pct} %. Musíš na tom víc zapracovat. ${tip}`,
+      title: `Hey, you skipped “${s.t.title}” ${s.missed}× in the last 2 weeks.`,
+      body: `${pct}% done. You need to work on this one. ${tip}`,
     });
   }
   const { counts, totals } = weekdayMisses(data);
   const rates = counts.map((c, i) => (totals[i] ? c / totals[i] : 0));
   const wi = rates.indexOf(Math.max(...rates));
   if (totals[wi] >= 3 && rates[wi] >= 0.35) {
-    out.push({ tone: 'info', title: `Nejvíc toho vynecháváš v den: ${DAY_NAMES[wi].toLowerCase()}.`, body: `V tento den necháš nesplněno ${Math.round(rates[wi] * 100)} % úkolů. Naplánuj si ho trochu lehčí.` });
+    out.push({ tone: 'info', title: `${DAY_NAMES[wi]}s are your weakest day.`, body: `You leave ${Math.round(rates[wi] * 100)}% of tasks undone on that day. Plan it a little lighter.` });
   }
   const best = stats14.filter((s) => s.rate === 1 && s.done >= 5)[0];
-  if (best) out.push({ tone: 'good', title: `„${best.t.title}“ ti jde skvěle.`, body: `${best.done}× splněno, nic nevynecháno. Takhle dál.` });
+  if (best) out.push({ tone: 'good', title: `You're nailing “${best.t.title}”.`, body: `${best.done}× done, nothing skipped. Keep it up.` });
   const st = streak(data);
-  if (st >= 3) out.push({ tone: 'good', title: `${st} ${st < 5 ? 'dny' : 'dní'} v řadě všechno splněno.`, body: 'Série drží. Nepřerušuj ji.' });
+  if (st >= 3) out.push({ tone: 'good', title: `${st} days in a row, everything done.`, body: 'The streak is alive. Don\'t break it.' });
   return out;
 }

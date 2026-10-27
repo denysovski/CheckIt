@@ -1,24 +1,25 @@
 <!doctype html>
-<html lang="cs">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Check It</title>
-  <meta name="description" content="Check It — klidný denní checklist s týdenní frekvencí, kalendářem, statistikami a připomínkami.">
+  <meta name="description" content="Check It — a calm daily checklist with weekly frequency, calendar, stats and reminders.">
   <meta name="theme-color" content="#FFFFFF">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="assets/icon-180.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
   <link rel="stylesheet" href="css/style.css">
+  <script>try{var p=JSON.parse(localStorage.getItem("checkit:prefs")||"{}"),t=p.theme||"system";if(t==="system")t=matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light";document.documentElement.dataset.theme=t;if(p.motion===false)document.documentElement.classList.add("no-motion")}catch(e){}</script>
 </head>
 <body>
   <div id="app" aria-live="polite"></div>
   <div id="toast-root" aria-live="assertive"></div>
   <div id="sheet-root"></div>
-  <noscript>Check It potřebuje zapnutý JavaScript.</noscript>
+  <noscript>Check It needs JavaScript enabled.</noscript>
   <script type="module" src="js/app.js"></script>
 </body>
 </html>

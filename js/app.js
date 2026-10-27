@@ -1,47 +1,63 @@
-import { initStore, userData, update, onChange } from './store.js';
+import { initStore, userData, update, onChange, applyPrefs } from './store.js';
 import { profile } from './auth.js';
-import { renderAuth, renderShell, openPresets } from './views.js';
+import { renderShell, openPresets, askNotifications } from './views.js';
+import { renderLanding, renderAuthPage, destroyLanding } from './landing.js';
 import { playIntro, playWelcome } from './intro.js';
 import * as notify from './notify.js';
 
+applyPrefs();
 window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); window.__installPrompt = e; });
 
-function route() {
-  const r = (location.hash.replace('#/', '') || 'today').split('?')[0];
-  return ['today', 'calendar', 'stats', 'tasks', 'settings'].includes(r) ? r : 'today';
-}
+const APP_ROUTES = ['today', 'calendar', 'stats', 'tasks', 'settings'];
+const hashRoute = () => (location.hash.replace('#/', '') || '').split('?')[0];
+const appRoute = () => (APP_ROUTES.includes(hashRoute()) ? hashRoute() : 'today');
 
+let started = false;
 function startApp() {
-  renderShell(route());
-  notify.startScheduler();
+  destroyLanding();
+  if (!APP_ROUTES.includes(hashRoute())) history.replaceState(null, '', '#/today');
+  renderShell(appRoute());
+  if (!started) { notify.startScheduler(); started = true; }
   notify.startupReminder();
 }
 
 async function afterAuth(mode) {
   const p = profile();
   const d = userData();
+  document.getElementById('app').innerHTML = '';
   if (mode === 'register' || !d.onboarded) {
     await playIntro({ name: p.name });
     update((x) => { x.onboarded = true; });
-    document.getElementById('app').innerHTML = '';
-    location.hash = '#/today';
-    startApp();
-    if (!d.tasks.length) setTimeout(() => openPresets({ first: true }), 250);
   } else {
     await playWelcome(p.name);
-    document.getElementById('app').innerHTML = '';
-    location.hash = '#/today';
-    startApp();
   }
+  history.replaceState(null, '', '#/today');
+  startApp();
+  await askNotifications();
+  if (!userData().tasks.length) openPresets({ first: true });
+}
+
+// Logged-out routes: landing (#/), #/login, #/signup
+function renderPublic() {
+  const r = hashRoute();
+  if (r === 'login' || r === 'signup') renderAuthPage(r, afterAuth);
+  else renderLanding();
 }
 
 async function boot() {
   await initStore();
   notify.registerSW();
-  window.addEventListener('hashchange', () => { if (profile()) renderShell(route()); });
+  window.addEventListener('hashchange', () => {
+    if (profile()) {
+      if (!document.querySelector('.shell')) startApp(); else renderShell(appRoute());
+    } else {
+      window.scrollTo(0, 0);
+      renderPublic();
+    }
+  });
   onChange(() => notify.syncBadge());
   if (profile()) startApp();
-  else renderAuth(afterAuth, Object.keys((await import('./store.js')).getState().users).length ? 'login' : 'register');
+  else renderPublic();
 }
 
 boot();

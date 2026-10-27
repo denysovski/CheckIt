@@ -110,7 +110,45 @@ export function exportJSON() {
 
 export function importJSON(text) {
   const parsed = JSON.parse(text);
-  if (!parsed || parsed.app !== 'checkit' || !parsed.data) throw new Error('Neplatný soubor');
+  if (!parsed || parsed.app !== 'checkit' || !parsed.data) throw new Error('Invalid backup file');
   state.data[state.session] = parsed.data;
   save();
+}
+
+// ---- device-wide preferences (theme, motion). Applied before login too. ----
+const PREFS_KEY = 'checkit:prefs';
+const defaultPrefs = { theme: 'system', motion: true };
+
+export function getPrefs() {
+  try { return { ...defaultPrefs, ...(JSON.parse(localStorage.getItem(PREFS_KEY)) || {}) }; } catch { return { ...defaultPrefs }; }
+}
+
+export function setPrefs(patch) {
+  const p = { ...getPrefs(), ...patch };
+  try { localStorage.setItem(PREFS_KEY, JSON.stringify(p)); } catch {}
+  applyPrefs();
+  return p;
+}
+
+const darkQuery = window.matchMedia('(prefers-color-scheme: dark)');
+export function resolvedTheme() {
+  const t = getPrefs().theme;
+  return t === 'system' ? (darkQuery.matches ? 'dark' : 'light') : t;
+}
+
+export function applyPrefs() {
+  const root = document.documentElement;
+  const theme = resolvedTheme();
+  root.dataset.theme = theme;
+  root.classList.toggle('no-motion', !getPrefs().motion);
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.content = theme === 'dark' ? '#000000' : '#FFFFFF';
+}
+darkQuery.addEventListener?.('change', applyPrefs);
+
+// Wipe everything for every account on this device.
+export async function clearAllData() {
+  try { localStorage.removeItem(KEY); localStorage.removeItem(PREFS_KEY); } catch {}
+  try { await new Promise((r) => { const q = indexedDB.deleteDatabase(DB_NAME); q.onsuccess = q.onerror = q.onblocked = () => r(); }); } catch {}
+  state = emptyState();
 }

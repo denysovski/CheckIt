@@ -15,13 +15,31 @@ async function hash(password, saltHex) {
 
 const norm = (u) => u.trim().toLowerCase();
 
-export async function register(username, name, password) {
+export const MIN_USERNAME = 6; // "longer than 5 characters"
+export const PASSWORD_RULES = [
+  { id: 'len', label: 'At least 8 characters', test: (p) => p.length >= 8 },
+  { id: 'lower', label: 'A lowercase letter', test: (p) => /[a-z]/.test(p) },
+  { id: 'upper', label: 'An uppercase letter', test: (p) => /[A-Z]/.test(p) },
+  { id: 'num', label: 'A number', test: (p) => /[0-9]/.test(p) },
+  { id: 'sym', label: 'A symbol (!@#…)', test: (p) => /[^A-Za-z0-9\s]/.test(p) },
+];
+export const passwordOk = (p) => PASSWORD_RULES.every((r) => r.test(p));
+export function usernameError(u) {
+  const id = norm(u);
+  if (id.length < MIN_USERNAME) return `Username must be longer than ${MIN_USERNAME - 1} characters.`;
+  if (!/^[a-z0-9._-]+$/.test(id)) return 'Use only letters, numbers, dot, dash or underscore.';
+  return '';
+}
+
+export async function register(username, name, password, confirm = password) {
   const s = getState();
   const id = norm(username);
-  if (id.length < 3) throw new Error('Uživatelské jméno musí mít aspoň 3 znaky.');
-  if (!/^[a-z0-9._-]+$/.test(id)) throw new Error('Použij jen písmena bez diakritiky, čísla, tečku, pomlčku nebo podtržítko.');
-  if (password.length < 6) throw new Error('Heslo musí mít aspoň 6 znaků.');
-  if (s.users[id]) throw new Error('Tohle jméno už je obsazené. Zkus se přihlásit.');
+  if (name.trim().length < 2) throw new Error('Tell us your name.');
+  const ue = usernameError(username);
+  if (ue) throw new Error(ue);
+  if (!passwordOk(password)) throw new Error('Your password doesn’t meet all the requirements yet.');
+  if (password !== confirm) throw new Error('Passwords don’t match.');
+  if (s.users[id]) throw new Error('This username is taken. Try logging in.');
   const salt = toHex(crypto.getRandomValues(new Uint8Array(16)));
   s.users[id] = { name: name.trim() || username.trim(), salt, hash: await hash(password, salt), createdAt: Date.now() };
   s.session = id;
@@ -33,8 +51,8 @@ export async function login(username, password) {
   const s = getState();
   const id = norm(username);
   const u = s.users[id];
-  if (!u) throw new Error('Účet s tímhle jménem v tomhle prohlížeči neexistuje.');
-  if ((await hash(password, u.salt)) !== u.hash) throw new Error('Špatné heslo.');
+  if (!u) throw new Error('No account with this username in this browser.');
+  if ((await hash(password, u.salt)) !== u.hash) throw new Error('Wrong password.');
   s.session = id;
   save();
   return id;

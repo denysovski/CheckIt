@@ -1,16 +1,10 @@
 // Onboarding motion piece shown after registration (full) and login (short).
-import { icon } from './icons.js';
+import { icon, logoMark } from './icons.js';
 import { esc, reducedMotion } from './ui.js';
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-const LOGO = (cls = '') => `
-  <div class="logo-mark ${cls}">
-    <svg viewBox="0 0 64 64" aria-hidden="true">
-      <rect class="lm-bg" x="2" y="2" width="60" height="60" rx="16"/>
-      <path class="lm-check" d="M19 33.5l8.5 8.5L45.5 23"/>
-    </svg>
-  </div>`;
+const LOGO = (cls = '') => `<div class="logo-mark ${cls}">${logoMark(cls === 'tiny' ? 'tile' : 'plain')}</div>`;
 
 function letters(text, cls = '') {
   return `<span class="letters ${cls}" aria-label="${esc(text)}">${[...text].map((c, i) =>
@@ -23,16 +17,16 @@ const SCENES = [
         <div class="orb"></div>
         ${LOGO('big')}
         <h1 class="intro-title">${letters('Check It')}</h1>
-        <p class="intro-sub fade-up" style="--d:1.6s">Tvůj klidný denní rytmus.</p>
+        <p class="intro-sub fade-up" style="--d:1.6s">Your calm daily rhythm.</p>
       </div>` },
   { id: 's-list', dur: 5200, html: `
       <div class="stage-split">
         <div class="copy">
           <p class="eyebrow fade-up">Checklist</p>
-          <h2 class="fade-up" style="--d:.1s">Všechno, co musíš udělat.<br><span class="soft">Na jednom místě.</span></h2>
+          <h2 class="fade-up" style="--d:.1s">Everything you need to do.<br><span class="soft">In one place.</span></h2>
         </div>
         <div class="mock-list">
-          ${[['pin', 'Nahrát Pinterest piny', '12 / 200 pinů'], ['gamepad', 'Stáhnout Marvel Rivals videa', '3× týdně'], ['tooth', 'Vyčistit zuby', '2× denně'], ['interdental', 'Mezizubní kartáčky', 'Každý den'], ['braces', 'Nasadit rovnátka na noc', 'Každý den']]
+          ${[['pin', 'Upload Pinterest pins', '12 / 200 pins'], ['gamepad', 'Download Marvel Rivals videos', '3× a week'], ['tooth', 'Brush teeth', '2× a day'], ['interdental', 'Interdental brushes', 'Every day'], ['braces', 'Put on retainer for the night', 'Every day']]
             .map(([ic, t, f], i) => `
             <div class="mock-row" style="--i:${i}">
               <span class="mock-check"><svg viewBox="0 0 24 24"><path d="M6 12.5l4 4L18 8"/></svg></span>
@@ -43,18 +37,18 @@ const SCENES = [
       </div>` },
   { id: 's-freq', dur: 4200, html: `
       <div class="stage-center">
-        <p class="eyebrow fade-up">Frekvence</p>
-        <h2 class="fade-up" style="--d:.1s">Kolikrát týdně? <span class="soft">Ty rozhodneš.</span></h2>
+        <p class="eyebrow fade-up">Frequency</p>
+        <h2 class="fade-up" style="--d:.1s">How many times a week? <span class="soft">You decide.</span></h2>
         <div class="freq-demo fade-up" style="--d:.3s">
-          <div class="freq-num"><span id="freq-count">1</span><small>× týdně</small></div>
-          <div class="freq-days">${['Po', 'Út', 'St', 'Čt', 'Pá', 'So', 'Ne'].map((d, i) => `<span style="--i:${i}">${d}</span>`).join('')}</div>
+          <div class="freq-num"><span id="freq-count">1</span><small>× a week</small></div>
+          <div class="freq-days">${['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((d, i) => `<span style="--i:${i}">${d}</span>`).join('')}</div>
         </div>
       </div>` },
   { id: 's-cal', dur: 4200, html: `
       <div class="stage-split reverse">
         <div class="copy">
-          <p class="eyebrow fade-up">Kalendář</p>
-          <h2 class="fade-up" style="--d:.1s">Každý den jako kroužek.<br><span class="soft">Uzavři ho.</span></h2>
+          <p class="eyebrow fade-up">Calendar</p>
+          <h2 class="fade-up" style="--d:.1s">Every day is a ring.<br><span class="soft">Close it.</span></h2>
         </div>
         <div class="mock-cal">
           ${Array.from({ length: 28 }, (_, i) => {
@@ -66,27 +60,27 @@ const SCENES = [
   { id: 's-stats', dur: 5000, html: `
       <div class="stage-split">
         <div class="copy">
-          <p class="eyebrow fade-up">Statistiky</p>
-          <h2 class="fade-up" style="--d:.1s">Čísla, která ti<br><span class="soft">řeknou pravdu.</span></h2>
+          <p class="eyebrow fade-up">Stats</p>
+          <h2 class="fade-up" style="--d:.1s">Numbers that<br><span class="soft">tell the truth.</span></h2>
         </div>
         <div class="mock-stats">
           <div class="bars">${[.7, .9, .55, 1, .8, .35, .95].map((v, i) => `<span style="--i:${i};--v:${v}" class="${v < .5 ? 'low' : ''}"></span>`).join('')}</div>
           <div class="insight-pop">
             <span class="ip-ic">${icon('flag', 18)}</span>
-            <div><b>Hele, rovnátka jsi vynechal 4×.</b><small>Musíš na tom víc zapracovat.</small></div>
+            <div><b>Hey, you skipped the retainer 4×.</b><small>You need to work on this one.</small></div>
           </div>
         </div>
       </div>` },
   { id: 's-notify', dur: 4200, html: `
       <div class="stage-center">
-        <p class="eyebrow fade-up">Připomínky</p>
-        <h2 class="fade-up" style="--d:.1s">Otevřeš prohlížeč. <span class="soft">Check It ti připomene zbytek.</span></h2>
+        <p class="eyebrow fade-up">Reminders</p>
+        <h2 class="fade-up" style="--d:.1s">Open your browser. <span class="soft">Check It reminds you of the rest.</span></h2>
         <div class="mock-browser fade-up" style="--d:.3s">
           <div class="mb-bar"><i></i><i></i><i></i><span></span></div>
           <div class="mb-body">
             <div class="mb-note">
               <span class="mb-app">${LOGO('tiny')}</span>
-              <div><b>Máš 3 nesplněné úkoly</b><small>Vyčistit zuby, Mezizubní kartáčky, Rovnátka…</small></div>
+              <div><b>You have 3 unfinished tasks</b><small>Brush teeth, Interdental brushes, Retainer…</small></div>
             </div>
           </div>
         </div>
@@ -95,9 +89,9 @@ const SCENES = [
       <div class="stage-center">
         <div class="orb end"></div>
         ${LOGO('big')}
-        <h1 class="intro-title">${letters('Pojďme na to.')}</h1>
-        <p class="intro-sub fade-up" style="--d:.9s">Data zůstávají jen v tomhle prohlížeči.</p>
-        <button class="btn primary large fade-up" style="--d:1.2s" id="intro-start">Začít</button>
+        <h1 class="intro-title">${letters('Let’s go.')}</h1>
+        <p class="intro-sub fade-up" style="--d:.9s">Your data stays in this browser only.</p>
+        <button class="btn primary large fade-up" style="--d:1.2s" id="intro-start">Get started</button>
       </div>` },
 ];
 
@@ -107,7 +101,7 @@ export function playIntro({ name = '' } = {}) {
     root.className = 'intro';
     root.innerHTML = `
       <div class="intro-progress">${SCENES.map(() => '<span><i></i></span>').join('')}</div>
-      <button class="intro-skip" type="button">Přeskočit</button>
+      <button class="intro-skip" type="button">Skip</button>
       <div class="intro-stage" aria-live="polite"></div>`;
     document.body.appendChild(root);
     const stage = root.querySelector('.intro-stage');
@@ -129,7 +123,7 @@ export function playIntro({ name = '' } = {}) {
       const el = document.createElement('section');
       el.className = `scene ${sc.id}`;
       el.innerHTML = sc.html;
-      if (i === 1 && name) el.querySelector('.eyebrow').textContent = `Ahoj, ${name}`;
+      if (i === 1 && name) el.querySelector('.eyebrow').textContent = `Hi, ${name}`;
       stage.appendChild(el);
       void el.offsetWidth;
       el.classList.add('play');
@@ -166,7 +160,7 @@ export function playWelcome(name) {
         <div class="stage-center">
           <div class="orb"></div>
           ${LOGO('big')}
-          <h1 class="intro-title">${letters(`Vítej zpět${name ? ', ' + name : ''}`)}</h1>
+          <h1 class="intro-title">${letters(`Welcome back${name ? ', ' + name : ''}`)}</h1>
         </div>
       </section></div>`;
     document.body.appendChild(root);

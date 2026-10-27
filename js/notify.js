@@ -46,7 +46,7 @@ async function show(title, body, tag = 'checkit') {
 function summary(list) {
   const names = list.map(({ t }) => t.title);
   const head = names.slice(0, 3).join(', ');
-  return names.length > 3 ? `${head} a ${names.length - 3} další` : head;
+  return names.length > 3 ? `${head} and ${names.length - 3} more` : head;
 }
 
 export function syncBadge() {
@@ -70,8 +70,8 @@ export async function startupReminder() {
   const list = pendingToday(d);
   syncBadge();
   if (!list.length) return;
-  const word = list.length === 1 ? 'nesplněný úkol' : list.length < 5 ? 'nesplněné úkoly' : 'nesplněných úkolů';
-  await show(`Máš ${list.length} ${word}`, summary(list), 'checkit-startup');
+  const word = list.length === 1 ? 'unfinished task' : 'unfinished tasks';
+  await show(`You have ${list.length} ${word}`, summary(list), 'checkit-startup');
 }
 
 let timer = null;
@@ -88,7 +88,7 @@ export function startScheduler() {
     if (due && d.lastNotified !== key) {
       const list = pendingToday(d);
       update((x) => { x.lastNotified = key; });
-      if (list.length) await show('Den ještě není hotový', `Zbývá: ${summary(list)}`, 'checkit-evening');
+      if (list.length) await show('Your day isn\'t done yet', `Left: ${summary(list)}`, 'checkit-evening');
     }
   };
   tick();
@@ -99,6 +99,6 @@ export function startScheduler() {
 export function stopScheduler() { clearInterval(timer); }
 
 export async function testNotification() {
-  const ok = await show('Check It funguje', 'Takhle tě upozorním na nesplněné úkoly.', 'checkit-test');
+  const ok = await show('Check It works', 'This is how I\'ll remind you about unfinished tasks.', 'checkit-test');
   return ok;
 }

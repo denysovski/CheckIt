@@ -1,9 +1,9 @@
 // Check It service worker: offline cache + notifications.
-const CACHE = 'checkit-v1';
+const CACHE = 'checkit-v3';
 const ASSETS = [
   './', './index.html', './css/style.css', './manifest.webmanifest',
   './js/app.js', './js/store.js', './js/auth.js', './js/schedule.js', './js/icons.js',
-  './js/notify.js', './js/intro.js', './js/views.js', './js/ui.js',
+  './js/notify.js', './js/intro.js', './js/views.js', './js/ui.js', './js/landing.js',
   './assets/icon.svg', './assets/icon-192.png', './assets/icon-512.png',
 ];
 
@@ -37,7 +37,7 @@ self.addEventListener('message', (e) => {
 
 self.addEventListener('periodicsync', (e) => {
   if (e.tag !== 'checkit-reminder' || !pending.count) return;
-  e.waitUntil(self.registration.showNotification(`Máš ${pending.count} nesplněné úkoly`, {
+  e.waitUntil(self.registration.showNotification(`You have ${pending.count} unfinished tasks`, {
     body: pending.names.slice(0, 3).join(', '), tag: 'checkit-periodic', icon: 'assets/icon-192.png',
   }));
 });
