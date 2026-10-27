@@ -1,9 +1,9 @@
 // Check It service worker: offline cache + notifications.
-const CACHE = 'checkit-v3';
+const CACHE = 'checkit-v4';
 const ASSETS = [
   './', './index.html', './css/style.css', './manifest.webmanifest',
   './js/app.js', './js/store.js', './js/auth.js', './js/schedule.js', './js/icons.js',
-  './js/notify.js', './js/intro.js', './js/views.js', './js/ui.js', './js/landing.js',
+  './js/notify.js', './js/intro.js', './js/views.js', './js/ui.js', './js/landing.js', './js/router.js', './js/shell.js', './js/notes.js', './js/channels.js', './js/palette.js', './js/export.js', './js/fx.js',
   './assets/icon.svg', './assets/icon-192.png', './assets/icon-512.png',
 ];
 

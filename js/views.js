@@ -9,10 +9,12 @@ import {
 } from './schedule.js';
 import * as notify from './notify.js';
 import { playIntro } from './intro.js';
+import { register, rerender } from './router.js';
+import { exportMenu } from './export.js';
 
-const pl = (n, word, plural = word + 's') => `${n} ${n === 1 ? word : plural}`;
+export const pl = (n, word, plural = word + 's') => `${n} ${n === 1 ? word : plural}`;
 export const REPO_URL = 'https://github.com/denysovski/CheckIt';
-const clock = (ts) => { const d = new Date(ts); return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; };
+export const clock = (ts) => { const d = new Date(ts); return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; };
 
 // ============================================================ presets
 export const PRESETS = [
@@ -244,7 +246,7 @@ function bindPrefControls(root, after) {
   };
 }
 
-function showAccountMenu(anchor) {
+export function showAccountMenu(anchor) {
   const p = profile();
   const prefs = getPrefs();
   const m = popover(anchor, `
@@ -258,6 +260,7 @@ function showAccountMenu(anchor) {
         ${notify.permission() === 'granted' ? `<span class="pill">On</span>` : `<button class="btn primary small" data-notify>Turn on</button>`}</div>
       <div class="menu-sep"></div>
       <a href="#/settings" data-go>${'<span>Settings</span>'}${icon('gear', 18)}</a>
+      <button data-export><span>Export my data</span>${icon('download', 18)}</button>
       <a href="${REPO_URL}" target="_blank" rel="noopener noreferrer"><span>GitHub repository</span>${icon('external', 18)}</a>
       <div class="menu-sep"></div>
       <button data-logout><span>Log out</span>${icon('logout', 18)}</button>
@@ -266,62 +269,18 @@ function showAccountMenu(anchor) {
   if (!m) return;
   bindPrefControls(m);
   $('[data-go]', m).onclick = () => closePopover();
+  $('[data-export]', m).onclick = (e) => { e.stopPropagation(); const anchor = document.getElementById('account-btn'); closePopover(); setTimeout(() => exportMenu(anchor), 200); };
   const nb = $('[data-notify]', m);
   if (nb) nb.onclick = async () => { closePopover(); await turnOnNotifications(); rerender(); };
   $('[data-logout]', m).onclick = () => { logout(); location.hash = '#/'; location.reload(); };
 }
 
-// ============================================================ shell
-const TABS = [
-  ['today', 'Today', 'today'],
-  ['calendar', 'Calendar', 'calendar'],
-  ['stats', 'Stats', 'chart'],
-  ['tasks', 'Tasks', 'list'],
-];
-
-const VIEWS = () => ({ today: viewToday, calendar: viewCalendar, stats: viewStats, tasks: viewTasks, settings: viewSettings });
-
-export function renderShell(route) {
-  const p = profile();
-  const app = $('#app');
-  if (!$('.shell', app)) {
-    app.innerHTML = `
-      <div class="shell">
-        <header class="topbar">
-          <a class="brand" href="#/today" aria-label="Check It — home">
-            <span class="brand-mark">${logoMark('plain')}</span>
-            <span class="brand-word">Check<b>It</b></span>
-          </a>
-          <nav class="tabs" aria-label="Main">
-            ${TABS.map(([r, l, ic]) => `<a href="#/${r}" data-r="${r}">${icon(ic, 18)}<span>${l}</span></a>`).join('')}
-          </nav>
-          <button class="avatar" id="account-btn" data-r="settings" aria-haspopup="menu" aria-expanded="false" aria-label="Account menu">${esc((p?.name || '?').slice(0, 1).toUpperCase())}</button>
-        </header>
-        <main id="view" tabindex="-1"></main>
-        <nav class="tabbar" aria-label="Navigation">
-          ${[...TABS, ['settings', 'Settings', 'gear']].map(([r, l, ic]) => `<a href="#/${r}" data-r="${r}">${icon(ic, 22)}<span>${l}</span></a>`).join('')}
-        </nav>
-      </div>`;
-    $('#account-btn', app).onclick = (e) => showAccountMenu(e.currentTarget);
-  }
-  $$('[data-r]', app).forEach((a) => a.classList.toggle('active', a.dataset.r === route));
-  const view = $('#view');
-  view.classList.remove('enter');
-  void view.offsetWidth;
-  view.classList.add('enter');
-  (VIEWS()[route] || viewToday)(view);
-  stagger(view);
-  countUp(view);
-  window.scrollTo({ top: 0 });
-}
-
-export function rerender() {
-  const r = (location.hash.replace('#/', '') || 'today').split('?')[0];
-  const view = $('#view');
-  if (!view) return;
-  view.classList.remove('enter'); // re-renders after an action don't replay entrance animations
-  (VIEWS()[r] || viewToday)(view);
-}
+// ============================================================ registration
+register('today', (v) => viewToday(v));
+register('calendar', (v) => viewCalendar(v));
+register('stats', (v) => viewStats(v));
+register('tasks', (v) => viewTasks(v));
+register('settings', (v) => viewSettings(v));
 
 // ============================================================ rows
 function linkBtn(t) {
@@ -331,7 +290,7 @@ function linkBtn(t) {
     ${icon('link', 16)}<span>${esc(label)}</span></a>`;
 }
 
-function taskRow(t, k, s, { compact = false, history = false } = {}) {
+export function taskRow(t, k, s, { compact = false, history = false } = {}) {
   const d = userData();
   const c = countOn(d, t, k);
   const max = perDay(t);
@@ -364,7 +323,7 @@ function taskRow(t, k, s, { compact = false, history = false } = {}) {
     </li>`;
 }
 
-function bindRows(root, k, after) {
+export function bindRows(root, k, after) {
   $$('[data-toggle]', root).forEach((b) => b.addEventListener('click', (e) => {
     e.stopPropagation();
     const row = b.closest('.task');
@@ -590,6 +549,7 @@ function viewStats(view) {
           <h1 class="large-title">Your rhythm.</h1>
           <p class="lead">The last 30 days in one place.</p>
         </div>
+        <button class="btn ghost" id="export-btn" aria-haspopup="menu" aria-expanded="false">${icon('download', 16)} Export</button>
       </div>
 
       <div class="kpis">
@@ -638,6 +598,7 @@ function viewStats(view) {
           </li>`).join('')}
       </ul></div>` : '<div class="empty"><p>Stats will show up once you start checking off tasks.</p></div>'}
     </section>`;
+  $('#export-btn', view).onclick = (e) => exportMenu(e.currentTarget);
 }
 
 // ============================================================ tasks (edit list)
@@ -728,7 +689,7 @@ function viewSettings(view) {
       <div class="card group">
         <div class="g-row"><div><b>Storage</b><small>localStorage + IndexedDB. Gone only if you clear this site’s data (cookies).</small></div><span class="pill" id="persist">…</span></div>
         <div class="g-row"><div><b>Backup</b><small>Download your data to a file or restore it.</small></div>
-          <div class="row gap"><button class="btn ghost small" id="exp">Export</button><label class="btn ghost small">Import<input type="file" id="imp" accept="application/json" hidden></label></div></div>
+          <div class="row gap"><button class="btn ghost small" id="exp" aria-haspopup="menu">Export</button><label class="btn ghost small">Import<input type="file" id="imp" accept="application/json" hidden></label></div></div>
         <div class="g-row"><div><b>Intro animation</b><small>Watch the tour again.</small></div><button class="btn ghost small" id="intro">${icon('play', 14)} Play</button></div>
       </div>
 
@@ -751,11 +712,7 @@ function viewSettings(view) {
     $('#rt b', view).textContent = v;
     toast(`Reminder set for ${v}`);
   });
-  $('#exp', view).onclick = () => {
-    const blob = new Blob([exportJSON()], { type: 'application/json' });
-    const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: `checkit-${todayKey()}.json` });
-    a.click(); URL.revokeObjectURL(a.href);
-  };
+  $('#exp', view).onclick = (e) => exportMenu(e.currentTarget);
   $('#imp', view).onchange = async (e) => {
     const f = e.target.files[0]; if (!f) return;
     try { importJSON(await f.text()); toast('Data restored'); viewSettings(view); } catch (err) { toast(err.message, { tone: 'bad' }); }

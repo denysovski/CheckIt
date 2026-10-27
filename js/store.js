@@ -7,6 +7,8 @@ const DB_NAME = 'checkit';
 const STORE = 'kv';
 
 let state = null;
+const SESSION_KEY = 'checkit:session'; // used when "Remember me" is off
+let ephemeral = false;
 const listeners = new Set();
 
 function emptyState() {
@@ -61,6 +63,9 @@ export async function initStore() {
   if (!local && mirror) local = mirror;
   if (local && mirror && (mirror.savedAt || 0) > (local.savedAt || 0)) local = mirror;
   state = local || emptyState();
+  if (!state.session) {
+    try { const sid = sessionStorage.getItem(SESSION_KEY); if (sid && state.users[sid]) { state.session = sid; ephemeral = true; } } catch {}
+  }
   // Ask the browser not to evict our storage under pressure.
   try { if (navigator.storage && navigator.storage.persist) await navigator.storage.persist(); } catch {}
   save();
@@ -69,9 +74,17 @@ export async function initStore() {
 
 export function getState() { return state; }
 
+// remember = keep me logged in across browser restarts
+export function setSession(id, remember = true) {
+  state.session = id;
+  ephemeral = !!id && !remember;
+  try { if (ephemeral) sessionStorage.setItem(SESSION_KEY, id); else sessionStorage.removeItem(SESSION_KEY); } catch {}
+  save();
+}
+
 export function save() {
   state.savedAt = Date.now();
-  const raw = JSON.stringify(state);
+  const raw = JSON.stringify(ephemeral ? { ...state, session: null } : state);
   try { localStorage.setItem(KEY, raw); } catch {}
   idbPut(JSON.parse(raw));
   listeners.forEach((fn) => fn(state));
@@ -94,7 +107,28 @@ export function userData() {
       lastNotified: null,
     };
   }
-  return state.data[u];
+  const d = state.data[u];
+  // v3 additions: text channels, notes, completion times
+  if (!d.doneAt) d.doneAt = {};
+  if (!d.channels) {
+    const now = Date.now();
+    d.channels = [
+      { id: 'ch-general', name: 'general', createdAt: now },
+      { id: 'ch-ideas', name: 'ideas', createdAt: now },
+    ];
+    d.messages = [
+      { id: 'm-1', channelId: 'ch-general', text: 'This is your own channel. Dump thoughts, links or a quick log of what you did — only you can see it.', ts: now },
+    ];
+  }
+  if (!d.messages) d.messages = [];
+  if (!d.notes) {
+    const now = Date.now();
+    d.notes = [{
+      id: 'n-welcome', title: 'Welcome to Notes', tag: 'Guide', pinned: true, createdAt: now, updatedAt: now,
+      body: '# Notes\n\nWrite anything here — school notes, plans, lists.\n\n- Use **bold** with two stars\n- Start a line with `- ` for a list\n- Start with `[ ] ` for a checkbox\n\n[ ] Try making your first note\n',
+    }];
+  }
+  return d;
 }
 
 export function update(fn) {

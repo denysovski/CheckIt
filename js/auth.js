@@ -1,6 +1,6 @@
 // Local-only accounts. Passwords are salted + hashed (PBKDF2, SHA-256) with WebCrypto
 // and never stored in plain text. Nothing leaves the browser.
-import { getState, save } from './store.js';
+import { getState, save, setSession } from './store.js';
 
 const enc = new TextEncoder();
 const toHex = (buf) => [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('');
@@ -31,37 +31,33 @@ export function usernameError(u) {
   return '';
 }
 
-export async function register(username, name, password, confirm = password) {
+export async function register(username, password, confirm = password) {
   const s = getState();
   const id = norm(username);
-  if (name.trim().length < 2) throw new Error('Tell us your name.');
+  const name = username.trim();
   const ue = usernameError(username);
   if (ue) throw new Error(ue);
   if (!passwordOk(password)) throw new Error('Your password doesn’t meet all the requirements yet.');
   if (password !== confirm) throw new Error('Passwords don’t match.');
   if (s.users[id]) throw new Error('This username is taken. Try logging in.');
   const salt = toHex(crypto.getRandomValues(new Uint8Array(16)));
-  s.users[id] = { name: name.trim() || username.trim(), salt, hash: await hash(password, salt), createdAt: Date.now() };
-  s.session = id;
-  save();
+  s.users[id] = { name, salt, hash: await hash(password, salt), createdAt: Date.now() };
+  setSession(id, true);
   return id;
 }
 
-export async function login(username, password) {
+export async function login(username, password, remember = true) {
   const s = getState();
   const id = norm(username);
   const u = s.users[id];
   if (!u) throw new Error('No account with this username in this browser.');
   if ((await hash(password, u.salt)) !== u.hash) throw new Error('Wrong password.');
-  s.session = id;
-  save();
+  setSession(id, remember);
   return id;
 }
 
 export function logout() {
-  const s = getState();
-  s.session = null;
-  save();
+  setSession(null, true);
 }
 
 export function profile() {

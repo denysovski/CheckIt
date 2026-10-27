@@ -18,9 +18,10 @@ I built Check It for my own routine — brushing teeth, interdental brushes, the
 
 - **Checklist** — what's due today, what's left this week, what's done.
 - **Your rhythm** — every day, 3× a week, or only on Mondays.
-- **Links** — one tap to your Pinterest, Meta Business, anything.
-- **Calendar** — see which days you showed up.
-- **Nudges** — it tells you what you skip the most.
+- **Channels & notes** — a place to log thoughts and keep school notes.
+- **Search** — find anything with ⌘K / Ctrl K.
+- **Calendar & stats** — see when you showed up and what you skip.
+- **Export** — your activity, stats and notes as CSV, Markdown or JSON.
 - **Reminders** — a notification when you open the browser.
 - **Light & dark** — follows your system, or pick one.
 
@@ -32,13 +33,13 @@ Everything runs locally in your browser (localStorage + IndexedDB). There's no s
 
 <img src="docs/palette.svg" alt="Palette: White #FFFFFF, Mist #F5F5F7, Ink #1D1D1F, Check Blue #0056FF, Soft Red #E0524F">
 
-White canvas, black components, one quiet blue. Red only shows up where something was missed. Inspired by Apple's [Human Interface Guidelines](https://developer.apple.com/design/human-interface-guidelines/). Logos by [SVGL](https://svgl.app), motion by [GSAP](https://gsap.com) and [Lenis](https://lenis.darkroom.engineering).
+White canvas, black components, one quiet blue. Red only shows up where something was missed. Inspired by Apple's [Human Interface Guidelines](https://developer.apple.com/design/human-interface-guidelines/). Type: [Satoshi](https://www.fontshare.com/fonts/satoshi) and [Geist Mono](https://vercel.com/font). Logos by [SVGL](https://svgl.app), motion by [GSAP](https://gsap.com) and [Lenis](https://lenis.darkroom.engineering).
 
 ## Screens
 
-<img src="docs/today.png" alt="Today">
-<img src="docs/calendar.png" alt="Calendar (dark)">
-<img src="docs/stats.png" alt="Stats (dark)">
+<img src="docs/home.png" alt="Home">
+<img src="docs/home-dark.png" alt="Home (dark)">
+<img src="docs/notes.png" alt="Notes">
 
 ## License
 

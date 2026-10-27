@@ -205,38 +205,46 @@ export function weekdayMisses(data, days = 56) {
   return { counts, totals };
 }
 
-// Human insights — the "hey, you keep skipping this" messages.
+// Human insights — short, varied nudges. Wording rotates by task + day so it doesn't repeat.
+const pick = (arr, seed) => arr[Math.abs(seed) % arr.length];
+const hash = (str) => [...str].reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 0);
+
 export function insights(data) {
   const out = [];
+  const day = new Date().getDate();
   const stats14 = taskStats(data, 14).filter((s) => s.done + s.missed > 0);
   const worst = [...stats14].sort((a, b) => b.missed - a.missed || (a.rate ?? 1) - (b.rate ?? 1));
   for (const s of worst.slice(0, 3)) {
     if (s.missed < 2) continue;
-    const pct = Math.round((s.rate ?? 0) * 100);
-    const tone = s.missed >= 6 ? 'bad' : 'warn';
-    const tips = [
-      'Tie it to something you already do every day without thinking.',
-      'Give it a fixed time and stick to it for a few days in a row.',
-      'Shrink it to the smallest possible version — just start.',
-      'Do it first thing in the morning, before the day runs away.',
-    ];
-    const tip = tips[(s.t.title.length + s.missed) % tips.length];
-    out.push({
-      tone,
-      taskId: s.t.id,
-      title: `Hey, you skipped “${s.t.title}” ${s.missed}× in the last 2 weeks.`,
-      body: `${pct}% done. You need to work on this one. ${tip}`,
-    });
+    const n = s.missed; const t = s.t.title; const seed = hash(t) + day;
+    const title = pick([
+      `Hey, “${t}” slipped ${n}× lately.`,
+      `“${t}” — skipped ${n}× in 2 weeks.`,
+      `You keep skipping “${t}”.`,
+      `${n} misses on “${t}”.`,
+    ], seed);
+    const body = pick([
+      'Tie it to something you already do.',
+      'Give it a fixed time tomorrow.',
+      'Make it smaller — just start.',
+      'Do it first thing in the morning.',
+      'Put it where you can see it.',
+      'Two days in a row resets the habit.',
+    ], seed + n);
+    out.push({ tone: n >= 6 ? 'bad' : 'warn', taskId: s.t.id, title, body });
   }
   const { counts, totals } = weekdayMisses(data);
   const rates = counts.map((c, i) => (totals[i] ? c / totals[i] : 0));
   const wi = rates.indexOf(Math.max(...rates));
   if (totals[wi] >= 3 && rates[wi] >= 0.35) {
-    out.push({ tone: 'info', title: `${DAY_NAMES[wi]}s are your weakest day.`, body: `You leave ${Math.round(rates[wi] * 100)}% of tasks undone on that day. Plan it a little lighter.` });
+    out.push({ tone: 'info', title: pick([`${DAY_NAMES[wi]}s are your weak spot.`, `${DAY_NAMES[wi]}s get away from you.`], day), body: `${Math.round(rates[wi] * 100)}% left undone. Plan them lighter.` });
   }
   const best = stats14.filter((s) => s.rate === 1 && s.done >= 5)[0];
-  if (best) out.push({ tone: 'good', title: `You're nailing “${best.t.title}”.`, body: `${best.done}× done, nothing skipped. Keep it up.` });
+  if (best) {
+    const seed = hash(best.t.title) + day;
+    out.push({ tone: 'good', title: pick([`Nailing “${best.t.title}”.`, `“${best.t.title}” is on fire.`, `Perfect run on “${best.t.title}”.`], seed), body: pick([`${best.done}× done, zero skipped.`, `${best.done} for ${best.done}. Keep going.`, 'Not a single miss.'], seed) });
+  }
   const st = streak(data);
-  if (st >= 3) out.push({ tone: 'good', title: `${st} days in a row, everything done.`, body: 'The streak is alive. Don\'t break it.' });
+  if (st >= 3) out.push({ tone: 'good', title: pick([`${st}-day streak.`, `${st} perfect days in a row.`], day), body: pick(['Don’t break the chain.', 'Momentum is real.'], st) });
   return out;
 }
