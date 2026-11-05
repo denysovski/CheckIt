@@ -106,7 +106,45 @@ export async function searchSvgl(query) {
 // Brand logos that also have a matching glyph if SVGL can't be reached.
 const LOGO_FALLBACK = { pinterest: 'pin', youtube: 'video', twitch: 'video', discord: 'mail', spotify: 'music', github: 'code', instagram: 'camera' };
 
+// ---------- Iconify: 200k+ open-source icons (https://iconify.design) ----------
+const ICONIFY = 'https://api.iconify.design';
+// Monochrome line/solid sets that look consistent with the rest of the UI.
+const ICON_SETS = 'lucide,tabler,ph,solar,mingcute,hugeicons,material-symbols,mdi,fluent,ri,iconoir';
+const icache = new Map();
+export const iconifyUrl = (name) => { const [p, n] = name.split(':'); return `${ICONIFY}/${p}/${n}.svg`; };
+const safeName = (n) => /^[a-z0-9-]+:[a-z0-9-]+$/.test(n);
+
+export async function searchIconify(query) {
+  const q = query.trim().toLowerCase();
+  if (!q) return [];
+  if (icache.has(q)) return icache.get(q);
+  const res = await fetch(`${ICONIFY}/search?query=${encodeURIComponent(q)}&limit=96&prefixes=${ICON_SETS}`);
+  if (!res.ok) throw new Error('Icon library unavailable');
+  const json = await res.json();
+  const items = (json.icons || []).filter(safeName).slice(0, 96);
+  icache.set(q, items);
+  return items;
+}
+
+// Download the SVG once and keep it inside the task, so it works offline too.
+// Only plain path data is kept; anything scriptable is dropped.
+export async function iconifyDataUri(name) {
+  if (!safeName(name)) throw new Error('bad icon');
+  const res = await fetch(iconifyUrl(name));
+  if (!res.ok) throw new Error('icon not found');
+  const svg = (await res.text()).trim();
+  if (!/^<svg[\s>]/i.test(svg) || /<script|<foreignObject|\son\w+=|href=|url\(/i.test(svg) || svg.length > 20000) throw new Error('unsafe icon');
+  return `data:image/svg+xml;utf8,${encodeURIComponent(svg).replace(/'/g, '%27')}`;
+}
+
+// Single-quoted CSS url() inside a double-quoted style attribute; strip anything that could break out.
+const cssUrl = (v) => `url('${String(v).replace(/['"\\\n<>]/g, '')}')`;
+
 export function taskIcon(ic, size = 22) {
+  if (ic && ic.kind === 'iconify' && ic.value) {
+    const src = ic.value.startsWith('data:') || ic.value.startsWith(ICONIFY) ? ic.value : iconifyUrl(ic.value);
+    return `<span class="ic-mask" style="width:${size}px;height:${size}px;--src:${cssUrl(src)}" aria-hidden="true"></span>`;
+  }
   if (ic && ic.kind === 'svgl' && ic.value) {
     const slug = (ic.value.split('/').pop() || '').replace(/(-light|-dark)?\.svg$/, '');
     const fb = icon(ic.fallback || LOGO_FALLBACK[slug] || 'star', size).replace(/"/g, '&quot;');

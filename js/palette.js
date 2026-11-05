@@ -57,12 +57,19 @@ export function openPalette() {
       <div class="pal-foot"><span><kbd>↑</kbd><kbd>↓</kbd> to move</span><span><kbd>↵</kbd> to open</span></div>
     </div>`;
   document.body.appendChild(wrap);
+  // Lock the page behind the palette; only the results list scrolls.
+  const sbw = window.innerWidth - document.documentElement.clientWidth;
+  document.documentElement.classList.add('scroll-locked');
+  document.documentElement.style.setProperty('--sbw', `${sbw}px`);
+  const blockWheel = (e) => { if (!e.target.closest('.pal-results')) e.preventDefault(); };
+  wrap.addEventListener('wheel', blockWheel, { passive: false });
+  wrap.addEventListener('touchmove', blockWheel, { passive: false });
   requestAnimationFrame(() => wrap.classList.add('in'));
   const prev = document.activeElement;
   const input = $('#pal-q', wrap);
   const res = $('#pal-res', wrap);
   let items = []; let sel = 0;
-  const close = () => { wrap.classList.remove('in'); setTimeout(() => wrap.remove(), 220); open = null; document.removeEventListener('keydown', onKey, true); prev && prev.focus && prev.focus(); };
+  const close = () => { document.documentElement.classList.remove('scroll-locked'); wrap.classList.remove('in'); setTimeout(() => wrap.remove(), 220); open = null; document.removeEventListener('keydown', onKey, true); prev && prev.focus && prev.focus(); };
   const run = (i) => { const it = items[i]; if (!it) return; close(); setTimeout(() => it.run(), 30); };
   const draw = () => {
     items = search(input.value);

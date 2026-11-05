@@ -48,11 +48,18 @@ function renderPublic() {
   else renderLanding();
 }
 
+function showWelcome() {
+  document.querySelector('.shell') && (document.getElementById('app').innerHTML = '');
+  document.body.classList.remove('drawer-open');
+  renderLanding({ loggedIn: true, name: profile().name });
+}
+
 async function boot() {
   await initStore();
   notify.registerSW();
   window.addEventListener('hashchange', () => {
     if (profile()) {
+      if (parse().name === 'welcome') { window.scrollTo(0, 0); showWelcome(); return; }
       if (!document.querySelector('.shell')) startApp(); else renderRoute();
     } else {
       window.scrollTo(0, 0);
@@ -60,7 +67,7 @@ async function boot() {
     }
   });
   onChange(() => notify.syncBadge());
-  if (profile()) startApp();
+  if (profile()) (parse().name === 'welcome' ? showWelcome() : startApp());
   else renderPublic();
 }
 

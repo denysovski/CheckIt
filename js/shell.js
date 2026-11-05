@@ -1,7 +1,7 @@
 // App shell: sidebar, mobile drawer, Home dashboard and the "write anything" composer.
 import { icon, taskIcon, logoMark } from './icons.js';
 import { esc, $, $$, popover, closePopover, ring, toast, countUp, stagger } from './ui.js';
-import { userData, update } from './store.js';
+import { userData, update, getPrefs, setPrefs } from './store.js';
 import { profile } from './auth.js';
 import { register, render, current, go, onRender, rerender } from './router.js';
 import {
@@ -25,28 +25,40 @@ function sidebarHTML() {
     ['home', 'Home', 'home'], ['today', 'Today', 'today', pending], ['calendar', 'Calendar', 'calendar'],
     ['stats', 'Stats', 'chart'], ['tasks', 'Tasks', 'list'], ['notes', 'Notes', 'book'],
   ];
+  const initial = (name) => esc((name || '?').replace(/[^a-z0-9]/gi, '').slice(0, 1).toUpperCase() || '#');
   return `
     <div class="sb-top">
-      <a class="brand" href="#/home" aria-label="Check It home"><span class="brand-mark">${logoMark('plain')}</span><span class="brand-word">Check<b>It</b></span></a>
-      <button class="icon-btn subtle" id="sb-new" aria-label="Create" aria-haspopup="menu">${icon('compose', 19)}</button>
+      <a class="brand" href="#/home" aria-label="Check It home"><span class="brand-mark">${logoMark('plain')}</span><span class="brand-word sb-label">Check<b>It</b></span></a>
+      <div class="sb-top-actions">
+        <button class="icon-btn subtle sb-label" id="sb-new" aria-label="Create" aria-haspopup="menu" title="Create">${icon('compose', 19)}</button>
+        <button class="icon-btn subtle sb-collapse" id="sb-collapse" aria-label="Collapse sidebar" title="Collapse sidebar">${icon('sidebar', 19)}</button>
+      </div>
     </div>
-    <button class="sb-search" id="sb-search"><span>${icon('search', 17)}</span><span class="grow">Search</span><kbd>${isMac ? '⌘' : 'Ctrl'} K</kbd></button>
+    <button class="sb-search" id="sb-search" title="Search"><span>${icon('search', 17)}</span><span class="grow sb-label">Search</span><kbd class="sb-label sb-kbd">${isMac ? '⌘' : 'Ctrl'} + K</kbd></button>
     <nav class="sb-nav" aria-label="Main">
-      ${nav.map(([r, l, ic, badge]) => `<a href="#/${r}" data-nav="${r}">${icon(ic, 18)}<span class="grow">${l}</span>${badge ? `<span class="sb-badge">${badge}</span>` : ''}</a>`).join('')}
+      ${nav.map(([r, l, ic, badge]) => `<a href="#/${r}" data-nav="${r}" title="${l}">${icon(ic, 18)}<span class="grow sb-label">${l}</span>${badge ? `<span class="sb-badge">${badge}</span>` : ''}</a>`).join('')}
     </nav>
     <div class="sb-section">
-      <div class="sb-head"><span>Channels</span><button class="icon-btn subtle xs2" id="sb-add-ch" aria-label="New channel">${icon('plus', 16)}</button></div>
-      ${d.channels.map((c) => { const n = messagesOf(c.id, d).length; return `<a href="#/channel/${c.id}" data-nav="channel:${c.id}"><span class="sb-hash">#</span><span class="grow ellipsis">${esc(c.name)}</span>${n ? `<span class="sb-count">${n}</span>` : ''}</a>`; }).join('')}
+      <div class="sb-head"><span class="sb-label">Channels</span><button class="icon-btn subtle xs2" id="sb-add-ch" aria-label="New channel" title="New channel">${icon('plus', 16)}</button></div>
+      ${d.channels.map((c) => { const n = messagesOf(c.id, d).length; return `<a href="#/channel/${c.id}" data-nav="channel:${c.id}" title="#${esc(c.name)}"><span class="sb-hash">#<em class="sb-initial">${initial(c.name)}</em></span><span class="grow ellipsis sb-label">${esc(c.name)}</span>${n ? `<span class="sb-count sb-label">${n}</span>` : ''}</a>`; }).join('')}
     </div>
     <div class="sb-section">
-      <div class="sb-head"><span>Notes</span><button class="icon-btn subtle xs2" id="sb-add-note" aria-label="New note">${icon('plus', 16)}</button></div>
-      ${notes.length ? notes.map((n) => `<a href="#/note/${n.id}" data-nav="note:${n.id}">${icon('doc', 16)}<span class="grow ellipsis">${esc(n.title || 'Untitled')}</span>${n.pinned ? `<span class="sb-pin">${icon('thumbtack', 13)}</span>` : ''}</a>`).join('') : '<p class="sb-empty">No notes yet</p>'}
+      <div class="sb-head"><span class="sb-label">Notes</span><button class="icon-btn subtle xs2" id="sb-add-note" aria-label="New note" title="New note">${icon('plus', 16)}</button></div>
+      ${notes.length ? notes.map((n) => `<a href="#/note/${n.id}" data-nav="note:${n.id}" title="${esc(n.title || 'Untitled')}">${icon('doc', 16)}<span class="grow ellipsis sb-label">${esc(n.title || 'Untitled')}</span>${n.pinned ? `<span class="sb-pin sb-label">${icon('thumbtack', 13)}</span>` : ''}</a>`).join('') : '<p class="sb-empty sb-label">No notes yet</p>'}
     </div>
-    <div class="sb-user">
+    <a class="sb-leave" href="#/welcome" title="Leave dashboard">${icon('logout', 17)}<span class="sb-label">Leave dashboard</span></a>
+    <button class="sb-user" id="account-btn" aria-label="Account and settings" aria-haspopup="menu" aria-expanded="false" title="Account and settings">
       <span class="avatar static sm">${esc((p.name || '?').slice(0, 1).toUpperCase())}<i class="online"></i></span>
-      <div class="grow"><b class="ellipsis">${esc(p.name)}</b><small>@${esc(p.id)}</small></div>
-      <button class="icon-btn subtle" id="account-btn" aria-label="Account and settings" aria-haspopup="menu" aria-expanded="false">${icon('gear', 19)}</button>
-    </div>`;
+      <span class="grow sb-label sb-user-txt"><b class="ellipsis">${esc(p.name)}</b><small>Settings &amp; account</small></span>
+      <span class="sb-user-gear sb-label">${icon('gear', 18)}</span>
+    </button>`;
+}
+
+export function applySidebarState() {
+  const collapsed = !!getPrefs().sidebarCollapsed;
+  document.documentElement.classList.toggle('sb-collapsed', collapsed);
+  const b = $('#sb-collapse');
+  if (b) { b.setAttribute('aria-label', collapsed ? 'Expand sidebar' : 'Collapse sidebar'); b.title = collapsed ? 'Expand sidebar' : 'Collapse sidebar'; }
 }
 
 function bindSidebar(sb) {
@@ -55,6 +67,8 @@ function bindSidebar(sb) {
   $('#sb-add-ch', sb).onclick = () => { closeDrawer(); newChannel(); };
   $('#sb-add-note', sb).onclick = () => { closeDrawer(); const n = createNote(); go('note', n.id); };
   $('#sb-new', sb).onclick = (e) => createMenu(e.currentTarget);
+  $('#sb-collapse', sb).onclick = () => { setPrefs({ sidebarCollapsed: !getPrefs().sidebarCollapsed }); applySidebarState(); };
+  applySidebarState();
   $$('a', sb).forEach((a) => a.addEventListener('click', closeDrawer));
   markActive();
 }
@@ -187,29 +201,28 @@ function viewHome(view) {
   const wd = w.reduce((a, s) => a + s.done, 0); const wm = w.reduce((a, s) => a + s.missed, 0);
   const weekPct = wd + wm ? Math.round((wd / (wd + wm)) * 100) : 0;
   const hour = new Date().getHours();
-  const greet = hour < 5 ? 'Good night' : hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
   const list = [...b.required, ...b.flexible, ...b.done].slice(0, 6);
   const notes = sortedNotes(d).slice(0, 4);
   const chans = d.channels.map((c) => ({ c, msgs: messagesOf(c.id, d) })).sort((a, z) => ((z.msgs.at(-1)?.ts || z.c.createdAt) - (a.msgs.at(-1)?.ts || a.c.createdAt))).slice(0, 4);
   const tip = insights(d)[0];
   const series = dailySeries(d, 7);
-  const date = parseKey(k).toLocaleDateString('en-GB', { weekday: 'long', month: 'long', day: 'numeric' });
+  const date = parseKey(k).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
 
   view.innerHTML = `
     <section class="page home">
       <div class="home-hero">
         <div>
-          <p class="eyebrow caps">${esc(date)}</p>
-          <h1 class="home-title">${greet}, ${esc(p.name)}</h1>
+          <p class="eyebrow date">${esc(date)}</p>
+          <h1 class="home-title"><span>Welcome back,</span><span class="hn">${esc(p.name)}</span></h1>
         </div>
         ${ILLUSTRATION}
       </div>
 
       <div class="tiles">
-        <a class="tile-card t-coral" href="#/today"><div class="tc-top">${icon('flag', 20)}<span>Due today</span></div><b class="mono" data-count="${left}">${left}</b><small>${left ? 'Left for today' : 'All clear for today'}</small></a>
-        <a class="tile-card t-yellow" href="#/today"><div class="tc-top">${icon('check', 20)}<span>Done today</span></div><b class="mono" data-count="${sum.done}">${sum.done}</b><small>of ${sum.total} planned</small></a>
-        <a class="tile-card t-pink" href="#/stats"><div class="tc-top">${icon('flame', 20)}<span>Streak</span></div><b class="mono" data-count="${st}">${st}</b><small>${st === 1 ? 'Day' : 'Days'} in a row</small></a>
-        <a class="tile-card t-blue" href="#/stats"><div class="tc-top">${icon('chart', 20)}<span>This week</span></div><b class="mono"><span data-count="${weekPct}">${weekPct}</span>%</b><small>Success in the last 7 days</small></a>
+        <a class="tile-card t-orange" href="#/today"><div class="tc-top">${icon('flag', 20)}<span>Due today</span></div><b class="num" data-count="${left}">${left}</b><small>${left ? 'Left for today' : 'All clear for today'}</small></a>
+        <a class="tile-card t-green" href="#/today"><div class="tc-top">${icon('check', 20)}<span>Done today</span></div><b class="num" data-count="${sum.done}">${sum.done}</b><small>of ${sum.total} planned</small></a>
+        <a class="tile-card t-red" href="#/stats"><div class="tc-top">${icon('flame', 20)}<span>Streak</span></div><b class="num" data-count="${st}">${st}</b><small>${st === 1 ? 'Day' : 'Days'} in a row</small></a>
+        <a class="tile-card t-blue" href="#/stats"><div class="tc-top">${icon('chart', 20)}<span>This week</span></div><b class="num"><span data-count="${weekPct}">${weekPct}</span><i>%</i></b><small>Success in the last 7 days</small></a>
       </div>
 
       <div class="home-grid">
@@ -265,21 +278,24 @@ function targetLabel(t) {
   return [icon('hash', 16), c ? c.name : 'Channel'];
 }
 
+const PLACEHOLDER = { task: 'Add a task for today…', note: 'Jot down a note…', channel: 'Message #' };
+
 function composerHTML() {
   const d = userData();
   if (composerTarget.kind === 'channel' && !d.channels.some((c) => c.id === composerTarget.id)) composerTarget = { kind: 'task' };
   const [ic, label] = targetLabel(composerTarget);
-  const ph = { task: 'Add a task for today…', note: 'Jot down a note…', channel: `Message #${label}` }[composerTarget.kind];
+  const quickOn = (q) => (q === 'ch' ? composerTarget.kind === 'channel' && d.channels[0] && composerTarget.id === d.channels[0].id : composerTarget.kind === q);
   return `
     <form class="composer floating" id="composer">
-      <div class="cp-chips">
-        <button type="button" class="chip ${composerTarget.kind === 'task' ? 'on' : ''}" data-quick="task">Add task</button>
-        <button type="button" class="chip ${composerTarget.kind === 'note' ? 'on' : ''}" data-quick="note">Jot a note</button>
-        ${d.channels[0] ? `<button type="button" class="chip ${composerTarget.kind === 'channel' && composerTarget.id === d.channels[0].id ? 'on' : ''}" data-quick="ch">Log to #${esc(d.channels[0].name)}</button>` : ''}
+      <div class="cp-chips" role="tablist" aria-label="What to write">
+        <span class="cp-pill" aria-hidden="true"></span>
+        <button type="button" role="tab" class="chip ${quickOn('task') ? 'on' : ''}" aria-selected="${quickOn('task')}" data-quick="task">Add task</button>
+        <button type="button" role="tab" class="chip ${quickOn('note') ? 'on' : ''}" aria-selected="${quickOn('note')}" data-quick="note">Jot a note</button>
+        ${d.channels[0] ? `<button type="button" role="tab" class="chip ${quickOn('ch') ? 'on' : ''}" aria-selected="${quickOn('ch')}" data-quick="ch">Log to #${esc(d.channels[0].name)}</button>` : ''}
       </div>
-      <textarea id="cp-input" rows="1" placeholder="${esc(ph)}" aria-label="Write anything"></textarea>
+      <div class="cp-field"><textarea id="cp-input" rows="1" placeholder="${esc(composerTarget.kind === 'channel' ? PLACEHOLDER.channel + label : PLACEHOLDER[composerTarget.kind])}" aria-label="Write anything"></textarea></div>
       <div class="composer-row">
-        <button type="button" class="cp-target" id="cp-target" aria-haspopup="menu" aria-expanded="false">${ic}<span>${esc(label)}</span>${icon('chevR', 13, 'pk-chev')}</button>
+        <button type="button" class="cp-target" id="cp-target" aria-haspopup="menu" aria-expanded="false"><span class="cp-t">${ic}<span>${esc(label)}</span></span>${icon('chevR', 13, 'pk-chev')}</button>
         <button class="send-btn" aria-label="Send">${icon('send', 18)}</button>
       </div>
     </form>`;
@@ -289,9 +305,39 @@ function bindComposer(view) {
   const f = $('#composer', view);
   if (!f) return;
   const ta = $('#cp-input', f);
+  const pill = $('.cp-pill', f);
+  const movePill = (instant) => {
+    const on = $('.chip.on', f);
+    if (!on) { pill.style.opacity = '0'; return; }
+    if (instant) pill.style.transition = 'none';
+    pill.style.opacity = '1';
+    pill.style.width = `${on.offsetWidth}px`;
+    pill.style.transform = `translateX(${on.offsetLeft}px)`;
+    if (instant) { void pill.offsetWidth; pill.style.transition = ''; }
+  };
+  requestAnimationFrame(() => movePill(true));
   ta.oninput = () => { ta.style.height = 'auto'; ta.style.height = `${Math.min(160, ta.scrollHeight)}px`; };
   ta.onkeydown = (e) => { if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); f.requestSubmit(); } };
-  const setTarget = (t) => { composerTarget = t; const keep = ta.value; f.outerHTML = composerHTML(); bindComposer(view); const n = $('#cp-input', view); n.value = keep; n.focus(); };
+  // Switch target in place: slide the pill, cross-fade placeholder + label.
+  const setTarget = (t) => {
+    composerTarget = t;
+    const d = userData();
+    $$('[data-quick]', f).forEach((b) => {
+      const q = b.dataset.quick;
+      const on = q === 'ch' ? t.kind === 'channel' && t.id === d.channels[0]?.id : t.kind === q;
+      b.classList.toggle('on', on); b.setAttribute('aria-selected', on);
+    });
+    movePill(false);
+    const [ic, label] = targetLabel(t);
+    const field = $('.cp-field', f); const tgt = $('.cp-t', f);
+    field.classList.add('swap'); tgt.classList.add('swap');
+    setTimeout(() => {
+      ta.placeholder = t.kind === 'channel' ? PLACEHOLDER.channel + label : PLACEHOLDER[t.kind];
+      tgt.innerHTML = `${ic}<span>${esc(label)}</span>`;
+      field.classList.remove('swap'); tgt.classList.remove('swap');
+    }, 110);
+    ta.focus();
+  };
   $$('[data-quick]', f).forEach((b) => (b.onclick = () => {
     const q = b.dataset.quick;
     setTarget(q === 'ch' ? { kind: 'channel', id: userData().channels[0].id } : { kind: q });

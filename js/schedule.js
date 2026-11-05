@@ -16,7 +16,7 @@ export const weekStart = (k) => addDays(k, -weekday(k));
 export const daysBetween = (a, b) => Math.round((parseKey(b) - parseKey(a)) / 86400000);
 export function prettyDate(k) {
   const d = parseKey(k);
-  return `${DAY_NAMES[weekday(k)]}, ${MONTHS_GEN[d.getMonth()]} ${d.getDate()}`;
+  return `${DAY_NAMES[weekday(k)]} ${d.getDate()} ${MONTHS_GEN[d.getMonth()]}`;
 }
 
 // ---------- task helpers ----------

@@ -45,7 +45,7 @@ function demoHTML() {
     <div class="dm-body">
       <aside class="dm-side">
         <div class="dm-brand"><span class="dm-mark">${logoMark('plain')}</span>Check<b>It</b></div>
-        <div class="dm-search">${icon('search', 12)} Search <kbd>⌘K</kbd></div>
+        <div class="dm-search">${icon('search', 12)} Search <kbd>Ctrl + K</kbd></div>
         ${[['home', 'Home', 1], ['today', 'Today'], ['calendar', 'Calendar', 0, 'cal'], ['chart', 'Stats'], ['book', 'Notes']].map(([ic, l, on, id]) => `<div class="dm-nav ${on ? 'on' : ''}" ${id ? `data-dm="${id}"` : ''}>${icon(ic, 13)}${l}</div>`).join('')}
         <div class="dm-sec">Channels</div>
         <div class="dm-nav" data-dm="ch-school"><span class="dm-hash">#</span>school</div>
@@ -57,13 +57,13 @@ function demoHTML() {
       </aside>
       <div class="dm-main">
         <section class="dm-view dm-home on">
-          <p class="dm-date">TUESDAY, OCTOBER 27</p>
-          <h3 class="dm-title">Good morning, Danko</h3>
+          <p class="dm-date">${new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
+          <h3 class="dm-title">Welcome back,<br><span>Danko</span></h3>
           <div class="dm-tiles">
-            <div class="dm-tile c1"><span>DUE TODAY</span><b id="dm-due">4</b><small>Left for today</small></div>
-            <div class="dm-tile c2"><span>DONE TODAY</span><b id="dm-done">1</b><small>of 5 planned</small></div>
-            <div class="dm-tile c3"><span>STREAK</span><b>12</b><small>Days in a row</small></div>
-            <div class="dm-tile c4"><span>THIS WEEK</span><b>86%</b><small>Success</small></div>
+            <div class="dm-tile c1"><span>Due today</span><b id="dm-due">4</b><small>Left for today</small></div>
+            <div class="dm-tile c2"><span>Done today</span><b id="dm-done">1</b><small>of 5 planned</small></div>
+            <div class="dm-tile c3"><span>Streak</span><b>12</b><small>Days in a row</small></div>
+            <div class="dm-tile c4"><span>This week</span><b>86%</b><small>Success</small></div>
           </div>
           <div class="dm-grid">
             <div class="dm-panel p1">
@@ -120,7 +120,8 @@ function runDemo(root, alive) {
   };
   const click = async () => { cur.classList.remove('clicking'); void cur.offsetWidth; cur.classList.add('clicking'); await sleep(260); };
   const type = async (el, text) => { el.textContent = ''; for (const ch of text) { if (!alive()) return; el.textContent += ch; await sleep(45 + Math.random() * 55); } };
-  const show = (cls) => $$('.dm-view', root).forEach((v) => v.classList.toggle('on', v.classList.contains(cls)));
+  const stage = $('.l-stage', root);
+  const show = (cls) => { $$('.dm-view', root).forEach((v) => v.classList.toggle('on', v.classList.contains(cls))); if (stage) stage.dataset.scene = cls; };
   const nav = (key) => { $$('.dm-nav', root).forEach((n) => n.classList.remove('on')); const n = key ? $(`[data-dm="${key}"]`, root) : $$('.dm-nav', root)[0]; n && n.classList.add('on'); };
   const reset = () => {
     show('dm-home'); nav(null);
@@ -169,16 +170,71 @@ function runDemo(root, alive) {
 }
 
 // ------------------------------------------------------------------ landing
-const FEATURES = [
-  ['today', 'Due today, at a glance', 'Tasks sort themselves into what’s due, what’s left this week and what’s done.'],
-  ['calendar', 'A calendar of rings', 'Every day is a ring. Look back and see exactly when you showed up.'],
-  ['hash', 'Your own channels', 'Quick logs, links and thoughts — a chat with yourself, per topic.'],
-  ['book', 'Notes for school', 'Write, tag and check things off. Autosaved as you type.'],
-  ['flag', 'Honest nudges', 'It notices what you skip the most and tells you, briefly.'],
-  ['download', 'Export everything', 'Your activity, stats and notes as CSV, Markdown or JSON.'],
+// Scattered, rotated pieces of the real dashboard around the hero.
+function floatersHTML() {
+  const ck = '<svg viewBox="0 0 24 24"><path d="M6 12.5l4 4L18 8"/></svg>';
+  return `
+    <div class="floaters" aria-hidden="true">
+      <div class="fl fl-1" data-depth="0.6"><div class="fl-tile t-green"><span>Done today</span><b>3</b><small>of 5 planned</small></div></div>
+      <div class="fl fl-2" data-depth="0.9"><div class="fl-row done"><span class="fl-ck">${ck}</span><span class="fl-ic">${icon('tooth', 15)}</span><span><b>Brush teeth</b><small>Done at 07:42</small></span></div></div>
+      <div class="fl fl-3" data-depth="0.4"><div class="fl-chip"><span>#</span>school <em>4</em></div></div>
+      <div class="fl fl-4" data-depth="0.8"><div class="fl-tile t-red"><span>Streak</span><b>12</b><small>Days in a row</small></div></div>
+      <div class="fl fl-5" data-depth="0.5"><div class="fl-row"><span class="fl-ck"></span><span class="fl-ic">${icon('pin', 15)}</span><span><b>Upload Pinterest pins</b><small>120 / 200 pins</small></span><span class="fl-link">${icon('link', 11)}</span></div></div>
+      <div class="fl fl-6" data-depth="0.7"><div class="fl-ring"><svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="19" class="t"/><circle cx="24" cy="24" r="19" class="v"/></svg><b>86%</b></div></div>
+      <div class="fl fl-7" data-depth="0.35"><div class="fl-note"><span class="fl-ic">${icon('doc', 14)}</span><span><b>Biology — cells</b><small>School · Today</small></span></div></div>
+    </div>`;
+}
+
+// Animated "check it" card shown next to the headline: a week fills up, then the dotted check draws.
+function checkCardHTML() {
+  const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  return `
+    <div class="cc" aria-hidden="true">
+      <div class="cc-head"><span>This week</span><b><span class="cc-n">0</span>/7</b></div>
+      <div class="cc-week">${days.map((d, i) => `<span class="cc-day" style="--i:${i}"><svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="14" class="t"/><circle cx="18" cy="18" r="14" class="v"/></svg><em>${d.slice(0, 1)}</em></span>`).join('')}</div>
+      <div class="cc-mark">${logoMark('plain', 'cc-dots')}</div>
+      <p class="cc-cap"><b>Week complete</b><span>Every day checked.</span></p>
+    </div>`;
+}
+
+function runCheckCard(root, alive) {
+  const cc = $('.cc', root);
+  if (!cc) return;
+  const n = $('.cc-n', cc);
+  const days = $$('.cc-day', cc);
+  (async () => {
+    await sleep(900);
+    while (alive()) {
+      cc.classList.remove('done');
+      days.forEach((d) => d.classList.remove('on'));
+      n.textContent = '0';
+      await sleep(500);
+      for (let i = 0; i < days.length && alive(); i++) { days[i].classList.add('on'); n.textContent = String(i + 1); await sleep(340); }
+      await sleep(250);
+      cc.classList.add('done');
+      await sleep(3200);
+    }
+  })();
+}
+
+const RESEARCH = [
+  ['138', 'studies, 19,951 people', 'Tracking your progress makes you more likely to reach a goal — and it works even better when the progress is written down.', 'Harkin et al., Psychological Bulletin, 2016', 'https://www.apa.org/news/press/releases/2015/10/progress-goals'],
+  ['d = .65', 'across 94 tests', 'Deciding when and where you’ll do something has a medium-to-large effect on actually doing it.', 'Gollwitzer & Sheeran, 2006', 'https://kops.uni-konstanz.de/entities/publication/2e749bfb-8533-437c-8203-7e788c910c5f'],
+  ['66', 'days, median', 'Repeating a small daily action made it automatic in about two months — anywhere from 18 to 254 days.', 'Lally et al., European Journal of Social Psychology, 2010', 'https://www.thebehavioralscientist.com/articles/how-long-to-form-a-habit'],
 ];
 
-export function renderLanding() {
+// Real numbers only: GitHub stars (live), and the visitor's own history if they've used it here.
+function ownStats() {
+  try {
+    const st = JSON.parse(localStorage.getItem('checkit:v1') || 'null');
+    if (!st) return null;
+    let done = 0; let days = 0;
+    Object.values(st.data || {}).forEach((d) => Object.values(d.log || {}).forEach((day) => { const c = Object.keys(day).length; done += c; if (c) days++; }));
+    return done ? { done, days } : null;
+  } catch { return null; }
+}
+
+export function renderLanding({ loggedIn = false, name = '' } = {}) {
   destroyLanding();
   document.documentElement.classList.add('is-landing');
   const app = $('#app');
@@ -186,28 +242,50 @@ export function renderLanding() {
   <div class="landing">
     <header class="l-nav">
       <a class="brand" href="#/" aria-label="Check It"><span class="brand-mark">${logoMark('plain')}</span><span class="brand-word">Check<b>It</b></span></a>
-      <nav class="l-links"><a href="#features" data-scroll>Features</a><a href="#privacy" data-scroll>Privacy</a><a href="${REPO_URL}" target="_blank" rel="noopener noreferrer">GitHub</a></nav>
-      <div class="l-nav-actions"><a class="l-login" href="#/login">Log in</a><a class="btn light small fx" href="#/signup">Get started</a></div>
+      <nav class="l-links"><a href="#how" data-scroll>How it works</a><a href="#research" data-scroll>Research</a><a href="#privacy" data-scroll>Privacy</a><a href="${REPO_URL}" target="_blank" rel="noopener noreferrer">GitHub</a></nav>
+      <div class="l-nav-actions">${loggedIn ? `<a class="btn light small fx" href="#/home">Open dashboard</a>` : `<a class="l-login" href="#/login">Log in</a><a class="btn light small fx" href="#/signup">Get started</a>`}</div>
     </header>
 
     <section class="l-hero">
-      <h1 class="l-title">
-        <span class="ln"><span>Plan your day.</span></span>
-        <span class="ln"><span>Check it off.</span></span>
-        <span class="ln"><span>Watch it add up.</span></span>
-      </h1>
-      <div class="l-hero-row">
-        <a class="btn light large fx" href="#/signup">Get started</a>
-        <a class="l-aside" href="${REPO_URL}" target="_blank" rel="noopener noreferrer"><b>Open source</b> Runs fully in your browser ${icon('chevR', 14)}</a>
+      ${floatersHTML()}
+      <div class="l-hero-grid">
+        <div>
+          <h1 class="l-title">
+            <span class="ln"><span>Plan your day.</span></span>
+            <span class="ln"><span>Check it off.</span></span>
+            <span class="ln"><span>Watch it add up.</span></span>
+          </h1>
+          <div class="l-hero-row">
+            <a class="btn blue large fx" href="${loggedIn ? '#/home' : '#/signup'}">${loggedIn ? `Back to dashboard` : 'Get started'}</a>
+            <a class="l-aside" href="${REPO_URL}" target="_blank" rel="noopener noreferrer"><b>Open source</b> Runs fully in your browser ${icon('chevR', 14)}</a>
+          </div>
+        </div>
+        ${checkCardHTML()}
       </div>
-      <div class="l-stage">${demoHTML()}</div>
+      <div class="l-stage" id="how">
+        <div class="l-glow" aria-hidden="true"><i class="g1"></i><i class="g2"></i><i class="g3"></i></div>
+        ${demoHTML()}
+      </div>
     </section>
 
-    <section class="l-features" id="features">
-      <h2 class="l-h2 rv">Everything for your routine.<br><span class="dim">Nothing you don’t need.</span></h2>
-      <div class="f-grid">
-        ${FEATURES.map(([ic, t, p], i) => `<article class="f-card rv" style="--i:${i}"><span class="f-ic">${icon(ic, 20)}</span><h3>${t}</h3><p>${p}</p></article>`).join('')}
+    <section class="l-research" id="research">
+      <p class="eyebrow-l rv">Why it works</p>
+      <h2 class="l-h2 rv">Writing it down<br><span class="dim">is half the work.</span></h2>
+      <div class="r-grid">
+        ${RESEARCH.map(([big, unit, text, cite, url], i) => `
+          <article class="r-card rv" style="--i:${i}">
+            <div class="r-num"><b>${big}</b><span>${unit}</span></div>
+            <p>${text}</p>
+            <a href="${url}" target="_blank" rel="noopener noreferrer" class="r-cite">${cite} ${icon('external', 12)}</a>
+          </article>`).join('')}
       </div>
+      <div class="r-live rv">
+        <div class="rl-item"><b id="gh-stars">—</b><span>GitHub stars, live</span></div>
+        <div class="rl-item"><b>0</b><span>servers storing your data</span></div>
+        <div class="rl-item"><b>0</b><span>trackers or ads</span></div>
+        <div class="rl-item" id="own-stat"><b>100%</b><span>runs in your browser</span></div>
+      </div>
+      <p class="r-note rv">Check It has no servers, so it can’t count its users — the numbers above are the real ones.</p>
     </section>
 
     <section class="l-statement" id="privacy">
@@ -217,7 +295,7 @@ export function renderLanding() {
 
     <section class="l-final">
       <h2 class="l-h2 rv">Start checking it.</h2>
-      <a class="btn blue large fx rv" href="#/signup">Get started</a>
+      <a class="btn blue large fx rv" href="${loggedIn ? '#/home' : '#/signup'}">${loggedIn ? 'Back to dashboard' : 'Get started'}</a>
     </section>
 
     <footer class="l-foot">
@@ -242,10 +320,27 @@ export function renderLanding() {
   window.addEventListener('scroll', onScroll, { passive: true });
   disposers.push(() => window.removeEventListener('scroll', onScroll));
 
+  // live, real numbers
+  fetch('https://api.github.com/repos/denysovski/CheckIt').then((r) => (r.ok ? r.json() : null)).then((j) => {
+    const el = $('#gh-stars', root); if (el && j && typeof j.stargazers_count === 'number') el.textContent = j.stargazers_count.toLocaleString('en-GB');
+  }).catch(() => {});
+  const own = ownStats();
+  if (own) { const el = $('#own-stat', root); el.innerHTML = `<b>${own.done.toLocaleString('en-GB')}</b><span>tasks you’ve checked off here, over ${own.days} ${own.days === 1 ? 'day' : 'days'}</span>`; }
+
+  // parallax for the scattered pieces
+  const fls = $$('.fl', root);
+  let mx = 0; let my = 0; let raf = 0;
+  const onMove = (e) => { mx = e.clientX / innerWidth - 0.5; my = e.clientY / innerHeight - 0.5; if (!raf) raf = requestAnimationFrame(applyPar); };
+  const applyPar = () => { raf = 0; const sy = Math.min(window.scrollY, 900); fls.forEach((f) => { const d = +f.dataset.depth; f.style.translate = `${mx * 40 * d}px ${my * 30 * d - sy * 0.25 * d}px`; }); };
+  window.addEventListener('pointermove', onMove, { passive: true });
+  window.addEventListener('scroll', () => { if (!raf) raf = requestAnimationFrame(applyPar); }, { passive: true });
+  disposers.push(() => window.removeEventListener('pointermove', onMove));
+
   $$('.dm-side > *', root).forEach((el, i) => el.style.setProperty('--k', i));
   $$('.dm-list li', root).forEach((el, i) => el.style.setProperty('--k', i));
   if (reducedMotion()) { root.classList.add('static'); return; }
   runDemo(root, () => alive);
+  runCheckCard(root, () => alive);
 
   loadLibs().then(() => {
     if (!alive) return;
@@ -276,6 +371,7 @@ export function renderAuthPage(mode, onDone) {
   const app = $('#app');
   app.innerHTML = `
     <div class="auth2">
+      <div class="auth-bg" aria-hidden="true"><i class="a1"></i><i class="a2"></i><i class="a3"></i><span class="auth-grid"></span></div>
       <a class="back-link" href="#/">${icon('chevL', 16)} Home</a>
       <form class="auth2-card" novalidate>
         <div class="auth2-icon">${logoMark('tile', 'animate')}</div>

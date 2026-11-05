@@ -1,4 +1,4 @@
-import { icon, taskIcon, TASK_GLYPHS, searchSvgl, logoMark } from './icons.js';
+import { icon, taskIcon, TASK_GLYPHS, searchSvgl, logoMark, searchIconify, iconifyDataUri, iconifyUrl } from './icons.js';
 import { esc, $, $$, uid, toast, sheet, confirmSheet, ring, popover, closePopover, isPopoverFor, timePicker, countUp, stagger } from './ui.js';
 import { userData, update, exportJSON, importJSON, getState, save, getPrefs, setPrefs, clearAllData } from './store.js';
 import { profile, logout } from './auth.js';
@@ -11,6 +11,7 @@ import * as notify from './notify.js';
 import { playIntro } from './intro.js';
 import { register, rerender } from './router.js';
 import { exportMenu } from './export.js';
+import { celebrate } from './celebrate.js';
 
 export const pl = (n, word, plural = word + 's') => `${n} ${n === 1 ? word : plural}`;
 export const REPO_URL = 'https://github.com/denysovski/CheckIt';
@@ -52,6 +53,7 @@ const hostOf = (url) => { try { return new URL(url).hostname.replace(/^www\./, '
 // ============================================================ actions
 export function toggleTask(taskId, k = todayKey()) {
   let message = null;
+  let result = { completed: false };
   update((d) => {
     const t = d.tasks.find((x) => x.id === taskId);
     if (!t) return;
@@ -62,18 +64,19 @@ export function toggleTask(taskId, k = todayKey()) {
     if (after) d.log[k][t.id] = after; else delete d.log[k][t.id];
     d.doneAt = d.doneAt || {};
     d.doneAt[k] = d.doneAt[k] || {};
-    if (after >= max && before < max) d.doneAt[k][t.id] = Date.now();
+    if (after >= max && before < max) { d.doneAt[k][t.id] = Date.now(); result = { completed: true, title: t.title }; }
     if (after < max) delete d.doneAt[k][t.id];
     if (t.goal) {
       const step = t.goal.step || 1;
       if (before < max && after >= max) t.goal.done = (t.goal.done || 0) + step;
       if (before >= max && after < max) t.goal.done = Math.max(0, (t.goal.done || 0) - step);
-      if (t.goal.done >= t.goal.target && !t.finishedAt) { t.finishedAt = k; message = `Goal “${t.title}” reached. Great work.`; }
+      if (t.goal.done >= t.goal.target && !t.finishedAt) { t.finishedAt = k; result.goalDone = true; }
       if (t.goal.done < t.goal.target && t.finishedAt) t.finishedAt = null;
     }
   });
   if (message) toast(message);
   notify.syncBadge();
+  return result;
 }
 
 function moveTask(id, dir) {
@@ -304,6 +307,19 @@ export function taskRow(t, k, s, { compact = false, history = false } = {}) {
   }
   const goal = t.goal ? `<div class="goal"><div class="goal-bar"><i style="width:${Math.min(100, (t.goal.done / t.goal.target) * 100)}%"></i></div><small>${t.goal.done} / ${t.goal.target} ${esc(t.goal.unit || '')}</small></div>` : '';
   const dots = max > 1 ? `<span class="dots" aria-label="${c} of ${max}">${Array.from({ length: max }, (_, i) => `<i class="${i < c ? 'on' : ''}"></i>`).join('')}</span>` : '';
+  // A clear "when" label: is this for today, or anytime this week — and how many times?
+  let when = '';
+  if (!history && s && !t.archivedAt) {
+    if (done) when = `<span class="when w-done">${icon('check', 12)} Done</span>`;
+    else if (s.kind === 'required') when = s.need && s.need < 7 && !isFixed(t) ? `<span class="when w-due">Due today</span>` : `<span class="when w-today">Today</span>`;
+    else if (s.kind === 'flexible') when = `<span class="when w-week">This week</span>`;
+    if (!done && max > 1) when += `<span class="when w-times">${max - c}× left today</span>`;
+    if (!isFixed(t) && t.perWeek < 7 && s.need) {
+      const doneWeek = Math.max(0, s.need - (s.remaining ?? 0)) + (done ? 1 : 0);
+      when += `<span class="when w-progress">${Math.min(doneWeek, s.need)} of ${s.need} this week</span>`;
+    }
+  }
+  if (!history) sub = frequencyLabel(t);
   return `
     <li class="task ${done ? 'is-done' : ''} ${s && s.kind === 'required' && !done && k < todayKey() ? 'is-missed' : ''}" data-id="${t.id}">
       <button class="check ${c && !done ? 'partial' : ''}" data-toggle="${t.id}" aria-pressed="${done}" aria-label="${done ? 'Mark as not done' : 'Complete'}: ${esc(t.title)}">
@@ -313,7 +329,8 @@ export function taskRow(t, k, s, { compact = false, history = false } = {}) {
       <span class="tile">${taskIcon(t.icon, 22)}</span>
       <div class="task-main" data-toggle="${t.id}">
         <span class="task-title">${esc(t.title)}</span>
-        <span class="task-sub">${esc(sub)} ${dots}</span>
+        <span class="task-sub"><span class="sub-txt">${esc(sub)}</span> ${dots}</span>
+        ${when ? `<span class="whens">${when}</span>` : ''}
         ${compact ? '' : goal}
       </div>
       <div class="task-actions">
@@ -327,10 +344,34 @@ export function bindRows(root, k, after) {
   $$('[data-toggle]', root).forEach((b) => b.addEventListener('click', (e) => {
     e.stopPropagation();
     const row = b.closest('.task');
-    const wasDone = row.classList.contains('is-done');
-    toggleTask(b.dataset.toggle, k);
-    if (!wasDone) row.classList.add('pop');
-    setTimeout(() => (after || rerender)(), wasDone ? 0 : 260);
+    if (row.classList.contains('completing')) return;
+    const res = toggleTask(b.dataset.toggle, k);
+    const redraw = () => (after || rerender)();
+    if (!res.completed) {
+      // partial tick (e.g. 1 of 2) or un-ticking: quick refresh
+      if (!row.classList.contains('is-done')) row.classList.add('pop');
+      setTimeout(redraw, row.classList.contains('is-done') ? 0 : 220);
+      return;
+    }
+    // Smooth finish: fill blue + strike, then fold the row away, then show the congratulation.
+    row.classList.add('completing');
+    const h = row.offsetHeight;
+    row.style.setProperty('--h', `${h}px`);
+    const txt = $('.sub-txt', row);
+    if (txt) {
+      const now = new Date();
+      txt.classList.add('swap-out');
+      setTimeout(() => { txt.textContent = `Done at ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`; txt.classList.remove('swap-out'); txt.classList.add('swap-in', 'done-at'); }, 160);
+    }
+    const stays = !!row.closest('.list.history');
+    if (!stays) setTimeout(() => row.classList.add('fold'), 1050);
+    setTimeout(() => {
+      redraw();
+      if (k === todayKey()) {
+        const sum = daySummary(userData(), k);
+        celebrate({ title: res.title, done: sum.done, total: sum.total, goalDone: res.goalDone });
+      }
+    }, stays ? 1100 : 1450);
   }));
   bindMenus(root);
 }
@@ -441,6 +482,8 @@ function emptyIllustration() {
 
 // ============================================================ calendar
 let calCursor = null;
+let calDir = 0;        // -1 = went back, 1 = went forward (drives slide + title roll)
+let calPrevTitle = null;
 let calSelected = null;
 
 function viewCalendar(view) {
@@ -476,7 +519,11 @@ function viewCalendar(view) {
       <div class="hero-head">
         <div>
           <p class="eyebrow">Calendar</p>
-          <h1 class="large-title"><button class="month-btn" id="month-pick" aria-haspopup="dialog" aria-expanded="false">${MONTHS[m - 1]} <span class="soft">${y}</span>${icon('chevR', 22, 'month-chev')}</button></h1>
+          <h1 class="large-title"><button class="month-btn" id="month-pick" aria-haspopup="dialog" aria-expanded="false" aria-label="${MONTHS[m - 1]} ${y}, pick a month">
+            <span class="roller ${calDir ? (calDir > 0 ? 'roll-up' : 'roll-down') : ''}">
+              ${calDir && calPrevTitle ? `<span class="roll-old" aria-hidden="true">${calPrevTitle}</span>` : ''}
+              <span class="roll-new">${MONTHS[m - 1]} <span class="soft">${y}</span></span>
+            </span>${icon('chevR', 22, 'month-chev')}</button></h1>
           <p class="lead">${monthTotal ? `${Math.round((monthDone / monthTotal) * 100)}% of tasks done this month.` : 'No data for this month yet.'}</p>
         </div>
         <div class="seg-nav">
@@ -501,7 +548,7 @@ function viewCalendar(view) {
             </span>
           </div>
           <div class="cal-grid head">${DAY_SHORT.map((x) => `<span>${x}</span>`).join('')}</div>
-          <div class="cal-grid">${cells.join('')}</div>
+          <div class="cal-viewport"><div class="cal-grid ${calDir ? (calDir > 0 ? 'slide-next' : 'slide-prev') : ''}">${cells.join('')}</div></div>
         </div>
         <div class="card day-card">
           <p class="eyebrow">${calSelected === today ? 'Today' : isFuture ? 'Planned' : 'History'}</p>
@@ -516,12 +563,20 @@ function viewCalendar(view) {
       </div>
     </section>`;
 
-  const move = (n) => { const dt = new Date(y, m - 1 + n, 1); calCursor = keyOf(dt).slice(0, 7); viewCalendar(view); };
+  calDir = 0;
+  const go2 = (key, dir) => {
+    if (key === calCursor) return;
+    calPrevTitle = `${MONTHS[m - 1]} <span class="soft">${y}</span>`;
+    calDir = dir; calCursor = key;
+    view.classList.remove('enter');
+    viewCalendar(view);
+  };
+  const move = (n) => { const dt = new Date(y, m - 1 + n, 1); go2(keyOf(dt).slice(0, 7), n); };
   $('#prev', view).onclick = () => move(-1);
   $('#next', view).onclick = () => move(1);
-  $('#now', view).onclick = () => { calCursor = today.slice(0, 7); calSelected = today; viewCalendar(view); };
+  $('#now', view).onclick = () => { calSelected = today; const key = today.slice(0, 7); if (key === calCursor) { view.classList.remove('enter'); viewCalendar(view); } else go2(key, key > calCursor ? 1 : -1); };
   $$('[data-day]', view).forEach((b) => (b.onclick = () => { calSelected = b.dataset.day; view.classList.remove('enter'); viewCalendar(view); const dc = $('.day-card', view); dc.classList.add('swap'); }));
-  $('#month-pick', view).onclick = (e) => monthPicker(e.currentTarget, y, m, (ny, nm) => { calCursor = `${ny}-${String(nm).padStart(2, '0')}`; view.classList.remove('enter'); viewCalendar(view); });
+  $('#month-pick', view).onclick = (e) => monthPicker(e.currentTarget, y, m, (ny, nm) => { const key = `${ny}-${String(nm).padStart(2, '0')}`; go2(key, key > calCursor ? 1 : -1); });
   if (isFuture) $$('[data-toggle]', view).forEach((b) => (b.disabled = true));
   else bindRows($('.day-card', view), calSelected, () => viewCalendar(view));
 }
@@ -594,7 +649,7 @@ function viewStats(view) {
           <li>
             <span class="tile sm">${taskIcon(s.t.icon, 18)}</span>
             <div class="sl-main"><b>${esc(s.t.title)}</b><div class="rate"><i style="width:${(s.rate ?? 0) * 100}%" class="${(s.rate ?? 1) < 0.6 ? 'low' : ''}"></i></div></div>
-            <div class="sl-num"><span>${s.rate == null ? '—' : `<i data-count="${Math.round(s.rate * 100)}">${Math.round(s.rate * 100)}</i>%`}</span><small>${s.done} ✓ · <em class="${s.missed ? 'red-t' : ''}">${s.missed} ✕</em></small></div>
+            <div class="sl-num"><span>${s.rate == null ? '—' : `<i data-count="${Math.round(s.rate * 100)}">${Math.round(s.rate * 100)}</i>%`}</span><small>${s.done} done · <em class="${s.missed ? 'red-t' : ''}">${s.missed} skipped</em></small></div>
           </li>`).join('')}
       </ul></div>` : '<div class="empty"><p>Stats will show up once you start checking off tasks.</p></div>'}
     </section>`;
@@ -738,7 +793,7 @@ export function openEditor(taskId, { focus = null, title = '' } = {}) {
   const existing = taskId ? d.tasks.find((t) => t.id === taskId) : null;
   const t = existing ? JSON.parse(JSON.stringify(existing)) : makeTask({ title, perWeek: 7 });
   let mode = isFixed(t) ? 'days' : 'count';
-  let iconTab = t.icon.kind === 'svgl' ? 'svgl' : 'glyph';
+  let iconTab = t.icon.kind === 'svgl' ? 'svgl' : t.icon.kind === 'iconify' ? 'lib' : 'glyph';
 
   const s = sheet(`
     <form class="editor" novalidate>
@@ -760,7 +815,7 @@ export function openEditor(taskId, { focus = null, title = '' } = {}) {
         </div>
 
         <div class="field"><span>Icon</span>
-          <div class="seg" role="tablist"><button type="button" data-itab="glyph">Symbols</button><button type="button" data-itab="svgl">Logos (SVGL)</button></div>
+          <div class="seg" role="tablist"><button type="button" data-itab="glyph">Symbols</button><button type="button" data-itab="lib">Icon library</button><button type="button" data-itab="svgl">Logos</button></div>
           <div id="icon-panel"></div>
         </div>
 
@@ -802,6 +857,35 @@ export function openEditor(taskId, { focus = null, title = '' } = {}) {
     if (iconTab === 'glyph') {
       panel.innerHTML = `<div class="icon-grid">${TASK_GLYPHS.map((g) => `<button type="button" class="ig ${t.icon.kind === 'glyph' && t.icon.value === g ? 'on' : ''}" data-g="${g}" aria-label="${g}">${icon(g, 22)}</button>`).join('')}</div>`;
       $$('[data-g]', panel).forEach((b) => (b.onclick = () => { t.icon = { kind: 'glyph', value: b.dataset.g }; preview(); renderIcons(); }));
+    } else if (iconTab === 'lib') {
+      panel.innerHTML = `
+        <div class="search"><span>${icon('search', 18)}</span><input id="lib-q" placeholder="Search 200,000+ icons: tooth, book, gym…" autocomplete="off" value="${esc(t.icon.kind === 'iconify' ? (t.icon.name || '').split(':')[1] || '' : t.title.split(' ').pop() || '')}"></div>
+        <div class="icon-grid" id="lib-res"><p class="muted small">Open-source icons from <a href="https://iconify.design" target="_blank" rel="noopener">Iconify</a> — Lucide, Tabler, Phosphor and more.</p></div>`;
+      const q = $('#lib-q', panel);
+      const res = $('#lib-res', panel);
+      let timer;
+      const run = async () => {
+        const v = q.value.trim();
+        if (!v) return;
+        res.innerHTML = '<p class="muted small">Searching…</p>';
+        try {
+          const names = await searchIconify(v);
+          res.innerHTML = names.length ? names.map((n) => `<button type="button" class="ig ${t.icon.name === n ? 'on' : ''}" data-ico="${esc(n)}" title="${esc(n)}" aria-label="${esc(n)}"><span class="ic-mask" style="width:22px;height:22px;--src:url('${iconifyUrl(n)}')"></span></button>`).join('')
+            : '<p class="muted small">Nothing found. Try a simpler word in English.</p>';
+          $$('[data-ico]', res).forEach((b) => (b.onclick = async () => {
+            const n = b.dataset.ico;
+            $$('.ig', res).forEach((x) => x.classList.toggle('on', x === b));
+            t.icon = { kind: 'iconify', value: iconifyUrl(n), name: n };
+            preview();
+            try { const uri = await iconifyDataUri(n); if (t.icon.name === n) { t.icon.value = uri; } } catch { /* keep remote url */ }
+          }));
+        } catch {
+          res.innerHTML = '<p class="muted small">The icon library can’t be reached right now. Check your connection, or use Symbols.</p>';
+        }
+      };
+      q.oninput = () => { clearTimeout(timer); timer = setTimeout(run, 280); };
+      q.onkeydown = (e) => { if (e.key === 'Enter') { e.preventDefault(); run(); } };
+      if (q.value) run();
     } else {
       panel.innerHTML = `
         <div class="search"><span>${icon('search', 18)}</span><input id="svgl-q" placeholder="Search logos: pinterest, youtube, discord…" autocomplete="off"></div>
