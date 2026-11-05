@@ -1,8 +1,8 @@
 // Export activity, stats and everything else as files.
-import { userData } from './store.js';
+import { userData, exportJSON, parseBackup, backupSummary, importBackup } from './store.js';
 import { profile } from './auth.js';
 import { icon } from './icons.js';
-import { popover, closePopover, toast } from './ui.js';
+import { popover, closePopover, toast, sheet, $, esc } from './ui.js';
 import { todayKey, addDays, statusOn, countOn, perDay, frequencyLabel, taskStats, streak, prettyDate, DAY_NAMES, weekday } from './schedule.js';
 
 const pad = (n) => String(n).padStart(2, '0');
@@ -97,9 +97,51 @@ export function exportChannels() {
 }
 
 export function exportAll() {
-  const p = profile();
-  download(`checkit-backup-${todayKey()}.json`, JSON.stringify({ app: 'checkit', version: 3, exportedAt: new Date().toISOString(), user: p.id, data: userData() }, null, 2), 'application/json');
-  toast('Backup downloaded');
+  download(`checkit-${profile().id}-${todayKey()}.checkit.json`, exportJSON(), 'application/json');
+  toast('Import this file into any Check It account to move your data.', { title: 'Backup downloaded', icon: 'download' });
+}
+
+export async function exportJournal() {
+  const { journalMarkdown } = await import('./journal.js');
+  const md = journalMarkdown();
+  if (!md) { toast('No journal entries yet', { tone: 'info' }); return; }
+  download(`checkit-journal-${todayKey()}.md`, `# Journal\n\n${md}\n`, 'text/markdown;charset=utf-8');
+  toast('Journal exported');
+}
+
+// Pick a file, show what's in it, then merge or replace.
+export function openImport(after) {
+  const input = Object.assign(document.createElement('input'), { type: 'file', accept: '.json,application/json' });
+  input.onchange = async () => {
+    const f = input.files[0]; if (!f) return;
+    let parsed;
+    try { parsed = parseBackup(await f.text()); } catch (e) { toast(e.message, { tone: 'bad', title: 'Can’t import' }); return; }
+    const n = backupSummary(parsed.data);
+    const when = parsed.meta.exportedAt ? new Date(parsed.meta.exportedAt).toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
+    const s = sheet(`
+      <div class="sheet-body">
+        <span class="notice-ic">${icon('upload', 24)}</span>
+        <h3 class="sheet-title">Import backup</h3>
+        <p class="muted">${parsed.meta.user ? `From <b>@${esc(parsed.meta.user)}</b>` : 'From a Check It backup'}${when ? ` · exported ${esc(when)}` : ''}</p>
+        <div class="imp-grid">
+          ${[['Tasks', n.tasks], ['Days of history', n.days], ['Notes', n.notes], ['Journal entries', n.journal], ['Channels', n.channels], ['Messages', n.messages]].map(([l, v]) => `<div><b class="num">${v}</b><span>${l}</span></div>`).join('')}
+        </div>
+        <div class="imp-opts">
+          <button class="imp-opt on" data-mode="merge"><b>Merge</b><span>Keep everything here and add what’s new.</span></button>
+          <button class="imp-opt" data-mode="replace"><b>Replace</b><span>Swap this account’s data for the file’s.</span></button>
+        </div>
+        <div class="row gap"><button class="btn ghost grow" data-close>Cancel</button><button class="btn primary grow" id="imp-go">Import</button></div>
+      </div>`);
+    let mode = 'merge';
+    s.el.querySelectorAll('[data-mode]').forEach((b) => (b.onclick = () => { mode = b.dataset.mode; s.el.querySelectorAll('[data-mode]').forEach((x) => x.classList.toggle('on', x === b)); $('#imp-go', s.el).classList.toggle('danger', mode === 'replace'); $('#imp-go', s.el).textContent = mode === 'replace' ? 'Replace my data' : 'Import'; }));
+    $('#imp-go', s.el).onclick = () => {
+      importBackup(parsed.data, mode);
+      s.close();
+      toast(mode === 'merge' ? 'Your data was merged.' : 'Your data was replaced.', { title: 'Import complete', icon: 'upload' });
+      after ? after() : location.reload();
+    };
+  };
+  input.click();
 }
 
 export function exportMenu(anchor) {
@@ -107,14 +149,18 @@ export function exportMenu(anchor) {
     ['chart', 'Activity log', 'Every task, every day · CSV', exportActivity],
     ['list', 'Stats summary', '7 and 30 day success · CSV', exportStats],
     ['book', 'Notes', 'All notes · Markdown', exportNotes],
+    ['pen', 'Journal', 'Every entry and mood · Markdown', exportJournal],
     ['hash', 'Channels', 'All messages · CSV', exportChannels],
-    ['archive', 'Everything', 'Full backup · JSON', exportAll],
+    ['archive', 'Everything', 'One file you can import anywhere · .checkit.json', exportAll],
   ];
   const el = popover(anchor, `<div class="menu export-menu" role="menu">
     <div class="menu-label">Export</div>
     ${items.map(([ic, t, sub], i) => `<button role="menuitem" data-x="${i}"><span class="mi-ic">${icon(ic, 18)}</span><span class="mi-txt"><b>${t}</b><small>${sub}</small></span>${icon('download', 16)}</button>`).join('')}
+    <div class="menu-sep"></div>
+    <button role="menuitem" data-import><span class="mi-ic">${icon('upload', 18)}</span><span class="mi-txt"><b>Import</b><small>Bring in a .checkit.json backup</small></span></button>
   </div>`, { cls: 'pop-export' });
   if (!el) return;
+  el.querySelector('[data-import]').onclick = () => { closePopover(); openImport(); };
   el.addEventListener('click', (e) => {
     const b = e.target.closest('[data-x]');
     if (!b) return;

@@ -1,6 +1,6 @@
 import { icon, taskIcon, TASK_GLYPHS, searchSvgl, logoMark, searchIconify, iconifyDataUri, iconifyUrl } from './icons.js';
 import { esc, $, $$, uid, toast, sheet, confirmSheet, ring, popover, closePopover, isPopoverFor, timePicker, countUp, stagger } from './ui.js';
-import { userData, update, exportJSON, importJSON, getState, save, getPrefs, setPrefs, clearAllData } from './store.js';
+import { userData, update, getState, save, getPrefs, setPrefs, clearAllData } from './store.js';
 import { profile, logout } from './auth.js';
 import {
   todayKey, prettyDate, todayBuckets, frequencyLabel, perDay, countOn, statusOn, daySummary,
@@ -10,8 +10,11 @@ import {
 import * as notify from './notify.js';
 import { playIntro } from './intro.js';
 import { register, rerender } from './router.js';
-import { exportMenu } from './export.js';
+import { exportMenu, openImport } from './export.js';
+import { getLocation, locationSheet, placeLabel } from './weather.js';
+import { refreshSidebar } from './shell.js';
 import { celebrate } from './celebrate.js';
+import { visibleNudges, nudgeStackHTML, bindNudges } from './nudges.js';
 
 export const pl = (n, word, plural = word + 's') => `${n} ${n === 1 ? word : plural}`;
 export const REPO_URL = 'https://github.com/denysovski/CheckIt';
@@ -19,14 +22,39 @@ export const clock = (ts) => { const d = new Date(ts); return `${String(d.getHou
 
 // ============================================================ presets
 export const PRESETS = [
-  { title: 'Upload Pinterest pins', icon: { kind: 'svgl', value: 'https://svgl.app/library/pinterest.svg' }, perWeek: 7, goal: { target: 200, unit: 'pins', step: 5, done: 0 } },
-  { title: 'Download new Marvel Rivals videos', icon: { kind: 'glyph', value: 'gamepad' }, perWeek: 3 },
-  { title: 'Brush teeth', icon: { kind: 'glyph', value: 'tooth' }, perWeek: 7, timesPerDay: 2 },
-  { title: 'Interdental brushes', icon: { kind: 'glyph', value: 'interdental' }, perWeek: 7 },
-  { title: 'Put on retainer for the night', icon: { kind: 'glyph', value: 'braces' }, perWeek: 7 },
-  { title: 'Drink 2 litres of water', icon: { kind: 'glyph', value: 'drop' }, perWeek: 7 },
-  { title: 'Workout', icon: { kind: 'glyph', value: 'dumbbell' }, perWeek: 3 },
-  { title: 'Read for 20 minutes', icon: { kind: 'glyph', value: 'book' }, perWeek: 5 },
+  { cat: 'Creator', title: 'Upload Pinterest pins', icon: { kind: 'svgl', value: 'https://svgl.app/library/pinterest.svg' }, perWeek: 7, goal: { target: 200, unit: 'pins', step: 5, done: 0 } },
+  { cat: 'Creator', title: 'Download new Marvel Rivals videos', icon: { kind: 'glyph', value: 'gamepad' }, perWeek: 3 },
+  { cat: 'Creator', title: 'Post one thing you made', icon: { kind: 'glyph', value: 'camera' }, perWeek: 3 },
+  { cat: 'Creator', title: 'Edit one video', icon: { kind: 'glyph', value: 'video' }, perWeek: 2 },
+  { cat: 'Body care', title: 'Brush teeth', icon: { kind: 'glyph', value: 'tooth' }, perWeek: 7, timesPerDay: 2 },
+  { cat: 'Body care', title: 'Interdental brushes', icon: { kind: 'glyph', value: 'interdental' }, perWeek: 7 },
+  { cat: 'Body care', title: 'Put on retainer for the night', icon: { kind: 'glyph', value: 'braces' }, perWeek: 7 },
+  { cat: 'Body care', title: 'Do your skincare', icon: { kind: 'glyph', value: 'face' }, perWeek: 7, timesPerDay: 2 },
+  { cat: 'Body care', title: 'Shower and stretch', icon: { kind: 'glyph', value: 'drop' }, perWeek: 7 },
+  { cat: 'Health', title: 'Take your creatine', icon: { kind: 'glyph', value: 'pill' }, perWeek: 7 },
+  { cat: 'Health', title: 'Take your vitamins', icon: { kind: 'glyph', value: 'pill' }, perWeek: 7 },
+  { cat: 'Health', title: 'Drink 2 litres of water', icon: { kind: 'glyph', value: 'drop' }, perWeek: 7 },
+  { cat: 'Health', title: 'Workout', icon: { kind: 'glyph', value: 'dumbbell' }, perWeek: 3 },
+  { cat: 'Health', title: 'Go for a walk outside', icon: { kind: 'glyph', value: 'run' }, perWeek: 5 },
+  { cat: 'Health', title: 'Sleep before midnight', icon: { kind: 'glyph', value: 'bed' }, perWeek: 5 },
+  { cat: 'Health', title: 'Cheat day — treat yourself', icon: { kind: 'glyph', value: 'cake' }, perWeek: 1, note: 'Once a week, for a better mood.' },
+  { cat: 'Home', title: 'Clean your room', icon: { kind: 'glyph', value: 'broom' }, perWeek: 2 },
+  { cat: 'Home', title: 'Tidy your drawers', icon: { kind: 'glyph', value: 'drawer' }, perWeek: 1 },
+  { cat: 'Home', title: 'Fold your clothes', icon: { kind: 'glyph', value: 'shirt' }, perWeek: 2 },
+  { cat: 'Home', title: 'Do the laundry', icon: { kind: 'glyph', value: 'washer' }, perWeek: 2 },
+  { cat: 'Home', title: 'Water the plants', icon: { kind: 'glyph', value: 'plant' }, perWeek: 2 },
+  { cat: 'Home', title: 'Take out the trash', icon: { kind: 'glyph', value: 'cart' }, perWeek: 2 },
+  { cat: 'Mind', title: 'Read for 20 minutes', icon: { kind: 'glyph', value: 'book' }, perWeek: 5 },
+  { cat: 'Mind', title: 'Write in your journal', icon: { kind: 'glyph', value: 'pen' }, perWeek: 7 },
+  { cat: 'Mind', title: '10 minutes without your phone', icon: { kind: 'glyph', value: 'phone' }, perWeek: 7 },
+  { cat: 'Mind', title: 'Meditate or breathe for 5 minutes', icon: { kind: 'glyph', value: 'leaf' }, perWeek: 5 },
+  { cat: 'Social', title: 'Text your friends', icon: { kind: 'glyph', value: 'users' }, perWeek: 3 },
+  { cat: 'Social', title: 'Call your family', icon: { kind: 'glyph', value: 'heart' }, perWeek: 2 },
+  { cat: 'Social', title: 'Reply to messages', icon: { kind: 'glyph', value: 'mail' }, perWeek: 7 },
+  { cat: 'Study & work', title: 'Do your homework', icon: { kind: 'glyph', value: 'book' }, perWeek: 5 },
+  { cat: 'Study & work', title: 'Learn something new for 15 minutes', icon: { kind: 'glyph', value: 'brain' }, perWeek: 5 },
+  { cat: 'Study & work', title: 'Practise coding', icon: { kind: 'glyph', value: 'code' }, perWeek: 3 },
+  { cat: 'Study & work', title: 'Check your budget', icon: { kind: 'glyph', value: 'wallet' }, perWeek: 1 },
 ];
 
 function makeTask(p) {
@@ -406,7 +434,7 @@ function viewToday(view) {
   const p = profile();
   const hour = new Date().getHours();
   const greet = hour < 5 ? 'Good night' : hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
-  const tip = insights(d).find((i) => i.tone === 'bad' || i.tone === 'warn');
+  const nudges = visibleNudges(d).filter((i) => i.tone === 'bad' || i.tone === 'warn');
   const needsPerm = notify.supported() && notify.permission() === 'default';
   const pct = sum.total ? Math.round((sum.done / sum.total) * 100) : 0;
   const left = sum.total - sum.done;
@@ -432,12 +460,7 @@ function viewToday(view) {
           <button class="btn primary small" id="perm">Turn on</button>
         </div>` : ''}
 
-      ${tip ? `
-        <div class="callout ${tip.tone === 'bad' ? 'red' : 'amber'}">
-          <span class="callout-ic">${icon('flag', 20)}</span>
-          <div class="grow"><b>${esc(tip.title)}</b><p>${esc(tip.body)}</p></div>
-          <a class="btn ghost small" href="#/stats">Stats</a>
-        </div>` : ''}
+      ${nudgeStackHTML(nudges, { limit: 3 })}
 
       <div class="section-head">
         <h2>Due today</h2>
@@ -457,6 +480,7 @@ function viewToday(view) {
     </section>`;
 
   bindRows(view, k);
+  bindNudges(view, () => rerender());
   bindQuickAdd(view, 'qa-today');
   $('#add', view).onclick = () => openEditor();
   const perm = $('#perm', view);
@@ -586,7 +610,7 @@ function viewStats(view) {
   const d = userData();
   const series = dailySeries(d, 14);
   const stats = taskStats(d, 30).sort((a, b) => b.missed - a.missed || (a.rate ?? 1) - (b.rate ?? 1));
-  const ins = insights(d);
+  const ins = visibleNudges(d);
   const st = streak(d);
   const totalDone = stats.reduce((a, s) => a + s.done, 0);
   const totalMiss = stats.reduce((a, s) => a + s.missed, 0);
@@ -614,12 +638,7 @@ function viewStats(view) {
         <div class="kpi"><span>Skipped in 30 days</span><b class="${totalMiss ? 'red-t' : ''}"><span data-count="${totalMiss}">${totalMiss}</span></b></div>
       </div>
 
-      ${ins.length ? `<div class="section-head"><h2>Nudges</h2></div>
-        <div class="insights">${ins.map((i) => `
-          <div class="insight ${i.tone}">
-            <span class="ins-ic">${icon(i.tone === 'good' ? 'sparkle' : i.tone === 'info' ? 'info' : 'flag', 18)}</span>
-            <div><b>${esc(i.title)}</b><p>${esc(i.body)}</p></div>
-          </div>`).join('')}</div>` : ''}
+      ${ins.length ? `<div class="section-head"><h2>Nudges</h2><span class="muted small">Hide any you don’t care about</span></div>${nudgeStackHTML(ins, { limit: 8 })}` : ''}
 
       <div class="grid-2">
         <div class="card">
@@ -654,6 +673,7 @@ function viewStats(view) {
       </ul></div>` : '<div class="empty"><p>Stats will show up once you start checking off tasks.</p></div>'}
     </section>`;
   $('#export-btn', view).onclick = (e) => exportMenu(e.currentTarget);
+  bindNudges(view, () => rerender());
 }
 
 // ============================================================ tasks (edit list)
@@ -712,77 +732,79 @@ function viewSettings(view) {
   const d = userData();
   const p = profile();
   const perm = notify.permission();
-  const permLabel = { granted: 'On', denied: 'Blocked in browser settings', default: 'Off', unsupported: 'Not supported by this browser' }[perm];
+  const loc = getLocation(d);
+  const permLabel = { granted: 'On', denied: 'Blocked by your browser', default: 'Off', unsupported: 'Not supported here' }[perm];
   view.innerHTML = `
-    <section class="page narrow">
-      <div class="hero-head"><div><p class="eyebrow">Settings</p><h1 class="large-title">${esc(p.name)}</h1><p class="lead">@${esc(p.id)} · account stored in this browser</p></div></div>
+    <section class="page narrow settings">
+      <div class="hero-head"><div><p class="eyebrow date">Settings</p><h1 class="large-title">${esc(d.profile.displayName || p.name)}</h1><p class="lead">@${esc(p.id)} · stored in this browser</p></div></div>
 
-      <h2 class="group-title">Notifications</h2>
+      <h2 class="group-title">You</h2>
       <div class="card group">
-        <div class="g-row"><div><b>System notifications</b><small>${permLabel}</small></div>
-          ${perm === 'granted' ? `<button class="btn ghost small" id="test">Test</button>` : perm === 'unsupported' ? '' : `<button class="btn primary small" id="perm">Turn on notifications</button>`}</div>
-        <div class="g-row"><div><b>Evening reminder</b><small>When Check It is open and something is left</small></div>
+        <label class="g-row"><div><b>Name</b><small>Shown on Home</small></div><input class="g-input" id="s-name" value="${esc(d.profile.displayName || p.name)}" maxlength="30" autocomplete="off"></label>
+        <div class="g-row"><div><b>Location</b><small>${loc ? `${esc(placeLabel(loc))}${loc.source === 'ip' ? ' · approximate' : ''} — used only for weather on your Journal` : 'Not set — add it to get weather tips in your Journal'}</small></div><button class="btn ghost small" id="s-loc">${icon('location', 14)} ${loc ? 'Change' : 'Set'}</button></div>
+      </div>
+
+      <h2 class="group-title">Reminders</h2>
+      <div class="card group">
+        <div class="g-row"><div><b>Browser notifications</b><small>${permLabel}</small></div>
+          ${perm === 'granted' ? `<button class="btn ghost small" id="test">Test</button>` : perm === 'unsupported' ? '' : `<button class="btn primary small" id="perm">Turn on</button>`}</div>
+        <div class="g-row"><div><b>Evening reminder</b><small>If tasks or the journal are still open</small></div>
           <button class="picker-btn" id="rt" aria-haspopup="dialog" aria-expanded="false">${icon('bell', 16)}<b>${esc(d.settings.reminderTime || '20:00')}</b>${icon('chevR', 14, 'pk-chev')}</button></div>
-        <div class="g-row col"><div><b>Remind me as soon as the browser starts</b>
-          <small>A website can’t launch itself, but one of these makes Check It open with your browser and tell you right away what’s left:</small></div>
+        <label class="g-row"><div><b>Nudges</b><small>Short notes about what you skip and what goes well</small></div><input type="checkbox" class="switch" id="s-nudges" ${d.settings.nudgesOff ? '' : 'checked'}></label>
+        <details class="g-row col more">
+          <summary><b>Get reminded when your browser opens</b>${icon('chevR', 14, 'pk-chev')}</summary>
           <ol class="howto">
-            <li><b>Chrome / Edge:</b> Settings → On startup → Open a specific page → paste <code>${esc(location.origin + location.pathname)}</code></li>
-            <li><b>Install it as an app</b> (icon in the address bar) and turn on “Start app when you sign in”.</li>
-            <li><b>Safari:</b> Settings → General → Homepage.</li>
+            <li><b>Chrome / Edge:</b> Settings → On startup → Open a specific page → <code>${esc(location.origin + location.pathname)}</code></li>
+            <li><b>Or install it as an app</b> from the address bar and turn on “Start app when you sign in”.</li>
           </ol>
           <button class="btn ghost small" id="install" hidden>Install app</button>
-        </div>
+        </details>
       </div>
 
       <h2 class="group-title">Appearance</h2>
       <div class="card group" id="prefs-group">
-        <div class="g-row"><div><b>Theme</b><small>Light, dark or follow your system</small></div>${themeSeg(getPrefs().theme)}</div>
-        <label class="g-row"><div><b>Animations</b><small>Fade-ins, rings and the intro</small></div><input type="checkbox" class="switch" data-motion ${getPrefs().motion ? 'checked' : ''}></label>
+        <div class="g-row"><div><b>Theme</b></div>${themeSeg(getPrefs().theme)}</div>
+        <label class="g-row"><div><b>Animations</b></div><input type="checkbox" class="switch" data-motion ${getPrefs().motion ? 'checked' : ''}></label>
       </div>
 
-      <h2 class="group-title">Data</h2>
+      <h2 class="group-title">Your data</h2>
       <div class="card group">
-        <div class="g-row"><div><b>Storage</b><small>localStorage + IndexedDB. Gone only if you clear this site’s data (cookies).</small></div><span class="pill" id="persist">…</span></div>
-        <div class="g-row"><div><b>Backup</b><small>Download your data to a file or restore it.</small></div>
-          <div class="row gap"><button class="btn ghost small" id="exp" aria-haspopup="menu">Export</button><label class="btn ghost small">Import<input type="file" id="imp" accept="application/json" hidden></label></div></div>
-        <div class="g-row"><div><b>Intro animation</b><small>Watch the tour again.</small></div><button class="btn ghost small" id="intro">${icon('play', 14)} Play</button></div>
+        <div class="g-row"><div><b>Export</b><small>Tasks, history, notes, journal — one file, or CSV / Markdown</small></div><button class="btn ghost small" id="exp" aria-haspopup="menu">${icon('download', 14)} Export</button></div>
+        <div class="g-row"><div><b>Import</b><small>Load a .checkit.json file — merge it or replace</small></div><button class="btn ghost small" id="imp">${icon('upload', 14)} Import</button></div>
+        <div class="g-row"><div><b>Intro</b><small>Watch the welcome tour again</small></div><button class="btn ghost small" id="intro">${icon('play', 14)} Play</button></div>
       </div>
 
       <h2 class="group-title">Account</h2>
       <div class="card group">
         <button class="g-row link" id="logout"><b>Log out</b>${icon('logout', 18)}</button>
         <button class="g-row link danger" id="del"><b>Delete this account</b>${icon('trash', 18)}</button>
-        <button class="g-row link danger" data-clear><b>Clear all my data</b>${icon('trash', 18)}</button>
+        <button class="g-row link danger" data-clear><b>Clear all data in this browser</b>${icon('trash', 18)}</button>
       </div>
-      <p class="muted small center">Check It is open source · <a href="${REPO_URL}" target="_blank" rel="noopener noreferrer">GitHub repository</a><br>Your data never leaves this browser.</p>
+      <p class="muted small center">Check It is an open-source school project · <a href="${REPO_URL}" target="_blank" rel="noopener noreferrer">GitHub</a><br>Everything stays in this browser.</p>
     </section>`;
 
+  const nm = $('#s-name', view);
+  nm.onchange = () => { const v = nm.value.trim().slice(0, 30); update((x) => { x.profile.displayName = v || p.name; }); toast('Name updated'); viewSettings(view); };
+  $('#s-loc', view).onclick = async () => { await locationSheet(); view.classList.remove('enter'); viewSettings(view); };
+  $('#s-nudges', view).onchange = (e) => { update((x) => { x.settings.nudgesOff = !e.target.checked; }); toast(e.target.checked ? 'Nudges on' : 'Nudges off', { tone: 'info' }); };
   const permBtn = $('#perm', view);
   if (permBtn) permBtn.onclick = async () => { await turnOnNotifications(); view.classList.remove('enter'); viewSettings(view); };
   bindPrefControls(view);
   const test = $('#test', view);
-  if (test) test.onclick = async () => { const ok = await notify.testNotification(); if (!ok) toast('Couldn’t show a notification'); };
+  if (test) test.onclick = async () => { const ok = await notify.testNotification(); if (!ok) toast('Couldn’t show a notification', { tone: 'bad' }); };
   $('#rt', view).onclick = (e) => timePicker(e.currentTarget, d.settings.reminderTime || '20:00', (v) => {
     update((x) => { x.settings.reminderTime = v; x.lastNotified = null; });
     $('#rt b', view).textContent = v;
-    toast(`Reminder set for ${v}`);
+    toast(`Reminder set for ${v}`, { icon: 'bell' });
   });
   $('#exp', view).onclick = (e) => exportMenu(e.currentTarget);
-  $('#imp', view).onchange = async (e) => {
-    const f = e.target.files[0]; if (!f) return;
-    try { importJSON(await f.text()); toast('Data restored'); viewSettings(view); } catch (err) { toast(err.message, { tone: 'bad' }); }
-  };
+  $('#imp', view).onclick = () => openImport(() => { refreshSidebar(); view.classList.remove('enter'); viewSettings(view); });
   $('#intro', view).onclick = () => playIntro({ name: p.name });
   $('#logout', view).onclick = () => { logout(); location.hash = '#/'; location.reload(); };
   $('#del', view).onclick = async () => {
-    if (!(await confirmSheet('Delete account?', 'All tasks, history and stats will be deleted. This can’t be undone.', 'Delete account'))) return;
-    const s = getState(); delete s.data[s.session]; delete s.users[s.session]; s.session = null; save(); location.hash = '#/'; location.reload();
+    if (!(await confirmSheet('Delete account?', 'All tasks, history, notes and journal entries will be deleted. This can’t be undone.', 'Delete account'))) return;
+    const st = getState(); delete st.data[st.session]; delete st.users[st.session]; st.session = null; save(); location.hash = '#/'; location.reload();
   };
-  (async () => {
-    let txt = 'Persistent';
-    try { txt = navigator.storage && (await navigator.storage.persisted()) ? 'Persistent' : 'Standard'; } catch {}
-    const el = $('#persist', view); if (el) el.textContent = txt;
-  })();
   const inst = $('#install', view);
   if (inst && window.__installPrompt) { inst.hidden = false; inst.onclick = () => window.__installPrompt.prompt(); }
 }
@@ -982,34 +1004,68 @@ export function openEditor(taskId, { focus = null, title = '' } = {}) {
 export function openPresets({ first = false } = {}) {
   const d = userData();
   const have = new Set(d.tasks.map((t) => t.title));
-  const chosen = new Set(first ? PRESETS.slice(0, 5).map((_, i) => i) : []);
+  const firstPicks = ['Brush teeth', 'Interdental brushes', 'Put on retainer for the night', 'Upload Pinterest pins', 'Download new Marvel Rivals videos'];
+  const chosen = new Set(first ? PRESETS.map((p, i) => (firstPicks.includes(p.title) ? i : -1)).filter((i) => i >= 0) : []);
+  const cats = ['All', ...new Set(PRESETS.map((p) => p.cat))];
+  let cat = 'All'; let q = '';
   const s = sheet(`
     <div class="sheet-header">
       <button type="button" class="btn text" data-close>${first ? 'Skip' : 'Cancel'}</button>
       <h3>${first ? 'Start with these' : 'Suggestions'}</h3>
       <button type="button" class="btn text strong" id="pr-add">Add</button>
     </div>
-    <div class="sheet-body">
-      <p class="muted">${first ? 'A few things to get you going. You can change frequency and add links later.' : 'Pick what you want to add.'}</p>
-      <ul class="list selectable">
-        ${PRESETS.map((p, i) => `
-          <li class="task ${have.has(p.title) ? 'disabled' : ''}">
+    <div class="sheet-body presets">
+      <p class="muted">${first ? 'We picked a few to start. Add as many as you like — you can change how often later.' : `${PRESETS.length} ideas. Pick as many as you like.`}</p>
+      <div class="search inline full"><span>${icon('search', 18)}</span><input id="pr-q" placeholder="Search suggestions…" autocomplete="off"></div>
+      <div class="chips-row pr-cats">${cats.map((c) => `<button type="button" class="chip ${c === cat ? 'on' : ''}" data-cat="${esc(c)}">${esc(c)}</button>`).join('')}</div>
+      <div id="pr-list"></div>
+    </div>
+    <div class="pr-foot"><span id="pr-count"></span><button type="button" class="btn primary" id="pr-add2">Add selected</button></div>`, { wide: true });
+  const list = $('#pr-list', s.el);
+  const count = () => { const n = chosen.size; $('#pr-count', s.el).textContent = n ? `${pl(n, 'task')} selected` : 'Nothing selected'; $('#pr-add2', s.el).disabled = !n; };
+  const draw = () => {
+    const ql = q.trim().toLowerCase();
+    const groups = {};
+    PRESETS.forEach((p, i) => {
+      if (cat !== 'All' && p.cat !== cat) return;
+      if (ql && !p.title.toLowerCase().includes(ql)) return;
+      (groups[p.cat] ||= []).push([p, i]);
+    });
+    const keys = Object.keys(groups);
+    list.innerHTML = keys.length ? keys.map((g) => `
+      <div class="pr-group">
+        <div class="pr-ghead"><span>${esc(g)}</span><button type="button" class="btn text small" data-all="${esc(g)}">Select all</button></div>
+        <ul class="list selectable">${groups[g].map(([p, i]) => `
+          <li class="task ${have.has(p.title) ? 'disabled' : ''} ${chosen.has(i) ? 'picked' : ''}" data-i="${i}">
             <button type="button" class="check ${chosen.has(i) ? 'sel' : ''}" data-i="${i}" ${have.has(p.title) ? 'disabled' : ''} aria-pressed="${chosen.has(i)}" aria-label="${esc(p.title)}"><svg viewBox="0 0 24 24" class="tick"><path d="M6 12.5l4 4L18 8"/></svg></button>
             <span class="tile">${taskIcon(p.icon, 22)}</span>
-            <div class="task-main" data-i="${i}"><span class="task-title">${esc(p.title)}</span><span class="task-sub">${esc(frequencyLabel(p))}${p.goal ? ` · goal ${p.goal.target} ${p.goal.unit}` : ''}${have.has(p.title) ? ' · already added' : ''}</span></div>
-          </li>`).join('')}
-      </ul>
-    </div>`, { wide: true });
-  $$('[data-i]', s.el).forEach((b) => (b.onclick = () => {
-    const i = +b.dataset.i; if (have.has(PRESETS[i].title)) return;
-    chosen.has(i) ? chosen.delete(i) : chosen.add(i);
-    const c = $(`.check[data-i="${i}"]`, s.el); c.classList.toggle('sel', chosen.has(i)); c.setAttribute('aria-pressed', chosen.has(i));
-  }));
-  $('#pr-add', s.el).onclick = () => {
-    update((x) => { [...chosen].sort().forEach((i) => x.tasks.push(makeTask(PRESETS[i]))); });
+            <div class="task-main" data-i="${i}"><span class="task-title">${esc(p.title)}</span><span class="task-sub">${esc(frequencyLabel(p))}${p.goal ? ` · goal ${p.goal.target} ${p.goal.unit}` : ''}${p.note ? ` · ${esc(p.note)}` : ''}${have.has(p.title) ? ' · already added' : ''}</span></div>
+          </li>`).join('')}</ul>
+      </div>`).join('') : '<p class="muted center">Nothing matches.</p>';
+    $$('[data-i]', list).forEach((b) => b.tagName !== 'LI' && (b.onclick = () => {
+      const i = +b.dataset.i; if (have.has(PRESETS[i].title)) return;
+      chosen.has(i) ? chosen.delete(i) : chosen.add(i);
+      const li = b.closest('li'); const c = $('.check', li);
+      c.classList.toggle('sel', chosen.has(i)); c.setAttribute('aria-pressed', chosen.has(i)); li.classList.toggle('picked', chosen.has(i));
+      count();
+    }));
+    $$('[data-all]', list).forEach((b) => (b.onclick = () => {
+      const idx = groups[b.dataset.all].map(([p, i]) => i).filter((i) => !have.has(PRESETS[i].title));
+      const allOn = idx.every((i) => chosen.has(i));
+      idx.forEach((i) => (allOn ? chosen.delete(i) : chosen.add(i)));
+      draw(); count();
+    }));
+  };
+  $$('[data-cat]', s.el).forEach((b) => (b.onclick = () => { cat = b.dataset.cat; $$('[data-cat]', s.el).forEach((x) => x.classList.toggle('on', x === b)); draw(); }));
+  $('#pr-q', s.el).oninput = (e) => { q = e.target.value; draw(); };
+  const add = () => {
+    update((x) => { [...chosen].sort((a, b) => a - b).forEach((i) => x.tasks.push(makeTask(PRESETS[i]))); });
     s.close();
-    if (chosen.size) toast(`Added ${pl(chosen.size, 'task')}`);
+    if (chosen.size) toast(`${pl(chosen.size, 'task')} added to your list`, { title: 'Suggestions added' });
     notify.syncBadge();
     rerender();
   };
+  $('#pr-add', s.el).onclick = add;
+  $('#pr-add2', s.el).onclick = add;
+  draw(); count();
 }

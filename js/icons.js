@@ -40,6 +40,24 @@ const P = {
   clock: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
   copy: '<rect x="8.5" y="8.5" width="11" height="11" rx="2.5"/><path d="M15.5 8.5V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v7.5a2 2 0 0 0 2 2h2.5"/>',
   sidebar: '<rect x="3.5" y="4.5" width="17" height="15" rx="3"/><path d="M9.5 4.5v15"/>',
+  shirt: '<path d="M8.5 4L4 6.5l1.8 4L8 9.6V20h8V9.6l2.2.9 1.8-4L15.5 4c-.6 1.5-2 2.5-3.5 2.5S9.1 5.5 8.5 4z"/>',
+  washer: '<rect x="4.5" y="3.5" width="15" height="17" rx="2.5"/><circle cx="12" cy="13" r="4.2"/><path d="M8 7h.01M11 7h3"/>',
+  drawer: '<rect x="4" y="4" width="16" height="16" rx="2.5"/><path d="M4 12h16M10 8h4M10 16h4"/>',
+  cake: '<path d="M5 20.5h14v-7a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2z"/><path d="M5 15.5c1.2 0 1.8-1 3.5-1s2.3 1 3.5 1 1.8-1 3.5-1 2.3 1 3.5 1M12 11.5V8M12 5.5v.01"/>',
+  users: '<circle cx="9" cy="8.5" r="3.2"/><path d="M3.5 19.5c.6-3 2.8-4.8 5.5-4.8s4.9 1.8 5.5 4.8"/><path d="M15.5 5.6a3.2 3.2 0 0 1 0 5.8M17.5 14.8c1.6.6 2.7 2.2 3 4.7"/>',
+  face: '<circle cx="12" cy="12" r="8.5"/><path d="M9 10h.01M15 10h.01M9 14.5c1.6 1.5 4.4 1.5 6 0"/>',
+  phone: '<rect x="7" y="3" width="10" height="18" rx="2.5"/><path d="M11 17.5h2"/>',
+  plant: '<path d="M12 20v-8M12 12c0-4 3-6.5 7-6.5 0 4-3 6.5-7 6.5zM12 14c0-3-2.2-5-5.5-5 0 3 2.2 5 5.5 5z"/><path d="M8 20h8"/>',
+  wallet: '<rect x="3.5" y="6" width="17" height="13" rx="2.5"/><path d="M3.5 9.5h17M16 14h.01"/>',
+  cloud: '<path d="M7 18.5h10a4 4 0 0 0 .6-8 5.5 5.5 0 0 0-10.6 1.6A3.3 3.3 0 0 0 7 18.5z"/>',
+  rain: '<path d="M7 15.5h10a4 4 0 0 0 .6-8 5.5 5.5 0 0 0-10.6 1.6A3.3 3.3 0 0 0 7 15.5z"/><path d="M9 18.5l-1 2M13 18.5l-1 2M17 18.5l-1 2"/>',
+  snow: '<path d="M7 15.5h10a4 4 0 0 0 .6-8 5.5 5.5 0 0 0-10.6 1.6A3.3 3.3 0 0 0 7 15.5z"/><path d="M9 19h.01M12.5 20.5h.01M16 19h.01"/>',
+  storm: '<path d="M7 15h10a4 4 0 0 0 .6-8 5.5 5.5 0 0 0-10.6 1.6A3.3 3.3 0 0 0 7 15z"/><path d="M12.5 15l-2 3.5h3l-2 3"/>',
+  fog: '<path d="M4 10h16M6 14h12M8 18h8"/>',
+  location: '<path d="M12 21s-6.5-6-6.5-11a6.5 6.5 0 0 1 13 0c0 5-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/>',
+  pen: '<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/>',
+  quote: '<path d="M9.5 7C6.5 7.5 5 9.6 5 12.5V17h4.5v-4.5H7M19 7c-3 .5-4.5 2.6-4.5 5.5V17H19v-4.5h-2.5"/>',
+  eyeoff2: '<path d="M4 4l16 16"/><path d="M9.9 5.8A9.6 9.6 0 0 1 12 5.5c6 0 9.5 6.5 9.5 6.5a17 17 0 0 1-2.7 3.4M6.6 7.1C4 8.9 2.5 12 2.5 12S6 18.5 12 18.5c1.6 0 3-.4 4.2-1.1"/>',
   info: '<circle cx="12" cy="12" r="8.5"/><path d="M12 11v5M12 8h.01"/>',
   // Task glyphs
   tooth: '<path d="M7.5 3.5c-2.5 0-4 2-4 4.5 0 2.2 1 3.5 1.5 5.5.6 2.6.8 7 2.8 7 1.7 0 1.6-4.5 4.2-4.5s2.5 4.5 4.2 4.5c2 0 2.2-4.4 2.8-7 .5-2 1.5-3.3 1.5-5.5 0-2.5-1.5-4.5-4-4.5-1.8 0-2.6 1-4.5 1s-2.7-1-4.5-1z"/>',
@@ -72,7 +90,7 @@ const P = {
   brain: '<path d="M9 4.5A2.5 2.5 0 0 0 6.5 7 2.5 2.5 0 0 0 4.5 11a2.5 2.5 0 0 0 1 4.5A2.5 2.5 0 0 0 9 19.5h3v-15zM15 4.5A2.5 2.5 0 0 1 17.5 7a2.5 2.5 0 0 1 2 4 2.5 2.5 0 0 1-1 4.5 2.5 2.5 0 0 1-3.5 4H12"/>',
 };
 
-export const TASK_GLYPHS = ['tooth', 'brush', 'interdental', 'braces', 'moon', 'sun', 'pin', 'video', 'download', 'upload', 'gamepad', 'book', 'dumbbell', 'run', 'drop', 'pill', 'leaf', 'heart', 'brain', 'code', 'music', 'camera', 'bed', 'cart', 'mail', 'broom', 'star', 'flame'];
+export const TASK_GLYPHS = ['shirt', 'washer', 'drawer', 'cake', 'users', 'face', 'phone', 'plant', 'wallet', 'tooth', 'brush', 'interdental', 'braces', 'moon', 'sun', 'pin', 'video', 'download', 'upload', 'gamepad', 'book', 'dumbbell', 'run', 'drop', 'pill', 'leaf', 'heart', 'brain', 'code', 'music', 'camera', 'bed', 'cart', 'mail', 'broom', 'star', 'flame'];
 
 export function icon(name, size = 22, extra = '') {
   const body = P[name] || P.star;

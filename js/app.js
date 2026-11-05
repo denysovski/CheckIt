@@ -3,6 +3,8 @@ import { profile } from './auth.js';
 import { openPresets, askNotifications } from './views.js';
 import { mountShell, renderRoute } from './shell.js';
 import './notes.js';
+import './journal.js';
+import { locationSheet } from './weather.js';
 import './channels.js';
 import './palette.js';
 import { has, parse } from './router.js';
@@ -38,6 +40,7 @@ async function afterAuth(mode) {
   history.replaceState(null, '', '#/home');
   startApp();
   await askNotifications();
+  if (mode === 'register' && !(userData().profile && userData().profile.location)) await locationSheet({ onboarding: true });
   if (!userData().tasks.length) openPresets({ first: true });
 }
 

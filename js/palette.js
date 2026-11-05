@@ -16,6 +16,7 @@ function actions() {
     { kind: 'Actions', icon: 'plus', title: 'New task', run: () => openEditor() },
     { kind: 'Actions', icon: 'doc', title: 'New note', run: () => { const n = createNote(); go('note', n.id); } },
     { kind: 'Actions', icon: 'hash', title: 'New channel', run: () => newChannel() },
+    { kind: 'Actions', icon: 'pen', title: 'Write today’s journal', run: () => go('journal') },
     { kind: 'Actions', icon: 'download', title: 'Export activity (CSV)', run: () => exportActivity() },
     { kind: 'Actions', icon: resolvedTheme() === 'dark' ? 'sun' : 'moon', title: resolvedTheme() === 'dark' ? 'Switch to light mode' : 'Switch to dark mode', run: () => setPrefs({ theme: resolvedTheme() === 'dark' ? 'light' : 'dark' }) },
     { kind: 'Go to', icon: 'home', title: 'Home', run: () => go('home') },
@@ -24,6 +25,7 @@ function actions() {
     { kind: 'Go to', icon: 'chart', title: 'Stats', run: () => go('stats') },
     { kind: 'Go to', icon: 'list', title: 'Tasks', run: () => go('tasks') },
     { kind: 'Go to', icon: 'book', title: 'Notes', run: () => go('notes') },
+    { kind: 'Go to', icon: 'pen', title: 'Journal', run: () => go('journal') },
     { kind: 'Go to', icon: 'gear', title: 'Settings', run: () => go('settings') },
   ];
 }
@@ -37,6 +39,7 @@ function search(q) {
   const out = [...acts];
   d.tasks.filter((t) => hit(t.title)).slice(0, 6).forEach((t) => out.push({ kind: 'Tasks', html: taskIcon(t.icon, 18), title: t.title, sub: frequencyLabel(t), run: () => openEditor(t.id) }));
   d.notes.filter((n) => hit(`${n.title} ${n.body} ${n.tag}`)).slice(0, 6).forEach((n) => out.push({ kind: 'Notes', icon: 'doc', title: n.title || 'Untitled', sub: excerpt(n.body).slice(0, 70), run: () => go('note', n.id) }));
+  Object.entries(d.journal || {}).filter(([, e]) => hit(e.text || '')).sort((a, b) => (a[0] < b[0] ? 1 : -1)).slice(0, 5).forEach(([k, e]) => out.push({ kind: 'Journal', icon: 'pen', title: new Date(k + 'T12:00').toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' }), sub: e.text.slice(0, 80), run: () => go('journal', k) }));
   d.channels.filter((c) => hit(c.name)).forEach((c) => out.push({ kind: 'Channels', icon: 'hash', title: c.name, run: () => go('channel', c.id) }));
   d.messages.filter((m) => hit(m.text)).slice(-6).reverse().forEach((m) => {
     const c = d.channels.find((x) => x.id === m.channelId);

@@ -121,6 +121,9 @@ export function userData() {
     ];
   }
   if (!d.messages) d.messages = [];
+  if (!d.journal) d.journal = {};
+  if (!d.profile) d.profile = {};
+  if (!d.settings.hiddenNudges) d.settings.hiddenNudges = {};
   if (!d.notes) {
     const now = Date.now();
     d.notes = [{
@@ -139,13 +142,59 @@ export function update(fn) {
 
 export function exportJSON() {
   const u = state.session;
-  return JSON.stringify({ app: 'checkit', exportedAt: new Date().toISOString(), user: u, data: state.data[u] }, null, 2);
+  return JSON.stringify({ app: 'checkit', version: 4, exportedAt: new Date().toISOString(), user: u, data: state.data[u] }, null, 2);
 }
 
-export function importJSON(text) {
-  const parsed = JSON.parse(text);
-  if (!parsed || parsed.app !== 'checkit' || !parsed.data) throw new Error('Invalid backup file');
-  state.data[state.session] = parsed.data;
+// ---- backup files ----
+// A .checkit.json file holds everything for one account: tasks, history, notes, channels, journal, settings.
+export function parseBackup(text) {
+  let parsed;
+  try { parsed = JSON.parse(text); } catch { throw new Error('This file isn’t a Check It backup.'); }
+  if (!parsed || parsed.app !== 'checkit' || !parsed.data || typeof parsed.data !== 'object') throw new Error('This file isn’t a Check It backup.');
+  const d = parsed.data;
+  const arr = (x) => (Array.isArray(x) ? x : []);
+  const obj = (x) => (x && typeof x === 'object' && !Array.isArray(x) ? x : {});
+  return {
+    meta: { user: parsed.user || '', exportedAt: parsed.exportedAt || '' },
+    data: {
+      tasks: arr(d.tasks).filter((t) => t && t.id && t.title), log: obj(d.log), doneAt: obj(d.doneAt),
+      notes: arr(d.notes).filter((n) => n && n.id), channels: arr(d.channels).filter((c) => c && c.id && c.name),
+      messages: arr(d.messages).filter((m) => m && m.id && m.channelId), journal: obj(d.journal),
+      settings: obj(d.settings), profile: obj(d.profile), onboarded: true, lastNotified: null,
+    },
+  };
+}
+
+export function backupSummary(data) {
+  return { tasks: data.tasks.length, notes: data.notes.length, channels: data.channels.length, messages: data.messages.length, journal: Object.keys(data.journal).length, days: Object.keys(data.log).length };
+}
+
+// mode: 'merge' keeps what's here and adds what's new; 'replace' swaps everything.
+export function importBackup(incoming, mode = 'merge') {
+  const u = state.session;
+  if (mode === 'replace') {
+    const keepSettings = state.data[u]?.settings || {};
+    state.data[u] = { ...incoming, settings: { ...keepSettings, ...incoming.settings } };
+    save();
+    return;
+  }
+  const cur = userData();
+  const byId = (list, add) => { const ids = new Set(list.map((x) => x.id)); add.forEach((x) => { if (!ids.has(x.id)) list.push(x); }); };
+  byId(cur.tasks, incoming.tasks);
+  byId(cur.notes, incoming.notes);
+  byId(cur.messages, incoming.messages);
+  incoming.channels.forEach((c) => { if (!cur.channels.some((x) => x.id === c.id)) cur.channels.push(c); });
+  for (const [k, day] of Object.entries(incoming.log)) {
+    cur.log[k] = cur.log[k] || {};
+    for (const [id, n] of Object.entries(day || {})) cur.log[k][id] = Math.max(cur.log[k][id] || 0, +n || 0);
+  }
+  for (const [k, day] of Object.entries(incoming.doneAt)) cur.doneAt[k] = { ...(day || {}), ...(cur.doneAt[k] || {}) };
+  for (const [k, e] of Object.entries(incoming.journal)) {
+    const mine = cur.journal[k];
+    if (!mine || !mine.text) cur.journal[k] = e;
+    else if (e && e.text && e.text !== mine.text) cur.journal[k] = { ...mine, text: `${mine.text}\n\n${e.text}`, mood: mine.mood ?? e.mood };
+  }
+  if (!cur.profile.location && incoming.profile.location) cur.profile.location = incoming.profile.location;
   save();
 }
 

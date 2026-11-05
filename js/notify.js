@@ -88,7 +88,12 @@ export function startScheduler() {
     if (due && d.lastNotified !== key) {
       const list = pendingToday(d);
       update((x) => { x.lastNotified = key; });
-      if (list.length) await show('Your day isn\'t done yet', `Left: ${summary(list)}`, 'checkit-evening');
+      const j = (d.journal || {})[key];
+      const words = ((j && j.text) || '').trim().split(/\s+/).filter(Boolean).length;
+      const parts = [];
+      if (list.length) parts.push(`Left: ${summary(list)}`);
+      if (words < 20) parts.push('Your journal for today is still empty.');
+      if (parts.length) await show('Your day isn\'t done yet', parts.join(' '), 'checkit-evening');
     }
   };
   tick();

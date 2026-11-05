@@ -11,6 +11,8 @@ import { taskRow, bindRows, openEditor, showAccountMenu, toggleTask } from './vi
 import { sortedNotes, createNote, fmtDate } from './notes.js';
 import { messagesOf, postMessage, newChannel } from './channels.js';
 import { openPalette } from './palette.js';
+import { journalPanelHTML, paintPanelWeather } from './journal.js';
+import { visibleNudges, nudgeStackHTML, bindNudges } from './nudges.js';
 import * as notify from './notify.js';
 
 const isMac = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
@@ -23,7 +25,7 @@ function sidebarHTML() {
   const notes = sortedNotes(d).slice(0, 6);
   const nav = [
     ['home', 'Home', 'home'], ['today', 'Today', 'today', pending], ['calendar', 'Calendar', 'calendar'],
-    ['stats', 'Stats', 'chart'], ['tasks', 'Tasks', 'list'], ['notes', 'Notes', 'book'],
+    ['stats', 'Stats', 'chart'], ['tasks', 'Tasks', 'list'], ['journal', 'Journal', 'pen'], ['notes', 'Notes', 'book'],
   ];
   const initial = (name) => esc((name || '?').replace(/[^a-z0-9]/gi, '').slice(0, 1).toUpperCase() || '#');
   return `
@@ -48,8 +50,8 @@ function sidebarHTML() {
     </div>
     <a class="sb-leave" href="#/welcome" title="Leave dashboard">${icon('logout', 17)}<span class="sb-label">Leave dashboard</span></a>
     <button class="sb-user" id="account-btn" aria-label="Account and settings" aria-haspopup="menu" aria-expanded="false" title="Account and settings">
-      <span class="avatar static sm">${esc((p.name || '?').slice(0, 1).toUpperCase())}<i class="online"></i></span>
-      <span class="grow sb-label sb-user-txt"><b class="ellipsis">${esc(p.name)}</b><small>Settings &amp; account</small></span>
+      <span class="avatar static sm">${esc((d.profile?.displayName || p.name || '?').slice(0, 1).toUpperCase())}<i class="online"></i></span>
+      <span class="grow sb-label sb-user-txt"><b class="ellipsis">${esc(d.profile?.displayName || p.name)}</b><small>Settings &amp; account</small></span>
       <span class="sb-user-gear sb-label">${icon('gear', 18)}</span>
     </button>`;
 }
@@ -122,7 +124,7 @@ export function mountShell() {
       <div class="drawer-backdrop" id="drawer-bd"></div>
       <main id="view" tabindex="-1"></main>
       <nav class="tabbar" aria-label="Navigation">
-        ${[['home', 'Home', 'home'], ['today', 'Today', 'today'], ['calendar', 'Calendar', 'calendar'], ['stats', 'Stats', 'chart']].map(([r, l, ic]) => `<a href="#/${r}" data-tab="${r}">${icon(ic, 22)}<span>${l}</span></a>`).join('')}
+        ${[['home', 'Home', 'home'], ['today', 'Today', 'today'], ['journal', 'Journal', 'pen'], ['calendar', 'Calendar', 'calendar']].map(([r, l, ic]) => `<a href="#/${r}" data-tab="${r}">${icon(ic, 22)}<span>${l}</span></a>`).join('')}
         <button id="m-more" data-tab="more">${icon('sidebar', 22)}<span>More</span></button>
       </nav>
     </div>`;
@@ -204,7 +206,7 @@ function viewHome(view) {
   const list = [...b.required, ...b.flexible, ...b.done].slice(0, 6);
   const notes = sortedNotes(d).slice(0, 4);
   const chans = d.channels.map((c) => ({ c, msgs: messagesOf(c.id, d) })).sort((a, z) => ((z.msgs.at(-1)?.ts || z.c.createdAt) - (a.msgs.at(-1)?.ts || a.c.createdAt))).slice(0, 4);
-  const tip = insights(d)[0];
+  const tips = visibleNudges(d);
   const series = dailySeries(d, 7);
   const date = parseKey(k).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
 
@@ -213,7 +215,7 @@ function viewHome(view) {
       <div class="home-hero">
         <div>
           <p class="eyebrow date">${esc(date)}</p>
-          <h1 class="home-title"><span>Welcome back,</span><span class="hn">${esc(p.name)}</span></h1>
+          <h1 class="home-title"><span>Welcome back,</span><span class="hn">${esc(d.profile?.displayName || p.name)}</span></h1>
         </div>
         ${ILLUSTRATION}
       </div>
@@ -226,22 +228,12 @@ function viewHome(view) {
       </div>
 
       <div class="home-grid">
+        <div class="home-col">
         <section class="panel p-blue">
           <header class="panel-head"><h2>${icon('today', 18)} Today <span class="count">${sum.total}</span></h2><a href="#/today" class="view-all">View all</a></header>
           ${list.length ? `<ul class="list compact panel-list">${list.map(({ t, s }) => taskRow(t, k, s, { compact: true })).join('')}</ul>`
             : `<div class="panel-empty"><p>Nothing planned yet.</p><button class="btn ghost small" id="h-add-task">${icon('plus', 14)} Add a task</button></div>`}
         </section>
-
-        <section class="panel p-coral">
-          <header class="panel-head"><h2>${icon('hash', 18)} Channels <span class="count">${d.channels.length}</span></h2><button class="view-all" id="h-new-ch">New</button></header>
-          <div class="panel-rows">
-            ${chans.map(({ c, msgs }) => `<a class="prow" href="#/channel/${c.id}">
-              <span class="prow-ic">#</span>
-              <span class="prow-main"><b>${esc(c.name)}</b><small>${msgs.length ? esc(msgs.at(-1).text.slice(0, 60)) : 'No messages yet'}</small></span>
-              ${msgs.length ? `<span class="count">${msgs.length}</span>` : ''}</a>`).join('') || '<div class="panel-empty"><p>No channels yet.</p></div>'}
-          </div>
-        </section>
-
         <section class="panel p-yellow">
           <header class="panel-head"><h2>${icon('doc', 18)} Notes <span class="count">${d.notes.length}</span></h2><a href="#/notes" class="view-all">View all</a></header>
           <div class="panel-rows">
@@ -252,18 +244,32 @@ function viewHome(view) {
             <button class="prow add" id="h-new-note"><span class="prow-ic">${icon('plus', 17)}</span><span class="prow-main"><b>New note</b></span></button>
           </div>
         </section>
-
+        </div>
+        <div class="home-col">
+${journalPanelHTML(d)}
+        <section class="panel p-coral">
+          <header class="panel-head"><h2>${icon('hash', 18)} Channels <span class="count">${d.channels.length}</span></h2><button class="view-all" id="h-new-ch">New</button></header>
+          <div class="panel-rows">
+            ${chans.map(({ c, msgs }) => `<a class="prow" href="#/channel/${c.id}">
+              <span class="prow-ic">#</span>
+              <span class="prow-main"><b>${esc(c.name)}</b><small>${msgs.length ? esc(msgs.at(-1).text.slice(0, 60)) : 'No messages yet'}</small></span>
+              ${msgs.length ? `<span class="count">${msgs.length}</span>` : ''}</a>`).join('') || '<div class="panel-empty"><p>No channels yet.</p></div>'}
+          </div>
+        </section>
         <section class="panel p-plain">
           <header class="panel-head"><h2>${icon('sparkle', 18)} Your week</h2><a href="#/stats" class="view-all">Stats</a></header>
           <div class="week-bars">${series.map((s) => `<div class="wb"><div class="wb-track"><i style="height:${s.ratio == null ? 0 : Math.max(6, s.ratio * 100)}%" class="${s.ratio != null && s.ratio < 1 && s.k < k ? 'part' : ''}"></i></div><span>${DAY_SHORT[weekday(s.k)].slice(0, 2)}</span></div>`).join('')}</div>
-          ${tip ? `<div class="mini-insight ${tip.tone}"><span>${icon(tip.tone === 'good' ? 'sparkle' : 'flag', 15)}</span><p><b>${esc(tip.title)}</b> ${esc(tip.body)}</p></div>` : '<p class="muted small">Tick off a few tasks and your patterns show up here.</p>'}
+          ${tips.length ? nudgeStackHTML(tips, { limit: 2, compact: true }) : `<p class="muted small week-empty">${d.settings.nudgesOff ? 'Nudges are off. Turn them on in Settings.' : 'Tick off a few tasks and your patterns show up here.'}</p>`}
         </section>
+        </div>
       </div>
       <div class="composer-spacer"></div>
     </section>
     ${composerHTML()}`;
 
   bindRows($('.p-blue', view), k, () => rerender());
+  bindNudges(view, () => rerender());
+  paintPanelWeather(view);
   const at = $('#h-add-task', view); if (at) at.onclick = () => openEditor();
   $('#h-new-ch', view).onclick = () => newChannel();
   $('#h-new-note', view).onclick = () => { const n = createNote(); go('note', n.id); };

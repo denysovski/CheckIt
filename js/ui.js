@@ -1,20 +1,38 @@
 // Small UI helpers: escaping, toasts, sheets, rings.
+import { icon as uiIcon } from './icons.js';
 export const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 export const $ = (sel, root = document) => root.querySelector(sel);
 export const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
 export const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
 export const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches || document.documentElement.classList.contains('no-motion');
 
-export function toast(text, { action, onAction, tone = '' } = {}) {
+// Notification card: icon + message (+ optional title and action).
+// tone: 'good' (default for confirmations), 'info', 'bad'
+export function toast(text, { action, onAction, tone = 'good', title = '', icon: ic } = {}) {
   const root = $('#toast-root');
+  if (!root) return;
+  const glyph = ic || { good: 'check', bad: 'close', info: 'info' }[tone] || 'check';
   const el = document.createElement('div');
-  el.className = `toast ${tone}`;
-  el.innerHTML = `<span>${esc(text)}</span>${action ? `<button class="toast-btn">${esc(action)}</button>` : ''}`;
+  el.className = `toast tone-${tone}`;
+  el.setAttribute('role', tone === 'bad' ? 'alert' : 'status');
+  el.innerHTML = `
+    <span class="toast-ic">${uiIcon(glyph, 16)}</span>
+    <span class="toast-txt">${title ? `<b>${esc(title)}</b>` : ''}<span>${esc(text)}</span></span>
+    ${action ? `<button class="toast-btn">${esc(action)}</button>` : ''}
+    <button class="toast-x" aria-label="Dismiss">${uiIcon('close', 14)}</button>
+    <i class="toast-bar" style="--t:${action ? 5000 : 3200}ms"></i>`;
+  // keep at most 3 on screen
+  while (root.children.length >= 3) root.firstElementChild.remove();
   root.appendChild(el);
   requestAnimationFrame(() => el.classList.add('in'));
-  const close = () => { el.classList.remove('in'); setTimeout(() => el.remove(), 300); };
-  if (action) el.querySelector('button').onclick = () => { onAction && onAction(); close(); };
-  setTimeout(close, action ? 5000 : 2600);
+  let t;
+  const close = () => { clearTimeout(t); el.classList.remove('in'); el.classList.add('out'); setTimeout(() => el.remove(), 300); };
+  const arm = (ms) => { clearTimeout(t); t = setTimeout(close, ms); };
+  if (action) el.querySelector('.toast-btn').onclick = () => { onAction && onAction(); close(); };
+  el.querySelector('.toast-x').onclick = close;
+  el.addEventListener('mouseenter', () => { clearTimeout(t); el.classList.add('hold'); });
+  el.addEventListener('mouseleave', () => { el.classList.remove('hold'); arm(1800); });
+  arm(action ? 5000 : 3200);
 }
 
 // Modal sheet. Returns { el, close }.

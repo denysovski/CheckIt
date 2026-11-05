@@ -231,20 +231,20 @@ export function insights(data) {
       'Put it where you can see it.',
       'Two days in a row resets the habit.',
     ], seed + n);
-    out.push({ tone: n >= 6 ? 'bad' : 'warn', taskId: s.t.id, title, body });
+    out.push({ key: `task:${s.t.id}`, tone: n >= 6 ? 'bad' : 'warn', taskId: s.t.id, title, body });
   }
   const { counts, totals } = weekdayMisses(data);
   const rates = counts.map((c, i) => (totals[i] ? c / totals[i] : 0));
   const wi = rates.indexOf(Math.max(...rates));
   if (totals[wi] >= 3 && rates[wi] >= 0.35) {
-    out.push({ tone: 'info', title: pick([`${DAY_NAMES[wi]}s are your weak spot.`, `${DAY_NAMES[wi]}s get away from you.`], day), body: `${Math.round(rates[wi] * 100)}% left undone. Plan them lighter.` });
+    out.push({ key: `weekday:${wi}`, tone: 'info', title: pick([`${DAY_NAMES[wi]}s are your weak spot.`, `${DAY_NAMES[wi]}s get away from you.`], day), body: `${Math.round(rates[wi] * 100)}% left undone. Plan them lighter.` });
   }
   const best = stats14.filter((s) => s.rate === 1 && s.done >= 5)[0];
   if (best) {
     const seed = hash(best.t.title) + day;
-    out.push({ tone: 'good', title: pick([`Nailing “${best.t.title}”.`, `“${best.t.title}” is on fire.`, `Perfect run on “${best.t.title}”.`], seed), body: pick([`${best.done}× done, zero skipped.`, `${best.done} for ${best.done}. Keep going.`, 'Not a single miss.'], seed) });
+    out.push({ key: `best:${best.t.id}`, tone: 'good', title: pick([`Nailing “${best.t.title}”.`, `“${best.t.title}” is on fire.`, `Perfect run on “${best.t.title}”.`], seed), body: pick([`${best.done}× done, zero skipped.`, `${best.done} for ${best.done}. Keep going.`, 'Not a single miss.'], seed) });
   }
   const st = streak(data);
-  if (st >= 3) out.push({ tone: 'good', title: pick([`${st}-day streak.`, `${st} perfect days in a row.`], day), body: pick(['Don’t break the chain.', 'Momentum is real.'], st) });
+  if (st >= 3) out.push({ key: 'streak', tone: 'good', title: pick([`${st}-day streak.`, `${st} perfect days in a row.`], day), body: pick(['Don’t break the chain.', 'Momentum is real.'], st) });
   return out;
 }
