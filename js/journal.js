@@ -92,12 +92,11 @@ function viewJournal(view, param) {
     <section class="page journal">
       <div class="hero-head">
         <div>
-          <p class="eyebrow date">${k === today ? 'Today' : 'Looking back'} · ${esc(longDate(k))}</p>
+          <p class="eyebrow date">${esc(longDate(k))}</p>
           <h1 class="large-title">How was your day?</h1>
         </div>
         <div class="seg-nav">
           <button class="icon-btn" id="j-prev" aria-label="Previous day">${icon('chevL', 20)}</button>
-          <button class="btn ghost small" id="j-today" ${k === today ? 'disabled' : ''}>Today</button>
           <button class="icon-btn" id="j-next" aria-label="Next day" ${k >= today ? 'disabled' : ''}>${icon('chevR', 20)}</button>
         </div>
       </div>
@@ -197,9 +196,10 @@ function viewJournal(view, param) {
     $('#j-save', view).textContent = 'Saved';
     paintWeather(view, now);
   }));
-  $('#j-prev', view).onclick = () => go('journal', addDays(k, -1));
-  $('#j-next', view).onclick = () => { const n = addDays(k, 1); go('journal', n >= today ? null : n); };
-  $('#j-today', view).onclick = () => go('journal');
+  // Day to day: the page fades out, the next one fades in.
+  const fadeTo = (key) => { const pg = $('.page.journal', view); pg.classList.add('j-out'); pg.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 220, easing: 'ease-in', fill: 'forwards' }); setTimeout(() => go('journal', key), 220); };
+  $('#j-prev', view).onclick = () => fadeTo(addDays(k, -1));
+  $('#j-next', view).onclick = () => { const n = addDays(k, 1); fadeTo(n >= today ? null : n); };
   const sl = $('#j-setloc', view);
   if (sl) sl.onclick = async () => { await locationSheet(); rerender(); };
   bindNudges(view, () => rerender());

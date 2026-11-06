@@ -358,7 +358,7 @@ export function taskRow(t, k, s, { compact = false, history = false } = {}) {
       </div>
       <div class="task-actions">
         ${linkBtn(t)}
-        ${history ? '' : `<button class="icon-btn subtle t-detail" data-detail="${t.id}" aria-label="Edit ${esc(t.title)}" title="Details">${icon('external', 16)}</button>`}
+        ${history ? '' : `<button class="icon-btn subtle t-detail" data-detail="${t.id}" aria-label="Edit ${esc(t.title)}" title="Edit">${icon('edit', 16)}</button>`}
       </div>
     </li>`;
 }
@@ -624,7 +624,7 @@ function viewStats(view) {
   const wdMax = Math.max(1, ...wd.counts);
 
   view.innerHTML = `
-    <section class="page">
+    <section class="page stats-page">
       <div class="hero-head">
         <div>
           <h1 class="large-title">Your rhythm.</h1>

@@ -42,9 +42,9 @@ Small daily things are the easiest to skip , brushing teeth twice, interdental b
 
 ### Landing page
 
-A short, minimal page that follows your light or dark theme. Under the headline a live copy of the dashboard plays on its own: a cursor ticks off tasks, types a new one, writes in a channel and opens the calendar. A week card fills its rings one day at a time.
+A short, minimal page on a slowly moving blue-black background (light blue in light mode). The navigation turns into a white floating bar once you scroll. Under the headline a live copy of the dashboard plays on its own: a cursor ticks off tasks, types a new one, writes in a channel and opens the calendar. The demo tilts upright in 3D as it scrolls into view, and a large week card, leaning in perspective and following the pointer, fills its rings one day at a time.
 
-Further down, **Why writing it down works** lists three research results with links to the sources, and a privacy section states the plain facts (no servers, no trackers). There are no made-up user numbers. The footer links to the **Privacy Policy** and **Terms of Use** pages (`#/privacy`, `#/terms`), which are also linked from sign up and Settings.
+Further down, **Why writing it down works** lists three research results with links to the sources, and a privacy section states the plain facts (no servers, no trackers). There are no made-up user numbers. The footer has a newsletter field (there is no server yet, so it says so and points to GitHub releases), links to the **Terms**, **Privacy Policy** and **Cookies** pages (`#/terms`, `#/privacy`, `#/cookies`), the repository and social profiles.
 
 <img src="docs/screens/02-landing-research.png" alt="Research section">
 
@@ -64,7 +64,8 @@ There are **33 suggestions** in categories: Creator, Body care, Health, Home, Mi
 
 ### Home
 
-- **Overview:** a greeting and four tiles: *Due today*, *Done today*, *Streak* and *This week*.
+- **Overview:** a greeting and four tiles in four shades of blue: *Due today* (darkest), *Done today* (lightest), *Streak* (with a flickering flame and a pulse) and *This week*.
+- **Cards:** every section sits on its own slowly drifting blue gradient, so no two look the same. Task cards have an edit (pencil) button that opens the task in Tasks.
 - **Today:** what's planned for today.
 - **Journal:** today's word count, your mood and a weather tip.
 - **Channels and Notes:** recent messages and notes.

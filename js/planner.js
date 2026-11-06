@@ -76,7 +76,12 @@ function viewPlanner(view) {
       <div class="pl-goal">
         <div class="pl-goal-txt"><b>${items.length}</b><span>${goal ? `of ${goal} planned this week` : 'tasks planned this week'}</span></div>
         <div class="pl-goal-bar"><i style="width:${goal ? pct : 0}%"></i></div>
-        <label class="pl-goal-in">Weekly goal <input type="number" id="pl-goal" min="0" max="99" value="${goal || ''}" placeholder="0" inputmode="numeric"></label>
+        <div class="pl-goal-in"><span id="pl-goal-l">Weekly goal</span>
+          <div class="pl-stepper" role="group" aria-labelledby="pl-goal-l">
+            <button type="button" data-step="-1" aria-label="Lower goal" ${goal ? '' : 'disabled'}>${icon('chevL', 16)}</button>
+            <output id="pl-goal" aria-live="polite">${goal}</output>
+            <button type="button" data-step="1" aria-label="Raise goal" ${goal >= 99 ? 'disabled' : ''}>${icon('chevR', 16)}</button>
+          </div></div>
       </div>
 
       <div class="pl-wrap">
@@ -118,8 +123,16 @@ function viewPlanner(view) {
   const act = $('#pl-activate', view);
   if (act) act.onclick = () => { update((x) => x.plans.forEach((y) => (y.active = y.id === p.id))); toast(`“${p.name}” is now active`, { title: 'Plan switched', icon: 'calendar' }); rerender(); };
   $('#pl-more', view).onclick = () => planMenu(p);
-  const g = $('#pl-goal', view);
-  g.onchange = () => { const v = Math.max(0, Math.min(99, parseInt(g.value, 10) || 0)); mutatePlan((x) => { x.goal = v; }); rerender(); };
+  // goal stepper: click, or hold to keep counting; arrow keys work on the buttons too
+  let holdT = 0;
+  const bump = (n) => { const v = Math.max(0, Math.min(99, (viewed().goal || 0) + n)); mutatePlan((x) => { x.goal = v; }); paintGoal(view, v); };
+  $$('[data-step]', view).forEach((b) => {
+    const n = +b.dataset.step;
+    b.onpointerdown = () => { bump(n); clearInterval(holdT); holdT = setTimeout(() => { holdT = setInterval(() => bump(n), 90); }, 380); };
+    const stop = () => { clearTimeout(holdT); clearInterval(holdT); };
+    b.onpointerup = stop; b.onpointerleave = stop; b.onpointercancel = stop;
+    b.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); bump(n); } };
+  });
 
   const qi = $('#pl-q', view);
   qi.oninput = () => {
@@ -137,6 +150,14 @@ function viewPlanner(view) {
   $$('.pl-task', view).forEach((b) => (b.onclick = () => { if (!b.dataset.dragged) daysSheet(b.dataset.task); delete b.dataset.dragged; }));
 
   bindDrag(view);
+}
+
+function paintGoal(view, goal) {
+  const n = viewed().items.filter((it) => userData().tasks.some((t) => t.id === it.taskId)).length;
+  $('#pl-goal', view).textContent = goal;
+  $('[data-step="-1"]', view).disabled = !goal; $('[data-step="1"]', view).disabled = goal >= 99;
+  $('.pl-goal-txt span', view).textContent = goal ? `of ${goal} planned this week` : 'tasks planned this week';
+  $('.pl-goal-bar i', view).style.width = `${goal ? Math.min(100, Math.round((n / goal) * 100)) : 0}%`;
 }
 
 // ------------------------------------------------------------ drag and drop (pointer based: mouse, pen and touch)

@@ -26,7 +26,7 @@ function demoHTML() {
     <div class="dm-bar">
       <span class="dm-dots"><i></i><i></i><i></i></span>
       <span class="dm-url">${icon('search', 12)} denysovski.github.io/CheckIt</span>
-      <span class="dm-bar-r"><span class="dm-av">D</span></span>
+      <span class="dm-bar-r"><span class="dm-av">U</span></span>
     </div>
     <div class="dm-body">
       <aside class="dm-side">
@@ -39,12 +39,12 @@ function demoHTML() {
         <div class="dm-sec">Notes</div>
         <div class="dm-nav">${icon('doc', 13)}Biology: cells</div>
         <div class="dm-nav">${icon('doc', 13)}Trip packing list</div>
-        <div class="dm-user"><span class="dm-av sm">D</span>Danko</div>
+        <div class="dm-user"><span class="dm-av sm">U</span>user</div>
       </aside>
       <div class="dm-main">
         <section class="dm-view dm-home on">
           <p class="dm-date">${new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
-          <h3 class="dm-title">Welcome back,<br><span>Danko</span></h3>
+          <h3 class="dm-title">Welcome back,<br><span>user</span></h3>
           <div class="dm-tiles">
             <div class="dm-tile c1"><span>Due today</span><b id="dm-due">4</b><small>Left for today</small></div>
             <div class="dm-tile c2"><span>Done today</span><b id="dm-done">1</b><small>of 5 planned</small></div>
@@ -194,12 +194,6 @@ const RESEARCH = [
   ['66', 'days', 'The median time for a small daily action to become automatic.', 'Lally et al., European Journal of Social Psychology, 2010', 'https://www.thebehavioralscientist.com/articles/how-long-to-form-a-habit'],
 ];
 
-const FEATURES = [
-  ['today', 'Today', 'Only what is due today. Tick it and it stays put, marked done.'],
-  ['calendar', 'Plan', 'Drag tasks into days, set a time and a reminder.'],
-  ['chart', 'Stats', 'Streaks, best days and a weekly recap every Monday.'],
-  ['pen', 'Journal', 'One line a day, with the weather and your mood.'],
-];
 
 // Real numbers only: the visitor's own history if they've used it here.
 function ownStats() {
@@ -213,7 +207,54 @@ function ownStats() {
 }
 
 export function legalLinks(cls = '') {
-  return `<a class="${cls}" href="#/privacy">Privacy</a><a class="${cls}" href="#/terms">Terms</a>`;
+  return `<a class="${cls}" href="#/privacy">Privacy</a><a class="${cls}" href="#/terms">Terms</a><a class="${cls}" href="#/cookies">Cookies</a>`;
+}
+
+const SOCIAL = [
+  ['GitHub', 'https://github.com/denysovski'],
+  ['Instagram', 'https://www.instagram.com/denysovski2/'],
+];
+
+function footerHTML() {
+  return `
+    <footer class="lx-footer">
+      <div class="lx-foot-top">
+        <div class="lx-news">
+          <h3>Release notes, now and then.</h3>
+          <p>One short email when something new ships. No spam.</p>
+          <form class="lx-news-form" novalidate>
+            <label class="sr-only" for="lx-email">Email address</label>
+            <input id="lx-email" type="email" placeholder="you@example.com" autocomplete="email" required>
+            <button class="btn pill" type="submit">Subscribe</button>
+          </form>
+          <p class="lx-news-msg" role="status" aria-live="polite"></p>
+        </div>
+        <nav class="lx-cols" aria-label="Footer">
+          <div><h4>Product</h4><a href="#how" data-scroll>Live demo</a><a href="#research" data-scroll>Research</a><a href="#privacy" data-scroll>Privacy</a><a href="#/signup">Create account</a><a href="#/login">Log in</a></div>
+          <div><h4>Legal</h4><a href="#/terms">Terms &amp; Conditions</a><a href="#/privacy">Privacy Policy</a><a href="#/cookies">Cookies</a></div>
+          <div><h4>Code</h4><a href="${REPO_URL}" target="_blank" rel="noopener noreferrer">GitHub repository</a><a href="${REPO_URL}/releases" target="_blank" rel="noopener noreferrer">Releases</a><a href="${REPO_URL}/issues/new" target="_blank" rel="noopener noreferrer">Report an issue</a></div>
+          <div><h4>Social</h4>${SOCIAL.map(([n, u]) => `<a href="${u}" target="_blank" rel="noopener noreferrer">${n}</a>`).join('')}</div>
+        </nav>
+      </div>
+      <div class="lx-wordmark" aria-hidden="true">Check It</div>
+      <div class="lx-foot-bottom">
+        <span>© 2026 Check It. Designed and built by <a href="https://github.com/denysovski" target="_blank" rel="noopener noreferrer">denysovski</a>.</span>
+        <span>A personal school project, not a commercial product.</span>
+      </div>
+    </footer>`;
+}
+
+function bindFooter(root) {
+  const f = $('.lx-news-form', root);
+  if (!f) return;
+  f.onsubmit = (e) => {
+    e.preventDefault();
+    const inp = $('#lx-email', f); const msg = $('.lx-news-msg', root);
+    if (!inp.checkValidity()) { msg.textContent = 'Enter a valid email address.'; msg.className = 'lx-news-msg bad'; inp.focus(); return; }
+    // No server yet: nothing is sent. Be honest about it.
+    msg.innerHTML = `Thanks. Check It has no server, so nothing was sent. Follow <a href="${REPO_URL}/releases" target="_blank" rel="noopener noreferrer">releases on GitHub</a> for now.`;
+    msg.className = 'lx-news-msg good'; inp.value = '';
+  };
 }
 
 export function renderLanding({ loggedIn = false } = {}) {
@@ -224,6 +265,7 @@ export function renderLanding({ loggedIn = false } = {}) {
   const own = ownStats();
   app.innerHTML = `
   <div class="landing lx">
+    <div class="lx-bg" aria-hidden="true"><i></i><i></i><i></i></div>
     <header class="l-nav">
       <a class="brand" href="#/" aria-label="Check It home"><span class="brand-mark">${logoMark('plain')}</span><span class="brand-word">Check<b>It</b></span></a>
       <nav class="l-links" aria-label="Sections"><a href="#how" data-scroll>Product</a><a href="#research" data-scroll>Research</a><a href="#privacy" data-scroll>Privacy</a></nav>
@@ -250,12 +292,8 @@ export function renderLanding({ loggedIn = false } = {}) {
           <h2 class="lx-h2">A week you can see.</h2>
           <p>Every day you finish fills a ring. Close all seven and the week is checked.</p>
         </div>
-        ${checkCardHTML()}
+        <div class="lx-tilt" id="lx-tilt">${checkCardHTML()}</div>
       </div>
-    </section>
-
-    <section class="lx-features" aria-label="What's inside">
-      ${FEATURES.map(([ic, t, d]) => `<div class="lx-f"><span class="lx-f-ic">${icon(ic, 22)}</span><div><h3>${t}</h3><p>${d}</p></div></div>`).join('')}
     </section>
 
     <section class="lx-research" id="research">
@@ -286,11 +324,7 @@ export function renderLanding({ loggedIn = false } = {}) {
       <a class="btn pill large" href="${cta[0]}">${cta[1]} ${icon('chevR', 16)}</a>
     </section>
 
-    <footer class="l-foot">
-      <span class="brand-word small">Check<b>It</b></span>
-      <span class="dim small">A personal school project by denysovski. Not a commercial product.</span>
-      <nav class="lx-foot-links">${legalLinks()}<a href="${REPO_URL}" target="_blank" rel="noopener noreferrer">GitHub</a></nav>
-    </footer>
+    ${footerHTML()}
   </div>`;
 
   const root = app.querySelector('.landing');
@@ -303,9 +337,39 @@ export function renderLanding({ loggedIn = false } = {}) {
     t.scrollIntoView({ behavior: reducedMotion() ? 'auto' : 'smooth' });
   }));
   const nav = $('.l-nav', root);
-  const onScroll = () => nav.classList.toggle('scrolled', window.scrollY > 10);
+  const demo = $('.lx-stage .demo', root);
+  const tilt = $('#lx-tilt', root);
+  const still = reducedMotion();
+  let raf = 0;
+  const paint = () => {
+    raf = 0;
+    nav.classList.toggle('scrolled', window.scrollY > 24);
+    if (still) return;
+    // 3D: the demo lies back and stands up as it scrolls into view
+    if (demo) {
+      const r = demo.getBoundingClientRect();
+      const p = Math.min(1, Math.max(0, (innerHeight - r.top) / (innerHeight * 0.9)));
+      demo.style.transform = `perspective(1800px) rotateX(${(1 - p) * 22}deg) scale(${0.92 + p * 0.08})`;
+    }
+    if (tilt && !tilt.matches(':hover')) {
+      const r = tilt.getBoundingClientRect();
+      const p = Math.min(1, Math.max(0, (innerHeight - r.top) / innerHeight));
+      tilt.style.setProperty('--rx', `${14 - p * 6}deg`);
+    }
+  };
+  const onScroll = () => { if (!raf) raf = requestAnimationFrame(paint); };
   window.addEventListener('scroll', onScroll, { passive: true });
   disposers.push(() => window.removeEventListener('scroll', onScroll));
+  paint();
+  if (tilt && !still) {
+    tilt.addEventListener('pointermove', (e) => {
+      const r = tilt.getBoundingClientRect();
+      const x = (e.clientX - r.left) / r.width - 0.5; const y = (e.clientY - r.top) / r.height - 0.5;
+      tilt.style.setProperty('--ry', `${-24 + x * 26}deg`); tilt.style.setProperty('--rx', `${8 - y * 22}deg`);
+    });
+    tilt.addEventListener('pointerleave', () => { tilt.style.removeProperty('--ry'); tilt.style.removeProperty('--rx'); paint(); });
+  }
+  bindFooter(root);
 
   $$('.dm-side > *', root).forEach((el, i) => el.style.setProperty('--k', i));
   $$('.dm-list li', root).forEach((el, i) => el.style.setProperty('--k', i));
@@ -324,6 +388,12 @@ const LEGAL = {
     ['Cookies and tracking', 'No cookies, analytics, ads or trackers are used.'],
     ['Your control', 'Export a full backup from Settings, import it elsewhere, or delete everything with one button. Clearing your browser data also removes it.'],
     ['Contact', 'Open an issue on GitHub: github.com/denysovski/CheckIt.'],
+  ]],
+  cookies: ['Cookies', [
+    ['No cookies', 'Check It sets no cookies. There is no analytics, no advertising and no tracking pixel.'],
+    ['Browser storage', 'To work without a server, the app saves your account and data in localStorage and IndexedDB in this browser. This is needed for the app to function and never leaves your device.'],
+    ['Offline cache', 'A service worker keeps a copy of the app files so it opens offline. It stores code, not personal data.'],
+    ['Removing it', 'Use Settings, then Clear all data, or clear site data in your browser.'],
   ]],
   terms: ['Terms of Use', [
     ['Use', 'Check It is free to use for personal purposes. The source code is public on GitHub.'],
@@ -348,11 +418,12 @@ export function renderLegal(kind, loggedIn = false) {
       <h1 class="lx-h2">${title}</h1>
       <p class="lg-date">Last updated 6 November 2026</p>
       ${sections.map(([h, p]) => `<section><h2>${h}</h2><p>${esc(p)}</p></section>`).join('')}
-      <nav class="lg-switch">${kind === 'privacy' ? '<a href="#/terms">Terms of Use</a>' : '<a href="#/privacy">Privacy Policy</a>'}</nav>
+      <nav class="lg-switch">${['privacy', 'terms', 'cookies'].filter((x) => x !== kind).map((x) => `<a href="#/${x}">${LEGAL[x][0]}</a>`).join('')}</nav>
     </article>
-    <footer class="l-foot"><span class="brand-word small">Check<b>It</b></span><nav class="lx-foot-links">${legalLinks()}</nav></footer>
+    ${footerHTML()}
   </div>`;
   window.scrollTo(0, 0);
+  bindFooter($('#app'));
 }
 
 // ------------------------------------------------------------------ auth (minimal, centered)

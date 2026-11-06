@@ -53,7 +53,7 @@ async function afterAuth(mode) {
 function renderPublic() {
   const r = parse().name;
   if (r === 'login' || r === 'signup') renderAuthPage(r, afterAuth);
-  else if (r === 'privacy' || r === 'terms') renderLegal(r);
+  else if (['privacy', 'terms', 'cookies'].includes(r)) renderLegal(r);
   else renderLanding();
 }
 
@@ -69,7 +69,7 @@ async function boot() {
   window.addEventListener('hashchange', () => {
     if (profile()) {
       if (parse().name === 'welcome') { window.scrollTo(0, 0); showWelcome(); return; }
-      if (['privacy', 'terms'].includes(parse().name)) { document.body.classList.remove('drawer-open'); renderLegal(parse().name, true); return; }
+      if (['privacy', 'terms', 'cookies'].includes(parse().name)) { document.body.classList.remove('drawer-open'); renderLegal(parse().name, true); return; }
       if (!document.querySelector('.shell')) startApp(); else renderRoute();
     } else {
       window.scrollTo(0, 0);
@@ -78,7 +78,7 @@ async function boot() {
   });
   onChange(() => notify.syncBadge());
   const n0 = parse().name;
-  if (profile()) (n0 === 'welcome' ? showWelcome() : ['privacy', 'terms'].includes(n0) ? renderLegal(n0, true) : startApp());
+  if (profile()) (n0 === 'welcome' ? showWelcome() : ['privacy', 'terms', 'cookies'].includes(n0) ? renderLegal(n0, true) : startApp());
   else renderPublic();
 }
 
