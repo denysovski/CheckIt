@@ -5,12 +5,13 @@ import { userData, update, getPrefs, setPrefs } from './store.js';
 import { profile } from './auth.js';
 import { register, render, current, go, onRender, rerender } from './router.js';
 import {
-  todayKey, todayBuckets, daySummary, taskStats, streak, insights, dailySeries, prettyDate, parseKey, DAY_SHORT, weekday, frequencyLabel,
+  todayKey, weekStart, todayBuckets, daySummary, taskStats, streak, insights, dailySeries, prettyDate, parseKey, DAY_SHORT, weekday, frequencyLabel,
 } from './schedule.js';
 import { taskRow, bindRows, openEditor, showAccountMenu, toggleTask } from './views.js';
 import { sortedNotes, createNote, fmtDate } from './notes.js';
 import { messagesOf, postMessage, newChannel } from './channels.js';
 import { openPalette } from './palette.js';
+import { recapBadge, ensureRecaps, showNewRecap, weekStats } from './recaps.js';
 import { journalPanelHTML, paintPanelWeather } from './journal.js';
 import { visibleNudges, nudgeStackHTML, bindNudges } from './nudges.js';
 import * as notify from './notify.js';
@@ -24,8 +25,8 @@ function sidebarHTML() {
   const pending = notify.syncBadge();
   const notes = sortedNotes(d).slice(0, 6);
   const nav = [
-    ['home', 'Home', 'home'], ['today', 'Today', 'today', pending], ['calendar', 'Calendar', 'calendar'],
-    ['stats', 'Stats', 'chart'], ['tasks', 'Tasks', 'list'], ['journal', 'Journal', 'pen'], ['notes', 'Notes', 'book'],
+    ['home', 'Home', 'home'], ['today', 'Today', 'today', pending], ['tasks', 'Tasks', 'list'], ['calendar', 'Calendar', 'calendar'], ['planner', 'Planner', 'clock'],
+    ['stats', 'Stats', 'chart'], ['journal', 'Journal', 'pen'], ['notes', 'Notes', 'book'], ['recaps', 'Recaps', 'archive', recapBadge()],
   ];
   const initial = (name) => esc((name || '?').replace(/[^a-z0-9]/gi, '').slice(0, 1).toUpperCase() || '#');
   return `
@@ -33,7 +34,6 @@ function sidebarHTML() {
       <a class="brand" href="#/home" aria-label="Check It home"><span class="brand-mark">${logoMark('plain')}</span><span class="brand-word sb-label">Check<b>It</b></span></a>
       <div class="sb-top-actions">
         <button class="icon-btn subtle sb-label" id="sb-new" aria-label="Create" aria-haspopup="menu" title="Create">${icon('compose', 19)}</button>
-        <button class="icon-btn subtle sb-collapse" id="sb-collapse" aria-label="Collapse sidebar" title="Collapse sidebar">${icon('sidebar', 19)}</button>
       </div>
     </div>
     <button class="sb-search" id="sb-search" title="Search"><span>${icon('search', 17)}</span><span class="grow sb-label">Search</span><kbd class="sb-label sb-kbd">${isMac ? '⌘' : 'Ctrl'} + K</kbd></button>
@@ -59,8 +59,8 @@ function sidebarHTML() {
 export function applySidebarState() {
   const collapsed = !!getPrefs().sidebarCollapsed;
   document.documentElement.classList.toggle('sb-collapsed', collapsed);
-  const b = $('#sb-collapse');
-  if (b) { b.setAttribute('aria-label', collapsed ? 'Expand sidebar' : 'Collapse sidebar'); b.title = collapsed ? 'Expand sidebar' : 'Collapse sidebar'; }
+  const b = $('#sb-toggle');
+  if (b) { b.setAttribute('aria-label', collapsed ? 'Expand sidebar' : 'Collapse sidebar'); b.title = collapsed ? 'Expand sidebar' : 'Collapse sidebar'; b.setAttribute('aria-expanded', String(!collapsed)); }
 }
 
 function bindSidebar(sb) {
@@ -69,7 +69,6 @@ function bindSidebar(sb) {
   $('#sb-add-ch', sb).onclick = () => { closeDrawer(); newChannel(); };
   $('#sb-add-note', sb).onclick = () => { closeDrawer(); const n = createNote(); go('note', n.id); };
   $('#sb-new', sb).onclick = (e) => createMenu(e.currentTarget);
-  $('#sb-collapse', sb).onclick = () => { setPrefs({ sidebarCollapsed: !getPrefs().sidebarCollapsed }); applySidebarState(); };
   applySidebarState();
   $$('a', sb).forEach((a) => a.addEventListener('click', closeDrawer));
   markActive();
@@ -121,6 +120,7 @@ export function mountShell() {
         <button class="icon-btn subtle" id="m-search" aria-label="Search">${icon('search', 20)}</button>
       </header>
       <aside class="sidebar" aria-label="Sidebar"></aside>
+      <button class="sb-toggle" id="sb-toggle" aria-label="Collapse sidebar" title="Collapse sidebar">${icon('chevL', 15)}</button>
       <div class="drawer-backdrop" id="drawer-bd"></div>
       <main id="view" tabindex="-1"></main>
       <nav class="tabbar" aria-label="Navigation">
@@ -129,6 +129,8 @@ export function mountShell() {
       </nav>
     </div>`;
   refreshSidebar();
+  $('#sb-toggle', app).onclick = () => { setPrefs({ sidebarCollapsed: !getPrefs().sidebarCollapsed }); applySidebarState(); };
+  applySidebarState();
   $('#m-menu', app).onclick = openDrawer;
   $('#m-more', app).onclick = openDrawer;
   $('#drawer-bd', app).onclick = closeDrawer;
@@ -203,10 +205,12 @@ function viewHome(view) {
   const wd = w.reduce((a, s) => a + s.done, 0); const wm = w.reduce((a, s) => a + s.missed, 0);
   const weekPct = wd + wm ? Math.round((wd / (wd + wm)) * 100) : 0;
   const hour = new Date().getHours();
-  const list = [...b.required, ...b.flexible, ...b.done].slice(0, 6);
+  // keep the user's own order so a ticked task stays exactly where it was
+  const order = new Map(d.tasks.map((t, i) => [t.id, i]));
+  const list = [...b.required, ...b.flexible, ...b.done].sort((x, y) => order.get(x.t.id) - order.get(y.t.id)).slice(0, 7);
+  const wk = weekStats(d, weekStart(k), k);
   const notes = sortedNotes(d).slice(0, 4);
   const chans = d.channels.map((c) => ({ c, msgs: messagesOf(c.id, d) })).sort((a, z) => ((z.msgs.at(-1)?.ts || z.c.createdAt) - (a.msgs.at(-1)?.ts || a.c.createdAt))).slice(0, 4);
-  const tips = visibleNudges(d);
   const series = dailySeries(d, 7);
   const date = parseKey(k).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
 
@@ -215,7 +219,7 @@ function viewHome(view) {
       <div class="home-hero">
         <div>
           <p class="eyebrow date">${esc(date)}</p>
-          <h1 class="home-title"><span>Welcome back,</span><span class="hn">${esc(d.profile?.displayName || p.name)}</span></h1>
+          <h1 class="home-title"><span>Welcome back<span class="hn">.</span></span></h1>
         </div>
         ${ILLUSTRATION}
       </div>
@@ -230,12 +234,12 @@ function viewHome(view) {
       <div class="home-grid">
         <div class="home-col">
         <section class="panel p-blue">
-          <header class="panel-head"><h2>${icon('today', 18)} Today <span class="count">${sum.total}</span></h2><a href="#/today" class="view-all">View all</a></header>
+          <header class="panel-head"><h2>${icon('today', 18)} Today <span class="count">${sum.total}</span></h2><a href="#/today" class="view-all">View all ${icon('chevR', 13)}</a></header>
           ${list.length ? `<ul class="list compact panel-list">${list.map(({ t, s }) => taskRow(t, k, s, { compact: true })).join('')}</ul>`
             : `<div class="panel-empty"><p>Nothing planned yet.</p><button class="btn ghost small" id="h-add-task">${icon('plus', 14)} Add a task</button></div>`}
         </section>
         <section class="panel p-yellow">
-          <header class="panel-head"><h2>${icon('doc', 18)} Notes <span class="count">${d.notes.length}</span></h2><a href="#/notes" class="view-all">View all</a></header>
+          <header class="panel-head"><h2>${icon('doc', 18)} Notes <span class="count">${d.notes.length}</span></h2><a href="#/notes" class="view-all">View all ${icon('chevR', 13)}</a></header>
           <div class="panel-rows">
             ${notes.map((n) => `<a class="prow" href="#/note/${n.id}">
               <span class="prow-ic">${icon('doc', 17)}</span>
@@ -248,7 +252,7 @@ function viewHome(view) {
         <div class="home-col">
 ${journalPanelHTML(d)}
         <section class="panel p-coral">
-          <header class="panel-head"><h2>${icon('hash', 18)} Channels <span class="count">${d.channels.length}</span></h2><button class="view-all" id="h-new-ch">New</button></header>
+          <header class="panel-head"><h2>${icon('hash', 18)} Channels <span class="count">${d.channels.length}</span></h2><button class="view-all" id="h-new-ch">${icon('plus', 13)} New</button></header>
           <div class="panel-rows">
             ${chans.map(({ c, msgs }) => `<a class="prow" href="#/channel/${c.id}">
               <span class="prow-ic">#</span>
@@ -256,10 +260,15 @@ ${journalPanelHTML(d)}
               ${msgs.length ? `<span class="count">${msgs.length}</span>` : ''}</a>`).join('') || '<div class="panel-empty"><p>No channels yet.</p></div>'}
           </div>
         </section>
-        <section class="panel p-plain">
-          <header class="panel-head"><h2>${icon('sparkle', 18)} Your week</h2><a href="#/stats" class="view-all">Stats</a></header>
+        <section class="panel p-week" id="p-week">
+          <header class="panel-head"><h2>${icon('chart', 18)} Your week</h2><a href="#/stats" class="view-all">${icon('chart', 13)} Stats</a></header>
+          <div class="wk-kpis">
+            <div class="wk-k big"><small>Done this week</small><b><span data-count="${wk.done}">${wk.done}</span><i>/${wk.planned}</i></b><div class="wk-bar"><i style="width:${wk.planned ? (wk.done / wk.planned) * 100 : 0}%"></i></div></div>
+            <div class="wk-k"><small>Earliest finish</small><b>${wk.earliest ? wk.earliest.time : '–'}</b><span>${wk.earliest ? `${esc(wk.earliest.day)} · ${esc(wk.earliest.title)}` : 'Nothing done yet'}</span></div>
+            <div class="wk-k"><small>Usually done by</small><b>${wk.avgTime || '–'}</b><span>${wk.beforeNoon} before noon</span></div>
+            <div class="wk-k"><small>Best day</small><b>${wk.best ? wk.best.day.slice(0, 3) : '–'}</b><span>${wk.best ? `${wk.best.done} of ${wk.best.total} done` : 'Still early'}</span></div>
+          </div>
           <div class="week-bars">${series.map((s) => `<div class="wb"><div class="wb-track"><i style="height:${s.ratio == null ? 0 : Math.max(6, s.ratio * 100)}%" class="${s.ratio != null && s.ratio < 1 && s.k < k ? 'part' : ''}"></i></div><span>${DAY_SHORT[weekday(s.k)].slice(0, 2)}</span></div>`).join('')}</div>
-          ${tips.length ? nudgeStackHTML(tips, { limit: 2, compact: true }) : `<p class="muted small week-empty">${d.settings.nudgesOff ? 'Nudges are off. Turn them on in Settings.' : 'Tick off a few tasks and your patterns show up here.'}</p>`}
         </section>
         </div>
       </div>
@@ -274,6 +283,13 @@ ${journalPanelHTML(d)}
   $('#h-new-ch', view).onclick = () => newChannel();
   $('#h-new-note', view).onclick = () => { const n = createNote(); go('note', n.id); };
   bindComposer(view);
+  bindSpot($('#p-week', view));
+}
+
+// Pointer-following light on the gradient card.
+function bindSpot(el) {
+  if (!el || !matchMedia('(hover: hover)').matches) return;
+  el.addEventListener('pointermove', (e) => { const r = el.getBoundingClientRect(); el.style.setProperty('--sx', `${e.clientX - r.left}px`); el.style.setProperty('--sy', `${e.clientY - r.top}px`); });
 }
 
 // ---------------------------------------------------------------- composer

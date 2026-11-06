@@ -117,18 +117,19 @@ export function userData() {
       { id: 'ch-ideas', name: 'ideas', createdAt: now },
     ];
     d.messages = [
-      { id: 'm-1', channelId: 'ch-general', text: 'This is your own channel. Dump thoughts, links or a quick log of what you did — only you can see it.', ts: now },
+      { id: 'm-1', channelId: 'ch-general', text: 'This is your own channel. Dump thoughts, links or a quick log of what you did, only you can see it.', ts: now },
     ];
   }
   if (!d.messages) d.messages = [];
   if (!d.journal) d.journal = {};
+  if (!d.plans) d.plans = [];
   if (!d.profile) d.profile = {};
   if (!d.settings.hiddenNudges) d.settings.hiddenNudges = {};
   if (!d.notes) {
     const now = Date.now();
     d.notes = [{
       id: 'n-welcome', title: 'Welcome to Notes', tag: 'Guide', pinned: true, createdAt: now, updatedAt: now,
-      body: '# Notes\n\nWrite anything here — school notes, plans, lists.\n\n- Use **bold** with two stars\n- Start a line with `- ` for a list\n- Start with `[ ] ` for a checkbox\n\n[ ] Try making your first note\n',
+      body: '# Notes\n\nWrite anything here, school notes, plans, lists.\n\n- Use **bold** with two stars\n- Start a line with `- ` for a list\n- Start with `[ ] ` for a checkbox\n\n[ ] Try making your first note\n',
     }];
   }
   return d;

@@ -15,7 +15,7 @@ export function visibleNudges(d = userData(), extra = []) {
   return [...extra, ...insights(d)].filter((n) => !(hidden[n.key] && now - hidden[n.key] < WEEK));
 }
 
-const ICON = { good: 'sparkle', info: 'info', warn: 'flag', bad: 'flag', journal: 'pen', weather: 'sun' };
+const ICON = { good: 'arrowUp', info: 'info', warn: 'flag', bad: 'flag', journal: 'pen', weather: 'sun' };
 
 export function nudgeStackHTML(list, { limit = 6, compact = false } = {}) {
   if (!list.length) return '';

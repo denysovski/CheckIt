@@ -9,7 +9,7 @@ import { nudgeStackHTML, bindNudges } from './nudges.js';
 
 export const MIN_WORDS = 20;
 export const MOODS = [
-  [1, 'Rough', '#E5534B'], [2, 'Low', '#E9925A'], [3, 'Okay', '#C9B458'], [4, 'Good', '#5BB98C'], [5, 'Great', '#4F86FF'],
+  [1, 'Rough', '#E5534B'], [2, 'Low', '#E9925A'], [3, 'Okay', '#C9B458'], [4, 'Good', '#5BB98C'], [5, 'Great', '#0E98BE'],
 ];
 const PROMPTS = [
   'Today I…', 'The best part of today was', 'Something that was hard:', 'I feel… because', 'Tomorrow I want to', 'I’m grateful for',
@@ -53,18 +53,18 @@ export function analyzeJournal(d, days = 30) {
   moods.forEach((x) => wd[weekday(x.k)].push(x.e.mood));
   const wdAvg = wd.map((a) => (a.length ? a.reduce((s, v) => s + v, 0) / a.length : null));
 
-  // reflections — questions, not verdicts
+  // reflections, questions, not verdicts
   const refl = [];
   const short = entries.filter((x) => x.k !== today && x.e && wordCount(x.e.text) > 0 && wordCount(x.e.text) < MIN_WORDS).slice(-2);
   short.forEach((x) => refl.push({ key: `journal:short:${x.k}`, tone: 'journal', icon: 'pen', title: `On ${shortDate(x.k)} you wrote only ${words(wordCount(x.e.text))}.`, body: 'Was it a quiet day, or a hard one to put into words? Add a line about what happened.', action: { href: `#/journal/${x.k}`, label: 'Open day' } }));
   const missed7 = keys.slice(-8, -1).filter((k) => !entryOf(d, k) || !wordCount(entryOf(d, k).text));
   if (missed7.length >= 3) refl.push({ key: `journal:missed:${keys.at(-1)}`, tone: 'warn', icon: 'pen', title: `No journal on ${missed7.length} of the last 7 days.`, body: 'Even three sentences count. Try writing right after your evening routine.' });
   const lowRow = moods.slice(-3);
-  if (lowRow.length === 3 && lowRow.every((x) => x.e.mood <= 2) && lowRow.at(-1).k >= addDays(today, -3)) refl.push({ key: `journal:low:${lowRow.at(-1).k}`, tone: 'bad', icon: 'heart', title: 'Three low days in a row.', body: 'What’s been weighing on you? Talking to someone you trust can help — so can a walk outside.' });
+  if (lowRow.length === 3 && lowRow.every((x) => x.e.mood <= 2) && lowRow.at(-1).k >= addDays(today, -3)) refl.push({ key: `journal:low:${lowRow.at(-1).k}`, tone: 'bad', icon: 'heart', title: 'Three low days in a row.', body: 'What’s been weighing on you? Talking to someone you trust can help, so can a walk outside.' });
   const a7 = avg(last7); const p7 = avg(prev7);
-  if (a7 != null && p7 != null && a7 - p7 >= 0.6) refl.push({ key: `journal:up:${today}`, tone: 'good', icon: 'sparkle', title: 'Your mood is up this week.', body: 'What changed? Write it down so you can repeat it.' });
+  if (a7 != null && p7 != null && a7 - p7 >= 0.6) refl.push({ key: `journal:up:${today}`, tone: 'good', icon: 'arrowUp', title: 'Your mood is up this week.', body: 'What changed? Write it down so you can repeat it.' });
   const rg = rate(goodDays); const rl = rate(lowDays);
-  if (rg != null && rl != null && goodDays.length >= 2 && lowDays.length >= 2 && rg - rl >= 0.15) refl.push({ key: 'journal:tasks', tone: 'info', icon: 'chart', title: `On good days you finish ${Math.round(rg * 100)}% of tasks — on low days ${Math.round(rl * 100)}%.`, body: 'Plan lighter on low days; one done task is better than none.' });
+  if (rg != null && rl != null && goodDays.length >= 2 && lowDays.length >= 2 && rg - rl >= 0.15) refl.push({ key: 'journal:tasks', tone: 'info', icon: 'chart', title: `On good days you finish ${Math.round(rg * 100)}% of tasks, on low days ${Math.round(rl * 100)}%.`, body: 'Plan lighter on low days; one done task is better than none.' });
 
   return {
     written: written.length, full: full.length, streak, avgWords, avgMood: avg(moods), last7: a7, prev7: p7,
@@ -84,7 +84,7 @@ function viewJournal(view, param) {
   const a = analyzeJournal(d);
   const hidden = d.settings.hiddenNudges || {};
   const refl = d.settings.nudgesOff ? [] : a.reflections.filter((n) => !(hidden[n.key] && Date.now() - hidden[n.key] < 7 * 86400000));
-  const past = Object.keys(d.journal).filter((x) => x !== k && wordCount(d.journal[x].text)).sort().reverse().slice(0, 12);
+  const past = Object.keys(d.journal).filter((x) => x !== k && wordCount(d.journal[x].text)).sort().reverse().slice(0, 60);
   const loc = getLocation(d);
   const prompts = PROMPTS.map((p) => `<button type="button" class="chip" data-prompt="${esc(p)}">${esc(p)}</button>`).join('');
 
@@ -118,12 +118,15 @@ function viewJournal(view, param) {
           </div>
           ${refl.length ? `<div class="section-head"><h2>Reflections</h2><span class="muted small">Questions, not judgements</span></div>${nudgeStackHTML(refl, { limit: 4 })}` : ''}
           <div class="section-head"><h2>Past entries</h2><span class="muted small">${a.written} in the last 30 days</span></div>
-          ${past.length ? `<div class="j-past">${past.map((x, i) => { const pe = d.journal[x]; const m = moodOf(pe.mood); const n = wordCount(pe.text); return `
-            <a class="j-entry" href="#/journal/${x}" style="--i:${i}">
-              <div class="je-top"><b>${esc(longDate(x))}</b>${m ? `<span class="mood-pill" style="--mc:${m[2]}"><i></i>${m[1]}</span>` : ''}</div>
-              <p>${esc(pe.text.slice(0, 180))}${pe.text.length > 180 ? '…' : ''}</p>
-              <small class="${n < MIN_WORDS ? 'short' : ''}">${words(n)}${n < MIN_WORDS ? ' · short' : ''}</small>
-            </a>`; }).join('')}</div>` : `<div class="empty"><span class="empty-ic">${icon('pen', 26)}</span><p>Your past entries will show up here.</p></div>`}
+          ${past.length ? `
+          <div class="book" id="book" tabindex="0" aria-label="Past entries. Use the arrow keys to turn pages">
+            <div class="book-spread" id="book-spread"></div>
+            <div class="book-nav">
+              <button class="icon-btn" id="book-prev" aria-label="Newer page">${icon('chevL', 18)}</button>
+              <span class="book-pos" id="book-pos"></span>
+              <button class="icon-btn" id="book-next" aria-label="Older page">${icon('chevR', 18)}</button>
+            </div>
+          </div>` : `<div class="empty"><span class="empty-ic">${icon('pen', 26)}</span><p>Your past entries will show up here.</p></div>`}
         </div>
 
         <aside class="j-side">
@@ -176,7 +179,7 @@ function viewJournal(view, param) {
     $('#j-save', view).textContent = 'Saving…';
     clearTimeout(t); t = setTimeout(() => {
       save();
-      if (!wasComplete && n >= MIN_WORDS && !view.dataset.toasted) { view.dataset.toasted = '1'; toast(`${n} words — that’s today’s entry done.`, { title: 'Journal complete', icon: 'pen' }); }
+      if (!wasComplete && n >= MIN_WORDS && !view.dataset.toasted) { view.dataset.toasted = '1'; toast(`${n} words, that’s today’s entry done.`, { title: 'Journal complete', icon: 'pen' }); }
     }, 400);
   };
   $$('[data-prompt]', view).forEach((b) => (b.onclick = () => {
@@ -200,8 +203,61 @@ function viewJournal(view, param) {
   const sl = $('#j-setloc', view);
   if (sl) sl.onclick = async () => { await locationSheet(); rerender(); };
   bindNudges(view, () => rerender());
+  if (past.length) mountBook(view, past.map((x) => ({ k: x, e: d.journal[x] })));
   paintWeather(view, e.mood);
   if (!param && !e.text) setTimeout(() => ta.focus({ preventScroll: true }), 150);
+}
+
+// Past entries as a book: two pages side by side (one on phones), turned with a page-flip.
+function pageHTML(p, no) {
+  if (!p) return '<article class="bpage blank"><span class="bp-no"></span></article>';
+  const m = moodOf(p.e.mood); const n = wordCount(p.e.text);
+  return `
+    <article class="bpage">
+      <header><b>${esc(longDate(p.k))}</b>${m ? `<span class="mood-pill" style="--mc:${m[2]}"><i></i>${m[1]}</span>` : ''}</header>
+      <div class="bp-text">${esc(p.e.text).replace(/\n/g, '<br>')}</div>
+      <footer><a href="#/journal/${p.k}">${icon('pen', 13)} Edit</a><span class="${n < MIN_WORDS ? 'short' : ''}">${words(n)}</span><span class="bp-no">${no}</span></footer>
+    </article>`;
+}
+
+function mountBook(view, pages) {
+  const book = $('#book', view);
+  const spread = $('#book-spread', view);
+  const per = () => (window.matchMedia('(max-width: 760px)').matches ? 1 : 2);
+  let i = 0; let busy = false;
+  const draw = () => {
+    const n = per();
+    spread.innerHTML = Array.from({ length: n }, (_, j) => pageHTML(pages[i + j], i + j + 1)).join('');
+    spread.dataset.per = n;
+    $('#book-pos', view).textContent = `${i + 1}${n > 1 && pages[i + 1] ? `–${i + 2}` : ''} of ${pages.length}`;
+    $('#book-prev', view).disabled = i === 0;
+    $('#book-next', view).disabled = i + n >= pages.length;
+  };
+  const turn = (dir) => {
+    const n = per();
+    const next = i + dir * n;
+    if (busy || next < 0 || next >= pages.length) return;
+    busy = true;
+    const reduce = document.documentElement.classList.contains('no-motion') || window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce) { i = next; draw(); busy = false; return; }
+    // lift the outgoing page, swap the content mid-turn, then lay the new page down
+    spread.classList.add(dir > 0 ? 'turn-next' : 'turn-prev', 'out');
+    setTimeout(() => {
+      i = next; draw();
+      spread.classList.remove('out'); spread.classList.add('in');
+      setTimeout(() => { spread.classList.remove('in', 'turn-next', 'turn-prev'); busy = false; }, 340);
+    }, 260);
+  };
+  $('#book-prev', view).onclick = () => turn(-1);
+  $('#book-next', view).onclick = () => turn(1);
+  book.addEventListener('keydown', (e) => { if (e.key === 'ArrowRight') turn(1); if (e.key === 'ArrowLeft') turn(-1); });
+  let sx = null;
+  book.addEventListener('touchstart', (e) => { sx = e.touches[0].clientX; }, { passive: true });
+  book.addEventListener('touchend', (e) => { if (sx == null) return; const dx = e.changedTouches[0].clientX - sx; if (Math.abs(dx) > 50) turn(dx < 0 ? 1 : -1); sx = null; });
+  let lastPer = per();
+  const onResize = () => { if (!document.body.contains(book)) { window.removeEventListener('resize', onResize); return; } if (per() !== lastPer) { lastPer = per(); i -= i % lastPer; draw(); } };
+  window.addEventListener('resize', onResize);
+  draw();
 }
 
 async function paintWeather(view, mood) {
@@ -219,7 +275,7 @@ async function paintWeather(view, mood) {
       </div>`;
     $('#jw-change', box).onclick = async () => { await locationSheet(); rerender(); };
   } catch {
-    box.innerHTML = `<p class="muted small">${icon('location', 14)} ${esc(placeLabel(loc))} — weather is unavailable right now.</p>`;
+    box.innerHTML = `<p class="muted small">${icon('location', 14)} ${esc(placeLabel(loc))}, weather is unavailable right now.</p>`;
   }
 }
 
@@ -231,13 +287,13 @@ export function journalPanelHTML(d) {
   const m = moodOf(e?.mood);
   return `
     <section class="panel p-plain j-panel">
-      <header class="panel-head"><h2>${icon('pen', 18)} Journal</h2><a href="#/journal" class="view-all">Open</a></header>
+      <header class="panel-head"><h2>${icon('pen', 18)} Journal</h2><a href="#/journal" class="view-all">${icon('pen', 13)} Open</a></header>
+      <div class="jp-weather-card" id="jp-weather"></div>
       <a class="prow j-prow" href="#/journal">
         <span class="prow-ic">${icon(isComplete(e) ? 'check' : 'pen', 17)}</span>
-        <span class="prow-main"><b>${isComplete(e) ? 'Today’s entry is written' : n ? 'Keep going — almost there' : 'How was your day?'}</b><small>${n} / ${MIN_WORDS} words${m ? ` · feeling ${m[1].toLowerCase()}` : ''}</small></span>
+        <span class="prow-main"><b>${isComplete(e) ? 'Today’s entry is written' : n ? 'Keep going, almost there' : 'How was your day?'}</b><small>${n} / ${MIN_WORDS} words${m ? ` · feeling ${m[1].toLowerCase()}` : ''}</small></span>
         ${m ? `<span class="mood-dot" style="--mc:${m[2]}"></span>` : ''}
       </a>
-      <p class="jp-weather muted small" id="jp-weather"></p>
     </section>`;
 }
 
@@ -245,17 +301,24 @@ export async function paintPanelWeather(root) {
   const el = $('#jp-weather', root);
   const loc = getLocation();
   if (!el) return;
-  if (!loc) { el.innerHTML = `<a href="#/settings">${icon('location', 13)} Add your city</a> to get weather tips.`; return; }
+  if (!loc) { el.innerHTML = `<a class="jpw empty" href="#/settings"><span class="jpw-ic">${icon('location', 22)}</span><span><b>Add your city</b><small>Get weather and walk tips here</small></span></a>`; return; }
+  el.innerHTML = `<div class="jpw loading"><span class="jpw-ic">${icon('cloud', 22)}</span><span><b>--°</b><small>${esc(placeLabel(loc))}</small></span></div>`;
   try {
     const w = await getWeather(loc);
     const mood = entryOf(userData(), todayKey())?.mood;
-    if (w && document.body.contains(el)) el.innerHTML = `${icon(w.icon, 14)} ${esc(walkAdvice(w, mood, loc.name))}`;
-  } catch { /* offline: say nothing */ }
+    if (!w || !document.body.contains(el)) return;
+    el.innerHTML = `
+      <div class="jpw wx-${w.icon}">
+        <span class="jpw-ic">${icon(w.icon, 30)}</span>
+        <div class="jpw-main"><b class="num">${w.temp}°</b><span><b>${esc(w.text)}</b><small>${esc(loc.name)} · ${w.min}° / ${w.max}°${w.rain != null ? ` · ${w.rain}% rain` : ''}</small></span></div>
+        <p>${esc(walkAdvice(w, mood, ''))}</p>
+      </div>`;
+  } catch { el.innerHTML = ''; }
 }
 
 export function journalMarkdown(d = userData()) {
   const keys = Object.keys(d.journal || {}).sort();
-  return keys.map((k) => { const e = d.journal[k]; const m = moodOf(e.mood); return `## ${longDate(k)}${m ? ` — ${m[1]}` : ''}\n\n${e.text || ''}`; }).join('\n\n');
+  return keys.map((k) => { const e = d.journal[k]; const m = moodOf(e.mood); return `## ${longDate(k)}${m ? ` (${m[1]})` : ''}\n\n${e.text || ''}`; }).join('\n\n');
 }
 
 register('journal', (v, p) => viewJournal(v, p));

@@ -35,6 +35,14 @@ export function toast(text, { action, onAction, tone = 'good', title = '', icon:
   arm(action ? 5000 : 3200);
 }
 
+// Scroll lock shared by sheets and the search palette. The page keeps its scrollbar gutter
+// (CSS scrollbar-gutter: stable), so nothing shifts sideways when it locks or unlocks.
+let locks = 0;
+export function lockScroll(on) {
+  locks = Math.max(0, locks + (on ? 1 : -1));
+  document.documentElement.classList.toggle('scroll-locked', locks > 0);
+}
+
 // Modal sheet. Returns { el, close }.
 export function sheet(html, { onClose, wide = false } = {}) {
   const root = $('#sheet-root');
@@ -43,11 +51,16 @@ export function sheet(html, { onClose, wide = false } = {}) {
   wrap.innerHTML = `<div class="sheet-backdrop"></div><div class="sheet ${wide ? 'wide' : ''}" role="dialog" aria-modal="true">${html}</div>`;
   root.appendChild(wrap);
   const prevFocus = document.activeElement;
-  requestAnimationFrame(() => wrap.classList.add('in'));
+  lockScroll(true);
+  // two frames so the start state is painted before we animate in
+  requestAnimationFrame(() => requestAnimationFrame(() => wrap.classList.add('in')));
+  let closed = false;
   const close = () => {
+    if (closed) return; closed = true;
+    wrap.classList.add('closing');
     wrap.classList.remove('in');
     document.removeEventListener('keydown', onKey);
-    setTimeout(() => { wrap.remove(); prevFocus && prevFocus.focus && prevFocus.focus(); }, 320);
+    setTimeout(() => { wrap.remove(); lockScroll(false); prevFocus && prevFocus.focus && prevFocus.focus({ preventScroll: true }); }, 300);
     onClose && onClose();
   };
   const onKey = (e) => { if (e.key === 'Escape') close(); };

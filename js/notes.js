@@ -63,7 +63,7 @@ function viewNotes(view) {
   view.innerHTML = `
     <section class="page">
       <div class="hero-head">
-        <div><p class="eyebrow">Notes</p><h1 class="large-title">Your notes.</h1><p class="lead">School, plans, ideas — anything you want to keep.</p></div>
+        <div><h1 class="large-title">Your notes.</h1><p class="lead">School, plans, ideas, anything you want to keep.</p></div>
         <button class="btn primary" id="new-note">${icon('plus', 16)} New note</button>
       </div>
       <div class="notes-bar">

@@ -1,6 +1,6 @@
 // ⌘K command palette: search tasks, notes, channels and messages, or run an action.
 import { icon, taskIcon } from './icons.js';
-import { esc, $, $$ } from './ui.js';
+import { esc, $, $$, lockScroll } from './ui.js';
 import { userData, setPrefs, resolvedTheme } from './store.js';
 import { go } from './router.js';
 import { frequencyLabel } from './schedule.js';
@@ -61,9 +61,7 @@ export function openPalette() {
     </div>`;
   document.body.appendChild(wrap);
   // Lock the page behind the palette; only the results list scrolls.
-  const sbw = window.innerWidth - document.documentElement.clientWidth;
-  document.documentElement.classList.add('scroll-locked');
-  document.documentElement.style.setProperty('--sbw', `${sbw}px`);
+  lockScroll(true);
   const blockWheel = (e) => { if (!e.target.closest('.pal-results')) e.preventDefault(); };
   wrap.addEventListener('wheel', blockWheel, { passive: false });
   wrap.addEventListener('touchmove', blockWheel, { passive: false });
@@ -72,7 +70,7 @@ export function openPalette() {
   const input = $('#pal-q', wrap);
   const res = $('#pal-res', wrap);
   let items = []; let sel = 0;
-  const close = () => { document.documentElement.classList.remove('scroll-locked'); wrap.classList.remove('in'); setTimeout(() => wrap.remove(), 220); open = null; document.removeEventListener('keydown', onKey, true); prev && prev.focus && prev.focus(); };
+  const close = () => { wrap.classList.add('closing'); wrap.classList.remove('in'); setTimeout(() => lockScroll(false), 220); setTimeout(() => wrap.remove(), 220); open = null; document.removeEventListener("keydown", onKey, true); prev && prev.focus && prev.focus({ preventScroll: true }); };
   const run = (i) => { const it = items[i]; if (!it) return; close(); setTimeout(() => it.run(), 30); };
   const draw = () => {
     items = search(input.value);

@@ -27,7 +27,7 @@
 
 ## The idea
 
-Small daily things are the easiest to skip — brushing teeth twice, interdental brushes, putting the retainer on at night, uploading Pinterest pins, downloading new Marvel Rivals clips. Check It keeps them in one place, tells you what's due today, shows what you skipped, and gives you a short journal to write down how the day went.
+Small daily things are the easiest to skip , brushing teeth twice, interdental brushes, putting the retainer on at night, uploading Pinterest pins, downloading new Marvel Rivals clips. Check It keeps them in one place, tells you what's due today, shows what you skipped, and gives you a short journal to write down how the day went.
 
 ## Privacy and what the app asks for
 
@@ -42,17 +42,19 @@ Small daily things are the easiest to skip — brushing teeth twice, interdental
 
 ### Landing page
 
-The public page explains the app. A live copy of the dashboard plays on its own: a cursor ticks off tasks, types a new one, writes in a channel and opens the calendar. Pieces of the dashboard float around the headline, and a week card next to it fills up and draws the dotted checkmark.
+A short, minimal page that follows your light or dark theme. Under the headline a live copy of the dashboard plays on its own: a cursor ticks off tasks, types a new one, writes in a channel and opens the calendar. A week card fills its rings one day at a time.
 
-Further down, a **Why it works** section shows three real research results with links to the sources. There are no made-up user numbers. The app has no server, so it can't count its users. The live numbers are the GitHub star count, plus your own checked-off tasks if you've used the app in this browser.
+Further down, **Why writing it down works** lists three research results with links to the sources, and a privacy section states the plain facts (no servers, no trackers). There are no made-up user numbers. The footer links to the **Privacy Policy** and **Terms of Use** pages (`#/privacy`, `#/terms`), which are also linked from sign up and Settings.
 
 <img src="docs/screens/02-landing-research.png" alt="Research section">
 
 ### Sign up and onboarding
 
-Sign up needs only a username and a password typed twice. The password must have at least 8 characters, an uppercase and a lowercase letter, a number and a symbol, and the checklist updates as you type. Log in has a *Remember me* option. After signing up you see a short animated intro. Then the app asks about notifications and your location (both optional) and offers a list of suggested tasks.
+Sign up needs only a username and a password typed twice. The password must have at least 8 characters, an uppercase and a lowercase letter, a number and a symbol, and the checklist updates as you type. Log in has a *Remember me* option. After signing up a six-step onboarding (about 16 seconds) shows ticking tasks, the planner, stats and reminders. Each step's picture and text arrive together; *Continue*, the arrow keys or *Skip* move you on. Then the app asks about notifications and your location (both optional) and offers a list of suggested tasks.
 
 <img src="docs/screens/03-sign-up.png" alt="Sign up">
+
+<img src="docs/screens/22-onboarding.png" alt="Onboarding">
 
 <img src="docs/screens/04-location.png" alt="Location question">
 
@@ -66,7 +68,7 @@ There are **33 suggestions** in categories: Creator, Body care, Health, Home, Mi
 - **Today:** what's planned for today.
 - **Journal:** today's word count, your mood and a weather tip.
 - **Channels and Notes:** recent messages and notes.
-- **Your week:** a small chart and the latest nudges.
+- **Your week:** a black-to-blue card with this week's numbers (done, earliest finish, usual finish time, best day) and a bar per day. A soft light follows the pointer.
 - **Composer:** the box at the bottom adds a task, a note or a channel message with one Enter.
 
 <img src="docs/screens/06-home.png" alt="Home">
@@ -78,6 +80,14 @@ Tasks are split into **Due today**, **This week** (flexible tasks you can do on 
 <img src="docs/screens/07-today.png" alt="Today">
 
 <img src="docs/screens/08-task-done.png" alt="Task completed">
+
+### Planner
+
+Plans are sets of days. Drag a task from **Your tasks** on the right into a day (on phones, press and hold, then drag), or tap a task and pick days, including *Weekdays*, *Weekend* or *Every day*. Tap a planned task to set its time, repeat (*Every week*, *Every other week*, *This week only*) and whether you want a reminder. You can keep several plans (for example a school week and a holiday week), switch which one is active, and set a weekly goal for how many tasks you plan.
+
+The active plan makes those tasks due on those days. Today sorts them by time and shows the time on the card, and a reminder fires at the planned time while Check It is open.
+
+<img src="docs/screens/23-planner.png" alt="Planner">
 
 ### Calendar
 
@@ -93,7 +103,7 @@ Every day is a ring: a full ring means everything was done, a partial ring means
 - which weekdays you skip most;
 - each task ranked by how often it's skipped.
 
-**Nudges** are short cards like *“Put on retainer for the night” — skipped 4× in 2 weeks*. Each card has an ✕ that hides it for a week, and *Hide all nudges* turns them off. You can turn them back on in Settings.
+**Nudges** are short cards like *“Put on retainer for the night” , skipped 4× in 2 weeks*. Each card has an ✕ that hides it for a week, and *Hide all nudges* turns them off. You can turn them back on in Settings.
 
 <img src="docs/screens/10-stats.png" alt="Stats">
 
@@ -101,7 +111,7 @@ Every day is a ring: a full ring means everything was done, a partial ring means
 
 - **Daily entry:** one entry per day, at least 20 words. Pick a mood (Rough, Low, Okay, Good, Great), tap a prompt like *The best part of today was…* or just write.
 - **Word bar:** fills up until you reach 20 words.
-- **Weather tip:** the side card shows the weather where you live with a suggestion. For example, on a low day: *“Feeling low? It's 9° and cloudy in Prague — a 15-minute walk outside might help.”*
+- **Weather tip:** the side card shows the weather where you live with a suggestion. For example, on a low day: *“Feeling low? It's 9° and cloudy in Prague , a 15-minute walk outside might help.”*
 - **Your journal card:** your journaling streak, how many entries are complete, your average length, your mood over the last 14 days and the words you use most.
 - **Reflections:** questions about your entries (see [How the analysis works](#how-the-analysis-works)).
 - **Past entries:** open any older day and keep writing.
@@ -185,7 +195,7 @@ All of it runs in the browser on your own data.
 
 - **Tasks:** for each task, the app counts the days it was done and the days it was skipped over 7, 14 and 30 days. A task you do *3× a week* only counts as skipped when the week ends without three completions. Nudges point out the tasks you skip most, your weakest weekday, tasks with a perfect run and streaks of 3+ days. The wording changes from day to day so it doesn't repeat.
 - **Journal:** the app looks at the last 30 days and finds:
-  - short entries, which turn into a question like *“On Tue 3 Nov you wrote only 6 words — was it a quiet day, or a hard one to put into words?”*;
+  - short entries, which turn into a question like *“On Tue 3 Nov you wrote only 6 words , was it a quiet day, or a hard one to put into words?”*;
   - missed days (3+ in a week);
   - three low moods in a row;
   - whether your mood went up compared with last week;
@@ -199,7 +209,7 @@ All of it runs in the browser on your own data.
 - Plain HTML, CSS and JavaScript modules with no build step. It's hosted on GitHub Pages and deployed by a GitHub Actions workflow on every push to `main`.
 - Works offline once loaded (service worker) and can be installed as an app.
 - Responsive from phones to wide desktop screens. On phones a bottom tab bar replaces the sidebar.
-- Motion uses CSS plus [GSAP](https://gsap.com) and [Lenis](https://lenis.darkroom.engineering) smooth scrolling on the landing page only. Animations can be turned off in Settings and follow the system *reduce motion* setting.
+- Motion uses CSS and [Motion](https://motion.dev) (bundled in `vendor/`, MIT) for the onboarding. Animations can be turned off in Settings and follow the system *reduce motion* setting.
 
 ## License
 

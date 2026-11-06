@@ -1,4 +1,4 @@
-// A small congratulation window after finishing a task — first one of the day, the middle ones, and the last one.
+// A small congratulation window after finishing a task, first one of the day, the middle ones, and the last one.
 import { esc, reducedMotion } from './ui.js';
 import { logoMark, icon } from './icons.js';
 
@@ -14,7 +14,7 @@ function copy({ title, done, total, goalDone }) {
     return { eyebrow: 'Day complete', head: pick(['That’s everything for today.', 'All done. Ring closed.', 'Every task, checked.'], seed), body: `“${title}” was the last one. ${total} of ${total} done.` };
   }
   if (done === 1) {
-    return { eyebrow: 'First step today', head: 'Congratulations — your first task today is done.', body: `You checked off “${title}”. ${total > 1 ? `${total - 1} to go.` : ''}` };
+    return { eyebrow: 'First step today', head: 'Congratulations, your first task today is done.', body: `You checked off “${title}”. ${total > 1 ? `${total - 1} to go.` : ''}` };
   }
   return {
     eyebrow: `${done} of ${total} done`,

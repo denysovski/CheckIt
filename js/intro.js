@@ -1,152 +1,141 @@
-// Onboarding motion piece shown after registration (full) and login (short).
+// Onboarding shown after registration (about 16 seconds) and a short welcome after login.
+// Animations use Motion (vendor/motion.js) when it is loaded, otherwise the Web Animations API.
 import { icon, logoMark } from './icons.js';
 import { esc, reducedMotion } from './ui.js';
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const EASE = [0.22, 1, 0.36, 1];
 
-const LOGO = (cls = '') => `<div class="logo-mark ${cls}">${logoMark(cls === 'tiny' ? 'tile' : 'plain')}</div>`;
-
-function letters(text, cls = '') {
-  return `<span class="letters ${cls}" aria-label="${esc(text)}">${[...text].map((c, i) =>
-    `<span style="--i:${i}">${c === ' ' ? '&nbsp;' : esc(c)}</span>`).join('')}</span>`;
+// One animate() for both engines. Returns a promise that resolves when it finishes.
+export function anim(el, keyframes, opts = {}) {
+  if (!el || (el.length === 0)) return Promise.resolve();
+  const M = window.Motion;
+  if (M && M.animate) return M.animate(el, keyframes, { duration: 0.5, ease: EASE, ...opts }).finished || Promise.resolve();
+  const list = el.length != null && !(el instanceof Element) ? [...el] : [el];
+  const frames = {};
+  Object.entries(keyframes).forEach(([k, v]) => {
+    const arr = Array.isArray(v) ? v : [null, v];
+    const T = { y: (x) => `translateY(${typeof x === 'number' ? x + 'px' : x})`, x: (x) => `translateX(${typeof x === 'number' ? x + 'px' : x})`, scale: (x) => `scale(${x})`, scaleY: (x) => `scaleY(${x})` };
+    const prop = T[k] ? 'transform' : k;
+    frames[prop] = arr.map((x) => (T[k] ? T[k](x) : x));
+    if (arr[0] === null) frames[prop].shift();
+  });
+  const d = (opts.duration ?? 0.5) * 1000;
+  return Promise.all(list.map((n, i) => {
+    const delay = typeof opts.delay === 'function' ? opts.delay(i, list.length) * 1000 : (opts.delay || 0) * 1000;
+    return n.animate(frames, { duration: d, delay, easing: 'cubic-bezier(.22,1,.36,1)', fill: 'both' }).finished.catch(() => {});
+  }));
 }
+const stagger = (s, from = 0) => (window.Motion && window.Motion.stagger ? window.Motion.stagger(s, { startDelay: from }) : (i) => from + i * s);
+
+const ck = '<svg viewBox="0 0 24 24"><path d="M6 12.5l4 4L18 8"/></svg>';
+const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 const SCENES = [
-  { id: 's-logo', dur: 3400, html: `
-      <div class="stage-center">
-        <div class="orb"></div>
-        ${LOGO('big')}
-        <h1 class="intro-title">${letters('Check It')}</h1>
-        <p class="intro-sub fade-up" style="--d:1.6s">Your calm daily rhythm.</p>
-      </div>` },
-  { id: 's-list', dur: 5200, html: `
-      <div class="stage-split">
-        <div class="copy">
-          <p class="eyebrow fade-up">Checklist</p>
-          <h2 class="fade-up" style="--d:.1s">Everything you need to do.<br><span class="soft">In one place.</span></h2>
-        </div>
-        <div class="mock-list">
-          ${[['pin', 'Upload Pinterest pins', '12 / 200 pins'], ['gamepad', 'Download Marvel Rivals videos', '3× a week'], ['tooth', 'Brush teeth', '2× a day'], ['interdental', 'Interdental brushes', 'Every day'], ['braces', 'Put on retainer for the night', 'Every day']]
-            .map(([ic, t, f], i) => `
-            <div class="mock-row" style="--i:${i}">
-              <span class="mock-check"><svg viewBox="0 0 24 24"><path d="M6 12.5l4 4L18 8"/></svg></span>
-              <span class="mock-ic">${icon(ic, 20)}</span>
-              <span class="mock-text"><b>${t}</b><small>${f}</small></span>
-            </div>`).join('')}
-        </div>
-      </div>` },
-  { id: 's-freq', dur: 4200, html: `
-      <div class="stage-center">
-        <p class="eyebrow fade-up">Frequency</p>
-        <h2 class="fade-up" style="--d:.1s">How many times a week? <span class="soft">You decide.</span></h2>
-        <div class="freq-demo fade-up" style="--d:.3s">
-          <div class="freq-num"><span id="freq-count">1</span><small>× a week</small></div>
-          <div class="freq-days">${['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((d, i) => `<span style="--i:${i}">${d}</span>`).join('')}</div>
-        </div>
-      </div>` },
-  { id: 's-cal', dur: 4200, html: `
-      <div class="stage-split reverse">
-        <div class="copy">
-          <p class="eyebrow fade-up">Calendar</p>
-          <h2 class="fade-up" style="--d:.1s">Every day is a ring.<br><span class="soft">Close it.</span></h2>
-        </div>
-        <div class="mock-cal">
-          ${Array.from({ length: 28 }, (_, i) => {
-            const v = [1, 1, .8, 1, .6, 1, 1, .4, 1, 1, 1, .8, 1, .2, 1, 1, .6, 1, 1, 1, .8, 1, 1, 1, .4, 1, 1, 1][i];
-            return `<span class="mc-day" style="--i:${i};--v:${v}"><svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="14" class="t"/><circle cx="18" cy="18" r="14" class="v"/></svg><em>${i + 1}</em></span>`;
-          }).join('')}
-        </div>
-      </div>` },
-  { id: 's-stats', dur: 5000, html: `
-      <div class="stage-split">
-        <div class="copy">
-          <p class="eyebrow fade-up">Stats</p>
-          <h2 class="fade-up" style="--d:.1s">Numbers that<br><span class="soft">tell the truth.</span></h2>
-        </div>
-        <div class="mock-stats">
-          <div class="bars">${[.7, .9, .55, 1, .8, .35, .95].map((v, i) => `<span style="--i:${i};--v:${v}" class="${v < .5 ? 'low' : ''}"></span>`).join('')}</div>
-          <div class="insight-pop">
-            <span class="ip-ic">${icon('flag', 18)}</span>
-            <div><b>Hey, you skipped the retainer 4×.</b><small>You need to work on this one.</small></div>
-          </div>
-        </div>
-      </div>` },
-  { id: 's-notify', dur: 4200, html: `
-      <div class="stage-center">
-        <p class="eyebrow fade-up">Reminders</p>
-        <h2 class="fade-up" style="--d:.1s">Open your browser. <span class="soft">Check It reminds you of the rest.</span></h2>
-        <div class="mock-browser fade-up" style="--d:.3s">
-          <div class="mb-bar"><i></i><i></i><i></i><span></span></div>
-          <div class="mb-body">
-            <div class="mb-note">
-              <span class="mb-app">${LOGO('tiny')}</span>
-              <div><b>You have 3 unfinished tasks</b><small>Brush teeth, Interdental brushes, Retainer…</small></div>
-            </div>
-          </div>
-        </div>
-      </div>` },
-  { id: 's-end', dur: 0, html: `
-      <div class="stage-center">
-        <div class="orb end"></div>
-        ${LOGO('big')}
-        <h1 class="intro-title">${letters('Let’s go.')}</h1>
-        <p class="intro-sub fade-up" style="--d:.9s">Your data stays in this browser only.</p>
-        <button class="btn primary large fade-up" style="--d:1.2s" id="intro-start">Get started</button>
-      </div>` },
+  {
+    id: 'hello', dur: 2600,
+    title: (n) => `Hi${n ? `, ${esc(n)}` : ''}.`, sub: 'Let’s set up your week. It takes a minute.',
+    art: () => `<div class="ob-logo">${logoMark('plain')}</div>`,
+    play: (el) => anim(el.querySelectorAll('.ob-logo .ld'), { scale: [0, 1], opacity: [0, 1] }, { duration: 0.45, delay: stagger(0.05, 0.15) }),
+  },
+  {
+    id: 'list', dur: 3400,
+    title: () => 'Tick it off.', sub: 'Done tasks turn blue and stay where they are.',
+    art: () => `<div class="ob-card ob-list">${[['tooth', 'Brush teeth', '2× a day'], ['pin', 'Upload Pinterest pins', '120 / 200'], ['interdental', 'Interdental brushes', 'Today'], ['gamepad', 'Marvel Rivals clips', '3× a week']]
+      .map(([ic, t, f]) => `<div class="ob-row"><span class="ob-ck">${ck}</span><span class="ob-ic">${icon(ic, 22)}</span><span class="ob-tx"><b>${t}</b><small>${f}</small></span></div>`).join('')}</div>`,
+    play: async (el) => {
+      const rows = [...el.querySelectorAll('.ob-row')];
+      await sleep(500);
+      for (const r of rows.slice(0, 3)) { r.classList.add('on'); anim(r.querySelector('.ob-ck'), { scale: [0.6, 1.12, 1] }, { duration: 0.35 }); await sleep(420); }
+    },
+  },
+  {
+    id: 'plan', dur: 3400,
+    title: () => 'Plan each day.', sub: 'Drag tasks into days and pick a time.',
+    art: () => `<div class="ob-card ob-plan">${DAYS.map((d, i) => `<div class="ob-col"><span>${d}</span>${i % 2 === 0 ? `<i class="ob-chip">${icon('tooth', 14)}<b>07:30</b></i>` : ''}${[1, 4].includes(i) ? `<i class="ob-chip c2">${icon('pin', 14)}<b>18:00</b></i>` : ''}${i === 5 ? `<i class="ob-chip c3">${icon('gamepad', 14)}<b>16:00</b></i>` : ''}</div>`).join('')}</div>`,
+    play: (el) => anim(el.querySelectorAll('.ob-chip'), { y: [-26, 0], opacity: [0, 1], scale: [0.9, 1] }, { duration: 0.4, delay: stagger(0.11, 0.35) }),
+  },
+  {
+    id: 'stats', dur: 3400,
+    title: () => 'See your week.', sub: 'Streaks, best days and a recap every Monday.',
+    art: () => `<div class="ob-card ob-stats"><div class="ob-kpi"><b>86<small>%</small></b><span>done this week</span></div><div class="ob-bars">${[0.7, 0.9, 0.55, 1, 0.8, 0.4, 0.95].map((v, i) => `<div class="ob-bar"><i style="--v:${v}"></i><span>${DAYS[i][0]}</span></div>`).join('')}</div></div>`,
+    play: (el) => {
+      const n = el.querySelector('.ob-kpi b'); let k = 0;
+      const t = setInterval(() => { k = Math.min(86, k + 4); n.firstChild.nodeValue = k; if (k >= 86) clearInterval(t); }, 28);
+      return anim(el.querySelectorAll('.ob-bar i'), { scaleY: [0, 1] }, { duration: 0.6, delay: stagger(0.06, 0.25) });
+    },
+  },
+  {
+    id: 'remind', dur: 3000,
+    title: () => 'Get a nudge.', sub: 'A reminder at the time you set. Turn it off any time.',
+    art: () => `<div class="ob-card ob-remind"><div class="ob-note"><span class="ob-app">${logoMark('tile')}</span><div><b>Brush teeth at 21:30</b><small>2 tasks left today</small></div><em>now</em></div></div>`,
+    play: (el) => anim(el.querySelector('.ob-note'), { y: [-40, 0], opacity: [0, 1] }, { duration: 0.5, delay: 0.35 }),
+  },
+  {
+    id: 'end', dur: 0,
+    title: () => 'You’re ready.', sub: 'Everything stays in this browser.',
+    art: () => `<div class="ob-logo done">${logoMark('plain')}</div>`,
+    play: (el) => anim(el.querySelectorAll('.ob-logo .ld'), { scale: [0, 1], opacity: [0, 1] }, { duration: 0.4, delay: stagger(0.04, 0.1) }),
+  },
 ];
 
 export function playIntro({ name = '' } = {}) {
   return new Promise((resolve) => {
     const root = document.createElement('div');
-    root.className = 'intro';
+    root.className = 'ob';
+    root.setAttribute('role', 'dialog');
+    root.setAttribute('aria-label', 'Welcome to Check It');
     root.innerHTML = `
-      <div class="intro-progress">${SCENES.map(() => '<span><i></i></span>').join('')}</div>
-      <button class="intro-skip" type="button">Skip</button>
-      <div class="intro-stage" aria-live="polite"></div>`;
+      <div class="ob-top">
+        <div class="ob-progress">${SCENES.map(() => '<span><i></i></span>').join('')}</div>
+        <button class="ob-skip" type="button">Skip</button>
+      </div>
+      <div class="ob-stage" aria-live="polite"></div>
+      <div class="ob-bottom">
+        <button class="ob-next" type="button"><span class="ob-next-dot">${icon('check', 18)}</span><span class="ob-next-l">Continue</span><span class="ob-chev">${icon('chevR', 16)}${icon('chevR', 16)}${icon('chevR', 16)}</span></button>
+      </div>`;
     document.body.appendChild(root);
-    const stage = root.querySelector('.intro-stage');
-    const bars = [...root.querySelectorAll('.intro-progress span')];
-    let done = false;
+    document.documentElement.classList.add('scroll-locked');
+    const stage = root.querySelector('.ob-stage');
+    const bars = [...root.querySelectorAll('.ob-progress span')];
+    const next = root.querySelector('.ob-next');
+    let i = -1; let done = false; let timer = 0; let busy = false;
 
-    const finish = () => {
-      if (done) return;
-      done = true;
-      root.classList.add('out');
-      setTimeout(() => { root.remove(); resolve(); }, 650);
+    const finish = async () => {
+      if (done) return; done = true; clearTimeout(timer);
+      await anim(root, { opacity: [1, 0] }, { duration: 0.35 });
+      root.remove(); document.documentElement.classList.remove('scroll-locked'); document.removeEventListener('keydown', onKey); resolve();
     };
-    root.querySelector('.intro-skip').onclick = finish;
-
-    const show = async (i) => {
-      const sc = SCENES[i];
+    const go = async (to) => {
+      if (busy || done || to < 0 || to >= SCENES.length) return;
+      busy = true; clearTimeout(timer);
       const old = stage.firstElementChild;
-      if (old) { old.classList.add('leave'); await sleep(450); old.remove(); }
+      if (old) { await anim(old, { opacity: [1, 0], y: [0, -16] }, { duration: 0.22, ease: 'ease-in' }); old.remove(); }
+      i = to;
+      const sc = SCENES[i];
       const el = document.createElement('section');
-      el.className = `scene ${sc.id}`;
-      el.innerHTML = sc.html;
-      if (i === 1 && name) el.querySelector('.eyebrow').textContent = `Hi, ${name}`;
+      el.className = `ob-scene ob-${sc.id}`;
+      el.innerHTML = `<div class="ob-art">${sc.art()}</div><div class="ob-copy"><h1>${sc.title(name)}</h1><p>${sc.sub}</p></div>`;
+      el.style.opacity = '0';
       stage.appendChild(el);
-      void el.offsetWidth;
-      el.classList.add('play');
-      bars.forEach((b, j) => b.classList.toggle('done', j < i));
-      if (bars[i]) { bars[i].classList.add('run'); bars[i].style.setProperty('--dur', `${sc.dur || 1200}ms`); }
-      if (sc.id === 's-freq') {
-        const c = el.querySelector('#freq-count');
-        for (let n = 1; n <= 7; n++) { if (done) break; c.textContent = n; await sleep(330); }
-      }
-      if (sc.id === 's-end') el.querySelector('#intro-start').onclick = finish;
+      bars.forEach((b, j) => { b.classList.toggle('done', j < i); b.classList.toggle('run', j === i); b.style.setProperty('--dur', `${sc.dur || 600}ms`); });
+      const last = i === SCENES.length - 1;
+      next.querySelector('.ob-next-l').textContent = last ? 'Get started' : 'Continue';
+      next.classList.toggle('last', last);
+      // Art and text arrive together, in one motion.
+      el.style.opacity = '';
+      await anim(el, { opacity: [0, 1], y: [24, 0] }, { duration: 0.45 });
+      busy = false;
+      sc.play(el);
+      if (sc.dur) timer = setTimeout(() => go(i + 1), sc.dur);
     };
-
-    (async () => {
-      if (reducedMotion()) { root.classList.add('reduced'); await show(SCENES.length - 1); return; }
-      for (let i = 0; i < SCENES.length; i++) {
-        if (done) return;
-        const t0 = performance.now();
-        await show(i);
-        if (!SCENES[i].dur) return;
-        const rest = SCENES[i].dur - (performance.now() - t0);
-        if (rest > 0) await sleep(rest);
-      }
-    })();
+    next.onclick = () => (i === SCENES.length - 1 ? finish() : go(i + 1));
+    root.querySelector('.ob-skip').onclick = finish;
+    const onKey = (e) => { if (e.key === 'ArrowRight' || e.key === 'Enter') { e.preventDefault(); next.click(); } else if (e.key === 'ArrowLeft') go(i - 1); else if (e.key === 'Escape') finish(); };
+    document.addEventListener('keydown', onKey);
+    if (reducedMotion()) root.classList.add('reduced');
+    go(0);
+    next.focus({ preventScroll: true });
   });
 }
 
@@ -154,18 +143,14 @@ export function playIntro({ name = '' } = {}) {
 export function playWelcome(name) {
   return new Promise((resolve) => {
     const root = document.createElement('div');
-    root.className = 'intro welcome';
-    root.innerHTML = `
-      <div class="intro-stage"><section class="scene s-logo play">
-        <div class="stage-center">
-          <div class="orb"></div>
-          ${LOGO('big')}
-          <h1 class="intro-title">${letters(`Welcome back${name ? ', ' + name : ''}`)}</h1>
-        </div>
-      </section></div>`;
+    root.className = 'ob welcome';
+    root.innerHTML = `<div class="ob-stage"><section class="ob-scene"><div class="ob-art"><div class="ob-logo">${logoMark('plain')}</div></div><div class="ob-copy"><h1>Welcome back${name ? `, ${esc(name)}` : ''}.</h1></div></section></div>`;
     document.body.appendChild(root);
-    const end = () => { root.classList.add('out'); setTimeout(() => { root.remove(); resolve(); }, 600); };
+    const sc = root.querySelector('.ob-scene');
+    anim(sc, { opacity: [0, 1], y: [20, 0] }, { duration: 0.45 });
+    anim(root.querySelectorAll('.ld'), { scale: [0, 1], opacity: [0, 1] }, { duration: 0.4, delay: stagger(0.04, 0.1) });
+    const end = async () => { root.onclick = null; await anim(root, { opacity: [1, 0] }, { duration: 0.3 }); root.remove(); resolve(); };
     root.onclick = end;
-    setTimeout(end, reducedMotion() ? 600 : 2300);
+    setTimeout(end, reducedMotion() ? 500 : 1500);
   });
 }

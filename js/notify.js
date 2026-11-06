@@ -3,7 +3,7 @@
 //   as an installed app) a system notification lists today's unfinished tasks.
 // - While the tab is open, a reminder fires once at the chosen time.
 // - The app/tab badge and the page title show the number of open tasks.
-import { pendingToday, todayKey } from './schedule.js';
+import { pendingToday, todayKey, planItemsOn, doneOn } from './schedule.js';
 import { userData, update } from './store.js';
 
 let swReg = null;
@@ -94,6 +94,17 @@ export function startScheduler() {
       if (list.length) parts.push(`Left: ${summary(list)}`);
       if (words < 20) parts.push('Your journal for today is still empty.');
       if (parts.length) await show('Your day isn\'t done yet', parts.join(' '), 'checkit-evening');
+    }
+    // Planner reminders at the planned time
+    const hm = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+    const sent = (d.planNotified && d.planNotified.day === key) ? d.planNotified.ids : [];
+    const dueItems = planItemsOn(d, key).filter((it) => it.notify && it.time && it.time <= hm && !sent.includes(it.id));
+    if (dueItems.length) {
+      update((x) => { x.planNotified = { day: key, ids: [...sent, ...dueItems.map((it) => it.id)] }; });
+      for (const it of dueItems) {
+        const t = d.tasks.find((x) => x.id === it.taskId);
+        if (t && !doneOn(d, t, key)) await show(t.title, `Planned for ${it.time}. Tap to open Check It.`, `checkit-plan-${it.id}`);
+      }
     }
   };
   tick();

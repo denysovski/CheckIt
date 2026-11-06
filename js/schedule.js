@@ -68,8 +68,27 @@ function weeklyNeed(t, wkStart) {
  * Status of a task on a given day.
  * kind: 'required' | 'flexible' | 'met' | 'off' | 'inactive'
  */
+// ---------- weekly plan (Planner) ----------
+export function activePlan(data) { return (data.plans || []).find((p) => p.active) || null; }
+export function planItemsOn(data, k) {
+  const plan = activePlan(data);
+  if (!plan) return [];
+  const wd = weekday(k); const ws = weekStart(k);
+  return plan.items.filter((it) => it.day === wd && (it.repeat === 'once' ? it.week === ws
+    : it.repeat === 'biweekly' ? Math.abs(Math.round(daysBetween(it.week || ws, ws) / 7)) % 2 === 0 : true));
+}
+export function planFor(data, t, k) { return planItemsOn(data, k).find((it) => it.taskId === t.id) || null; }
+
 export function statusOn(data, t, k) {
   if (!activeOn(t, k)) return { kind: 'inactive' };
+  const base = baseStatus(data, t, k);
+  const planned = planFor(data, t, k);
+  if (!planned) return base;
+  if (base.kind === 'required') return { ...base, planned };
+  return { ...base, kind: 'required', done: doneOn(data, t, k), planned };
+}
+
+function baseStatus(data, t, k) {
   const done = doneOn(data, t, k);
   if (isFixed(t)) return { kind: t.days.includes(weekday(k)) ? 'required' : 'off', done };
   if (isDaily(t)) return { kind: 'required', done };
@@ -97,6 +116,8 @@ export function todayBuckets(data, k = todayKey()) {
     else if (s.kind === 'required') out.required.push({ t, s });
     else out.flexible.push({ t, s });
   }
+  const tm = (x) => (x.s.planned && x.s.planned.time) || '99:99';
+  out.required.sort((a, b) => tm(a).localeCompare(tm(b)));
   return out;
 }
 
@@ -205,7 +226,7 @@ export function weekdayMisses(data, days = 56) {
   return { counts, totals };
 }
 
-// Human insights — short, varied nudges. Wording rotates by task + day so it doesn't repeat.
+// Human insights, short, varied nudges. Wording rotates by task + day so it doesn't repeat.
 const pick = (arr, seed) => arr[Math.abs(seed) % arr.length];
 const hash = (str) => [...str].reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 0);
 
@@ -219,14 +240,14 @@ export function insights(data) {
     const n = s.missed; const t = s.t.title; const seed = hash(t) + day;
     const title = pick([
       `Hey, “${t}” slipped ${n}× lately.`,
-      `“${t}” — skipped ${n}× in 2 weeks.`,
+      `“${t}” was skipped ${n}× in 2 weeks.`,
       `You keep skipping “${t}”.`,
       `${n} misses on “${t}”.`,
     ], seed);
     const body = pick([
       'Tie it to something you already do.',
       'Give it a fixed time tomorrow.',
-      'Make it smaller — just start.',
+      'Make it smaller. Just start.',
       'Do it first thing in the morning.',
       'Put it where you can see it.',
       'Two days in a row resets the habit.',

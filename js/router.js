@@ -33,7 +33,7 @@ export function render(view, { enter = true } = {}) {
   afterRender(r, enter);
 }
 
-// Re-render after an action — no entrance animations.
+// Re-render after an action, no entrance animations.
 export function rerender() {
   render(document.getElementById('view'), { enter: false });
 }

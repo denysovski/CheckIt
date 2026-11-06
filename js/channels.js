@@ -31,7 +31,7 @@ export function newChannel(after) {
   const s = sheet(`
     <form class="sheet-body" id="nc-form">
       <h3 class="sheet-title">New channel</h3>
-      <p class="muted">A personal stream for one topic — school, gym log, ideas.</p>
+      <p class="muted">One topic per channel: school, gym, ideas.</p>
       <label class="field"><span>Name</span><div class="link-input"><span>${icon('hash', 18)}</span><input id="nc-name" placeholder="e.g. school" maxlength="32" autocomplete="off"></div></label>
       <div class="row gap"><button type="button" class="btn ghost grow" data-close>Cancel</button><button class="btn primary grow">Create</button></div>
     </form>`);
@@ -71,7 +71,7 @@ function viewChannel(view, id) {
         <button class="icon-btn subtle" id="ch-more" aria-label="Channel options" aria-haspopup="menu">${icon('more', 20)}</button>
       </header>
       <div class="ch-stream" id="stream">
-        ${msgs.length ? body : `<div class="empty ch-empty"><span class="empty-ic">${icon('hash', 26)}</span><p><b>This is the start of #${esc(c.name)}.</b><br>Write anything — it’s saved in your browser.</p></div>`}
+        ${msgs.length ? body : `<div class="empty ch-empty"><span class="empty-ic">${icon('hash', 26)}</span><p><b>This is the start of #${esc(c.name)}.</b><br>Write anything, it’s saved in your browser.</p></div>`}
       </div>
       <form class="composer ch-composer" id="ch-form">
         <textarea id="ch-input" rows="1" placeholder="Message #${esc(c.name)}" aria-label="Message"></textarea>

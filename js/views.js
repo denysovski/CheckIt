@@ -37,7 +37,7 @@ export const PRESETS = [
   { cat: 'Health', title: 'Workout', icon: { kind: 'glyph', value: 'dumbbell' }, perWeek: 3 },
   { cat: 'Health', title: 'Go for a walk outside', icon: { kind: 'glyph', value: 'run' }, perWeek: 5 },
   { cat: 'Health', title: 'Sleep before midnight', icon: { kind: 'glyph', value: 'bed' }, perWeek: 5 },
-  { cat: 'Health', title: 'Cheat day — treat yourself', icon: { kind: 'glyph', value: 'cake' }, perWeek: 1, note: 'Once a week, for a better mood.' },
+  { cat: 'Health', title: 'Weekly cheat day', icon: { kind: 'glyph', value: 'cake' }, perWeek: 1, note: 'Once a week, for a better mood.' },
   { cat: 'Home', title: 'Clean your room', icon: { kind: 'glyph', value: 'broom' }, perWeek: 2 },
   { cat: 'Home', title: 'Tidy your drawers', icon: { kind: 'glyph', value: 'drawer' }, perWeek: 1 },
   { cat: 'Home', title: 'Fold your clothes', icon: { kind: 'glyph', value: 'shirt' }, perWeek: 2 },
@@ -326,46 +326,49 @@ export function taskRow(t, k, s, { compact = false, history = false } = {}) {
   const c = countOn(d, t, k);
   const max = perDay(t);
   const done = c >= max;
-  let sub = frequencyLabel(t);
-  if (s && s.kind === 'flexible' && !done && s.remaining) sub = `${s.remaining}× left this week · optional today`;
-  if (s && s.kind === 'required' && s.need && s.need < 7 && !isFixed(t) && !done) sub = `${s.remaining}× left this week · due today`;
-  if (history) {
-    const at = d.doneAt && d.doneAt[k] && d.doneAt[k][t.id];
-    sub = done ? (at ? `Done at ${clock(at)}` : 'Done') : k < todayKey() ? (s && s.kind === 'required' ? 'Skipped' : 'Not done · optional') : c ? `${c} of ${max} so far` : 'Not done yet';
-  }
+  const at = d.doneAt && d.doneAt[k] && d.doneAt[k][t.id];
+  let sub = '';
+  if (history) sub = done ? (at ? `Done at ${clock(at)}` : 'Done') : k < todayKey() ? (s && s.kind === 'required' ? 'Skipped' : 'Not done · optional') : c ? `${c} of ${max} so far` : 'Not done yet';
+  else if (done) sub = at ? `Done at ${clock(at)}` : 'Done';
   const goal = t.goal ? `<div class="goal"><div class="goal-bar"><i style="width:${Math.min(100, (t.goal.done / t.goal.target) * 100)}%"></i></div><small>${t.goal.done} / ${t.goal.target} ${esc(t.goal.unit || '')}</small></div>` : '';
-  const dots = max > 1 ? `<span class="dots" aria-label="${c} of ${max}">${Array.from({ length: max }, (_, i) => `<i class="${i < c ? 'on' : ''}"></i>`).join('')}</span>` : '';
-  // A clear "when" label: is this for today, or anytime this week — and how many times?
+  // "When" label: for today, or anytime this week, and how many times
   let when = '';
-  if (!history && s && !t.archivedAt) {
-    if (done) when = `<span class="when w-done">${icon('check', 12)} Done</span>`;
-    else if (s.kind === 'required') when = s.need && s.need < 7 && !isFixed(t) ? `<span class="when w-due">Due today</span>` : `<span class="when w-today">Today</span>`;
-    else if (s.kind === 'flexible') when = `<span class="when w-week">This week</span>`;
-    if (!done && max > 1) when += `<span class="when w-times">${max - c}× left today</span>`;
+  if (!history && s && !t.archivedAt && !done) {
+    if (s.kind === 'required') when = s.need && s.need < 7 && !isFixed(t) ? '<span class="when w-due">Due today</span>' : '<span class="when w-today">Today</span>';
+    else if (s.kind === 'flexible') when = '<span class="when w-week">This week</span>';
+    if (s.planned && s.planned.time) when = `<span class="when w-time">${icon('clock', 12)} ${esc(s.planned.time)}</span>` + when;
+    if (max > 1) when += `<span class="when w-times">${c} of ${max} today</span>`;
     if (!isFixed(t) && t.perWeek < 7 && s.need) {
-      const doneWeek = Math.max(0, s.need - (s.remaining ?? 0)) + (done ? 1 : 0);
+      const doneWeek = Math.max(0, s.need - (s.remaining ?? 0));
       when += `<span class="when w-progress">${Math.min(doneWeek, s.need)} of ${s.need} this week</span>`;
     }
   }
-  if (!history) sub = frequencyLabel(t);
   return `
-    <li class="task ${done ? 'is-done' : ''} ${s && s.kind === 'required' && !done && k < todayKey() ? 'is-missed' : ''}" data-id="${t.id}">
+    <li class="task tcard ${done ? 'is-done' : ''} ${s && s.kind === 'required' && !done && k < todayKey() ? 'is-missed' : ''}" data-id="${t.id}">
       <button class="check ${c && !done ? 'partial' : ''}" data-toggle="${t.id}" aria-pressed="${done}" aria-label="${done ? 'Mark as not done' : 'Complete'}: ${esc(t.title)}">
         ${max > 1 && !done ? ring(c / max, 30, 2.5, 'mini') : ''}
         <svg viewBox="0 0 24 24" class="tick"><path d="M6 12.5l4 4L18 8"/></svg>
       </button>
-      <span class="tile">${taskIcon(t.icon, 22)}</span>
+      <span class="tile big">${taskIcon(t.icon, 26)}</span>
       <div class="task-main" data-toggle="${t.id}">
         <span class="task-title">${esc(t.title)}</span>
-        <span class="task-sub"><span class="sub-txt">${esc(sub)}</span> ${dots}</span>
+        <span class="task-sub"><span class="sub-txt ${done ? 'done-at' : ''}">${esc(sub)}</span></span>
         ${when ? `<span class="whens">${when}</span>` : ''}
         ${compact ? '' : goal}
       </div>
       <div class="task-actions">
         ${linkBtn(t)}
-        ${compact ? '' : `<button class="icon-btn subtle" data-menu="${t.id}" aria-haspopup="menu" aria-label="More for ${esc(t.title)}">${icon('more', 20)}</button>`}
+        ${history ? '' : `<button class="icon-btn subtle t-detail" data-detail="${t.id}" aria-label="Edit ${esc(t.title)}" title="Details">${icon('external', 16)}</button>`}
       </div>
     </li>`;
+}
+
+// Open a task's details: jump to Tasks and open its editor there.
+export function openTaskDetail(id) {
+  const open = () => setTimeout(() => openEditor(id), 120);
+  if (location.hash.startsWith('#/tasks')) { open(); return; }
+  location.hash = '#/tasks';
+  window.addEventListener('hashchange', open, { once: true });
 }
 
 export function bindRows(root, k, after) {
@@ -391,7 +394,7 @@ export function bindRows(root, k, after) {
       txt.classList.add('swap-out');
       setTimeout(() => { txt.textContent = `Done at ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`; txt.classList.remove('swap-out'); txt.classList.add('swap-in', 'done-at'); }, 160);
     }
-    const stays = !!row.closest('.list.history');
+    const stays = !!row.closest('.list.history, .panel-list');
     if (!stays) setTimeout(() => row.classList.add('fold'), 1050);
     setTimeout(() => {
       redraw();
@@ -402,6 +405,7 @@ export function bindRows(root, k, after) {
     }, stays ? 1100 : 1450);
   }));
   bindMenus(root);
+  $$('[data-detail]', root).forEach((b) => (b.onclick = (e) => { e.stopPropagation(); openTaskDetail(b.dataset.detail); }));
 }
 
 function bindMenus(root) {
@@ -501,7 +505,7 @@ function emptyIllustration() {
       </svg>
     </div>
     <p><b>Nothing here yet.</b><br>Add your first task or start from suggestions.</p>
-    <button class="btn ghost" id="empty-presets">${icon('sparkle', 16)} Pick from suggestions</button>`;
+    <button class="btn ghost" id="empty-presets">${icon('star', 16)} Pick from suggestions</button>`;
 }
 
 // ============================================================ calendar
@@ -542,7 +546,6 @@ function viewCalendar(view) {
     <section class="page">
       <div class="hero-head">
         <div>
-          <p class="eyebrow">Calendar</p>
           <h1 class="large-title"><button class="month-btn" id="month-pick" aria-haspopup="dialog" aria-expanded="false" aria-label="${MONTHS[m - 1]} ${y}, pick a month">
             <span class="roller ${calDir ? (calDir > 0 ? 'roll-up' : 'roll-down') : ''}">
               ${calDir && calPrevTitle ? `<span class="roll-old" aria-hidden="true">${calPrevTitle}</span>` : ''}
@@ -564,10 +567,10 @@ function viewCalendar(view) {
               ${icon('info', 18)}
               <span class="bubble" role="tooltip">
                 <b>Reading the calendar</b>
-                <span><i class="lg full"></i>Full ring — everything done</span>
-                <span><i class="lg part"></i>Partial ring — some tasks done</span>
-                <span><i class="lg miss"></i>Red dot — something was skipped</span>
-                <span><i class="lg today"></i>Blue number — today</span>
+                <span><i class="lg full"></i>Full ring: everything done</span>
+                <span><i class="lg part"></i>Partial ring: some tasks done</span>
+                <span><i class="lg miss"></i>Red dot: something was skipped</span>
+                <span><i class="lg today"></i>Blue number: today</span>
               </span>
             </span>
           </div>
@@ -624,7 +627,6 @@ function viewStats(view) {
     <section class="page">
       <div class="hero-head">
         <div>
-          <p class="eyebrow">Stats</p>
           <h1 class="large-title">Your rhythm.</h1>
           <p class="lead">The last 30 days in one place.</p>
         </div>
@@ -634,7 +636,7 @@ function viewStats(view) {
       <div class="kpis">
         <div class="kpi"><span>Today</span><b><span data-count="${today.done}">${today.done}</span><small>/${today.total}</small></b></div>
         <div class="kpi"><span>Streak</span><b><span data-count="${st}">${st}</span><small> ${st === 1 ? 'day' : 'days'}</small></b></div>
-        <div class="kpi"><span>30-day success</span><b>${rate30 == null ? '—' : `<span data-count="${rate30}">${rate30}</span>`}<small>${rate30 == null ? '' : '%'}</small></b></div>
+        <div class="kpi"><span>30-day success</span><b>${rate30 == null ? '–' : `<span data-count="${rate30}">${rate30}</span>`}<small>${rate30 == null ? '' : '%'}</small></b></div>
         <div class="kpi"><span>Skipped in 30 days</span><b class="${totalMiss ? 'red-t' : ''}"><span data-count="${totalMiss}">${totalMiss}</span></b></div>
       </div>
 
@@ -668,7 +670,7 @@ function viewStats(view) {
           <li>
             <span class="tile sm">${taskIcon(s.t.icon, 18)}</span>
             <div class="sl-main"><b>${esc(s.t.title)}</b><div class="rate"><i style="width:${(s.rate ?? 0) * 100}%" class="${(s.rate ?? 1) < 0.6 ? 'low' : ''}"></i></div></div>
-            <div class="sl-num"><span>${s.rate == null ? '—' : `<i data-count="${Math.round(s.rate * 100)}">${Math.round(s.rate * 100)}</i>%`}</span><small>${s.done} done · <em class="${s.missed ? 'red-t' : ''}">${s.missed} skipped</em></small></div>
+            <div class="sl-num"><span>${s.rate == null ? '–' : `<i data-count="${Math.round(s.rate * 100)}">${Math.round(s.rate * 100)}</i>%`}</span><small>${s.done} done · <em class="${s.missed ? 'red-t' : ''}">${s.missed} skipped</em></small></div>
           </li>`).join('')}
       </ul></div>` : '<div class="empty"><p>Stats will show up once you start checking off tasks.</p></div>'}
     </section>`;
@@ -703,12 +705,11 @@ function viewTasks(view) {
     <section class="page">
       <div class="hero-head">
         <div>
-          <p class="eyebrow">Tasks</p>
           <h1 class="large-title">Your list.</h1>
           <p class="lead">${pl(active.length, 'active task')}. Add, edit, reorder and attach links.</p>
         </div>
         <div class="row gap">
-          <button class="btn ghost" id="presets">${icon('sparkle', 16)} Suggestions</button>
+          <button class="btn ghost" id="presets">${icon('star', 16)} Suggestions</button>
           <button class="btn primary" id="add">${icon('plus', 16)} New task</button>
         </div>
       </div>
@@ -736,12 +737,12 @@ function viewSettings(view) {
   const permLabel = { granted: 'On', denied: 'Blocked by your browser', default: 'Off', unsupported: 'Not supported here' }[perm];
   view.innerHTML = `
     <section class="page narrow settings">
-      <div class="hero-head"><div><p class="eyebrow date">Settings</p><h1 class="large-title">${esc(d.profile.displayName || p.name)}</h1><p class="lead">@${esc(p.id)} · stored in this browser</p></div></div>
+      <div class="hero-head"><div><h1 class="large-title">${esc(d.profile.displayName || p.name)}</h1><p class="lead">@${esc(p.id)} · stored in this browser</p></div></div>
 
       <h2 class="group-title">You</h2>
       <div class="card group">
         <label class="g-row"><div><b>Name</b><small>Shown on Home</small></div><input class="g-input" id="s-name" value="${esc(d.profile.displayName || p.name)}" maxlength="30" autocomplete="off"></label>
-        <div class="g-row"><div><b>Location</b><small>${loc ? `${esc(placeLabel(loc))}${loc.source === 'ip' ? ' · approximate' : ''} — used only for weather on your Journal` : 'Not set — add it to get weather tips in your Journal'}</small></div><button class="btn ghost small" id="s-loc">${icon('location', 14)} ${loc ? 'Change' : 'Set'}</button></div>
+        <div class="g-row"><div><b>Location</b><small>${loc ? `${esc(placeLabel(loc))}${loc.source === 'ip' ? ' · approximate' : ''}, used only for weather on your Journal` : 'Not set, add it to get weather tips in your Journal'}</small></div><button class="btn ghost small" id="s-loc">${icon('location', 14)} ${loc ? 'Change' : 'Set'}</button></div>
       </div>
 
       <h2 class="group-title">Reminders</h2>
@@ -769,8 +770,8 @@ function viewSettings(view) {
 
       <h2 class="group-title">Your data</h2>
       <div class="card group">
-        <div class="g-row"><div><b>Export</b><small>Tasks, history, notes, journal — one file, or CSV / Markdown</small></div><button class="btn ghost small" id="exp" aria-haspopup="menu">${icon('download', 14)} Export</button></div>
-        <div class="g-row"><div><b>Import</b><small>Load a .checkit.json file — merge it or replace</small></div><button class="btn ghost small" id="imp">${icon('upload', 14)} Import</button></div>
+        <div class="g-row"><div><b>Export</b><small>Tasks, history, notes, journal, one file, or CSV / Markdown</small></div><button class="btn ghost small" id="exp" aria-haspopup="menu">${icon('download', 14)} Export</button></div>
+        <div class="g-row"><div><b>Import</b><small>Load a .checkit.json file, merge it or replace</small></div><button class="btn ghost small" id="imp">${icon('upload', 14)} Import</button></div>
         <div class="g-row"><div><b>Intro</b><small>Watch the welcome tour again</small></div><button class="btn ghost small" id="intro">${icon('play', 14)} Play</button></div>
       </div>
 
@@ -780,7 +781,12 @@ function viewSettings(view) {
         <button class="g-row link danger" id="del"><b>Delete this account</b>${icon('trash', 18)}</button>
         <button class="g-row link danger" data-clear><b>Clear all data in this browser</b>${icon('trash', 18)}</button>
       </div>
-      <p class="muted small center">Check It is an open-source school project · <a href="${REPO_URL}" target="_blank" rel="noopener noreferrer">GitHub</a><br>Everything stays in this browser.</p>
+      <h2 class="group-title">Legal</h2>
+      <div class="card group">
+        <a class="g-row link" href="#/privacy"><b>Privacy Policy</b>${icon('chevR', 18)}</a>
+        <a class="g-row link" href="#/terms"><b>Terms of Use</b>${icon('chevR', 18)}</a>
+      </div>
+      <p class="muted small center">Check It is an open-source school project. <a href="${REPO_URL}" target="_blank" rel="noopener noreferrer">GitHub</a><br>Everything stays in this browser.</p>
     </section>`;
 
   const nm = $('#s-name', view);
@@ -882,7 +888,7 @@ export function openEditor(taskId, { focus = null, title = '' } = {}) {
     } else if (iconTab === 'lib') {
       panel.innerHTML = `
         <div class="search"><span>${icon('search', 18)}</span><input id="lib-q" placeholder="Search 200,000+ icons: tooth, book, gym…" autocomplete="off" value="${esc(t.icon.kind === 'iconify' ? (t.icon.name || '').split(':')[1] || '' : t.title.split(' ').pop() || '')}"></div>
-        <div class="icon-grid" id="lib-res"><p class="muted small">Open-source icons from <a href="https://iconify.design" target="_blank" rel="noopener">Iconify</a> — Lucide, Tabler, Phosphor and more.</p></div>`;
+        <div class="icon-grid" id="lib-res"><p class="muted small">Open-source icons from <a href="https://iconify.design" target="_blank" rel="noopener">Iconify</a>, Lucide, Tabler, Phosphor and more.</p></div>`;
       const q = $('#lib-q', panel);
       const res = $('#lib-res', panel);
       let timer;
@@ -944,7 +950,7 @@ export function openEditor(taskId, { focus = null, title = '' } = {}) {
         <div class="freq-pick">
           ${[1, 2, 3, 4, 5, 6, 7].map((n) => `<button type="button" class="fp ${t.perWeek === n ? 'on' : ''}" data-n="${n}">${n}×</button>`).join('')}
         </div>
-        <small class="hint">${t.perWeek >= 7 ? 'Every day.' : `${t.perWeek}× a week — you pick the days. When you can’t make it otherwise, Check It tells you it’s due today.`}</small>`;
+        <small class="hint">${t.perWeek >= 7 ? 'Every day.' : `${t.perWeek}× a week, you pick the days. When you can’t make it otherwise, Check It tells you it’s due today.`}</small>`;
       $$('[data-n]', panel).forEach((b) => (b.onclick = () => { t.perWeek = +b.dataset.n; renderFreq(); }));
     } else {
       const days = t.days || [];
@@ -1015,7 +1021,7 @@ export function openPresets({ first = false } = {}) {
       <button type="button" class="btn text strong" id="pr-add">Add</button>
     </div>
     <div class="sheet-body presets">
-      <p class="muted">${first ? 'We picked a few to start. Add as many as you like — you can change how often later.' : `${PRESETS.length} ideas. Pick as many as you like.`}</p>
+      <p class="muted">${first ? 'We picked a few to start. Add as many as you like, you can change how often later.' : `${PRESETS.length} ideas. Pick as many as you like.`}</p>
       <div class="search inline full"><span>${icon('search', 18)}</span><input id="pr-q" placeholder="Search suggestions…" autocomplete="off"></div>
       <div class="chips-row pr-cats">${cats.map((c) => `<button type="button" class="chip ${c === cat ? 'on' : ''}" data-cat="${esc(c)}">${esc(c)}</button>`).join('')}</div>
       <div id="pr-list"></div>

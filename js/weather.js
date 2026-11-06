@@ -58,11 +58,11 @@ export function walkAdvice(w, mood, place) {
   const where = place ? ` in ${place}` : '';
   const wet = ['rain', 'storm', 'snow'].includes(w.icon) || (w.rain ?? 0) >= 60;
   const low = mood && mood <= 2;
-  if (w.icon === 'storm') return `There’s a storm${where} right now — maybe a slow stretch inside instead.`;
-  if (wet) return low ? `Feeling low? It’s ${w.temp}° and ${w.text.toLowerCase()}${where} — a short walk with a jacket still helps.` : `${w.temp}° and ${w.text.toLowerCase()}${where}. Take a jacket if you head out.`;
-  if (w.temp <= 0) return low ? `Feeling low? It’s ${w.temp}°${where} — even 10 minutes of cold air can reset your head.` : `${w.temp}°${where}. Cold, but clear for a quick walk.`;
-  if (w.temp >= 28) return `${w.temp}°${where} — go early or late, and bring water.`;
-  return low ? `Feeling low? It’s ${w.temp}° and ${w.text.toLowerCase()}${where} — a 15-minute walk outside might help.` : `${w.temp}° and ${w.text.toLowerCase()}${where} — nice for a walk.`;
+  if (w.icon === 'storm') return `There’s a storm${where} right now, maybe a slow stretch inside instead.`;
+  if (wet) return low ? `Feeling low? It’s ${w.temp}° and ${w.text.toLowerCase()}${where}, a short walk with a jacket still helps.` : `${w.temp}° and ${w.text.toLowerCase()}${where}. Take a jacket if you head out.`;
+  if (w.temp <= 0) return low ? `Feeling low? It’s ${w.temp}°${where}, even 10 minutes of cold air can reset your head.` : `${w.temp}°${where}. Cold, but clear for a quick walk.`;
+  if (w.temp >= 28) return `${w.temp}°${where}, go early or late, and bring water.`;
+  return low ? `Feeling low? It’s ${w.temp}° and ${w.text.toLowerCase()}${where}, a 15-minute walk outside might help.` : `${w.temp}° and ${w.text.toLowerCase()}${where}, nice for a walk.`;
 }
 
 // ---------- finding a place ----------
@@ -110,7 +110,7 @@ export function locationSheet({ onboarding = false } = {}) {
       <div class="sheet-body loc-sheet">
         <span class="notice-ic">${icon('location', 26)}</span>
         <h3 class="sheet-title center">Where do you live?</h3>
-        <p class="muted center">Check It uses this only to show today’s weather on your Journal — like “it’s 9° and cloudy, a short walk might help”. It’s saved in this browser, never on a server.</p>
+        <p class="muted center">Check It uses this only to show today’s weather on your Journal, like “it’s 9° and cloudy, a short walk might help”. It’s saved in this browser, never on a server.</p>
         <button class="btn primary full" id="loc-detect">${icon('location', 16)} Use my location</button>
         <p class="muted small center loc-hint">Your browser will ask for permission. If you say no, we’ll guess the city from your IP address instead.</p>
         <div class="loc-or"><span>or search for a city</span></div>
