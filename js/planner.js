@@ -35,11 +35,18 @@ export function addToPlan(taskId, day, extra = {}) {
 }
 
 function chipHTML(it, t) {
-  const rep = it.repeat === 'weekly' ? '' : it.repeat === 'biweekly' ? '2 wk' : 'Once';
+  const rep = it.repeat === 'weekly' ? '' : it.repeat === 'biweekly' ? 'Every 2 weeks' : 'This week';
   return `
     <div class="pl-chip" data-item="${it.id}" tabindex="0" role="button" aria-label="${esc(t.title)}, ${it.time || 'any time'}. Edit">
-      <span class="pl-chip-top"><span class="pl-ic">${taskIcon(t.icon, 14)}</span><small>${it.time ? esc(it.time) : 'Any time'}${it.notify ? icon('bell', 11) : ''}</small></span>
-      <b>${esc(t.title)}</b>${rep ? `<em>${rep}</em>` : ''}
+      <span class="pl-ic">${taskIcon(t.icon, 16)}</span>
+      <div class="pl-chip-body">
+        <b>${esc(t.title)}</b>
+        <div class="pl-meta">
+          <span class="pl-time ${it.time ? '' : 'any'}">${icon('clock', 11)}${it.time ? esc(it.time) : 'Any time'}</span>
+          ${it.notify ? `<span class="pl-bell" title="Reminder on">${icon('bell', 11)}</span>` : ''}
+          ${rep ? `<span class="pl-rep">${rep}</span>` : ''}
+        </div>
+      </div>
     </div>`;
 }
 
