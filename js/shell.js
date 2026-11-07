@@ -37,6 +37,9 @@ function sidebarHTML() {
       </div>
     </div>
     <button class="sb-search" id="sb-search" title="Search"><span>${icon('search', 17)}</span><span class="grow sb-label">Search</span><kbd class="sb-label sb-kbd">${isMac ? '⌘' : 'Ctrl'} + K</kbd></button>
+    <nav class="sb-quick" aria-label="Quick links">
+      ${[['home', 'Home', 'home'], ['today', 'Today', 'today'], ['tasks', 'Tasks', 'list'], ['calendar', 'Calendar', 'calendar'], ['planner', 'Planner', 'clock']].map(([r, l, ic]) => `<a href="#/${r}" data-nav="${r}" title="${l}" aria-label="${l}">${icon(ic, 18)}</a>`).join('')}
+    </nav>
     <div class="sb-mid">
     <nav class="sb-nav" aria-label="Main">
       ${nav.map(([r, l, ic, badge]) => `<a href="#/${r}" data-nav="${r}" title="${l}">${icon(ic, 18)}<span class="grow sb-label">${l}</span>${badge ? `<span class="sb-badge">${badge}</span>` : ''}</a>`).join('')}

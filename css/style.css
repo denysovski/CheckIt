@@ -2891,3 +2891,17 @@ html.no-motion .tile-card.t-red, html.no-motion .tile-card.t-red::after { animat
 .tile-card.t-red::before { inset: 0 !important; border-radius: inherit; animation: none !important; transform: none !important;
   background: radial-gradient(70% 90% at 80% 0%, rgba(127, 221, 245, .45), transparent 70%), linear-gradient(150deg, var(--g1) 0%, var(--g2) 55%, var(--g3) 125%) !important; background-size: auto !important; }
 html .shell > .sidebar::before { display: none !important; content: none !important; }
+
+/* collapsed card: full-height search and a row of quick icons */
+.sb-top, .sb-search { flex: none !important; }
+.sb-search { min-height: 40px; }
+.sb-quick { display: flex; justify-content: space-between; gap: 4px; flex: none; max-height: 0; opacity: 0; overflow: hidden; visibility: hidden; margin: 0;
+  transition: max-height .45s var(--ease-out), opacity .25s var(--ease-out), margin .45s var(--ease-out), visibility 0s linear .45s; }
+.sidebar .sb-quick a { flex: 1; justify-content: center; padding: 0 !important; height: 40px; border-radius: 12px; display: flex; align-items: center; color: rgba(255, 255, 255, .78); }
+.sidebar .sb-quick a:hover { background: rgba(255, 255, 255, .1); color: #fff; }
+.sidebar .sb-quick a.active { background: rgba(255, 255, 255, .16); color: #fff; }
+@media (min-width: 901px) {
+  :root { --sb-card-h: 176px; }
+  html.sb-collapsed .sb-quick { max-height: 44px; opacity: 1; visibility: visible; margin-top: 4px; transition: max-height .45s var(--ease-out), opacity .35s var(--ease-out) .1s, margin .45s var(--ease-out), visibility 0s; }
+  html.sb-collapsed .sb-search { margin-bottom: 6px; }
+}
