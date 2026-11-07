@@ -13,7 +13,7 @@ export function toast(text, { action, onAction, tone = 'good', title = '', icon:
   if (!root) return;
   const glyph = ic || { good: 'check', bad: 'close', info: 'info' }[tone] || 'check';
   const el = document.createElement('div');
-  el.className = `toast tone-${tone}`;
+  el.className = `toast gx tone-${tone}`;
   el.setAttribute('role', tone === 'bad' ? 'alert' : 'status');
   el.innerHTML = `
     <span class="toast-ic">${uiIcon(glyph, 16)}</span>
@@ -48,7 +48,7 @@ export function sheet(html, { onClose, wide = false } = {}) {
   const root = $('#sheet-root');
   const wrap = document.createElement('div');
   wrap.className = 'sheet-wrap';
-  wrap.innerHTML = `<div class="sheet-backdrop"></div><div class="sheet ${wide ? 'wide' : ''}" role="dialog" aria-modal="true">${html}</div>`;
+  wrap.innerHTML = `<div class="sheet-backdrop"></div><div class="sheet gx ${wide ? 'wide' : ''}" role="dialog" aria-modal="true">${html}</div>`;
   root.appendChild(wrap);
   const prevFocus = document.activeElement;
   lockScroll(true);

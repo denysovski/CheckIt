@@ -23,7 +23,7 @@ export function nudgeStackHTML(list, { limit = 6, compact = false } = {}) {
   return `
     <div class="nudges ${compact ? 'compact' : ''}" role="region" aria-label="Nudges">
       ${shown.map((n, i) => `
-        <div class="nudge tone-${n.tone}" data-key="${esc(n.key)}" style="--i:${i}">
+        <div class="nudge gx tone-${n.tone}" data-key="${esc(n.key)}" style="--i:${i}">
           <span class="nudge-ic">${icon(n.icon || ICON[n.tone] || 'info', 16)}</span>
           <div class="nudge-txt"><b>${esc(n.title)}</b>${n.body ? `<span>${esc(n.body)}</span>` : ''}</div>
           ${n.action ? `<a class="nudge-act" href="${esc(n.action.href)}">${esc(n.action.label)}</a>` : ''}

@@ -29,7 +29,7 @@ export function celebrate(info) {
   const R = 26; const C = 2 * Math.PI * R;
   dismiss(true);
   const el = document.createElement('div');
-  el.className = `celebrate ${info.total && info.done >= info.total ? 'all' : ''}`;
+  el.className = `celebrate gx ${info.total && info.done >= info.total ? 'all' : ''}`;
   el.setAttribute('role', 'status');
   el.innerHTML = `
     <div class="cb-burst" aria-hidden="true">${Array.from({ length: 10 }, (_, i) => `<i style="--a:${i * 36}deg;--d:${i % 2 ? 46 : 58}px"></i>`).join('')}</div>

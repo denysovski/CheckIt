@@ -3003,3 +3003,70 @@ html .shell > .sidebar::before { display: none !important; content: none !import
 .gx .link-btn, .j-weather.gx button.link, .j-weather.gx .jw-change { color: #fff !important; text-decoration: underline; text-underline-offset: 3px; }
 .book-spread.gx .bpage footer .short { color: #FFC9B5 !important; }
 .gx .btn.text { color: #fff !important; text-decoration: underline; text-underline-offset: 3px; }
+
+/* =====================================================================
+   gradients on reflections, nudges, notifications, celebrations, sheets
+   ===================================================================== */
+.nudge.gx { border: 0 !important; border-radius: 20px; padding: 14px 12px 14px 14px; }
+.nudge.gx::after { display: none !important; }
+.nudge.gx .nudge-ic { width: 38px; height: 38px; border-radius: 12px; background: #fff; color: var(--nc); box-shadow: 0 6px 14px rgba(0, 10, 20, .25); }
+.nudge.gx.tone-warn { --nc: #E08A2E; --g2: #0B3550; } .nudge.gx.tone-bad { --nc: #D9534A; --g2: #0D2D45; }
+.nudge.gx.tone-good, .nudge.gx.tone-journal { --nc: #0B84A6; } .nudge.gx.tone-info { --nc: #4A5966; }
+.nudge.gx .nudge-txt b { color: #fff; font-weight: 600; }
+.nudge.gx .nudge-txt span { color: rgba(255, 255, 255, .74); }
+.nudge.gx .nudge-act { color: #fff; background: rgba(255, 255, 255, .14); font-weight: 600; }
+.nudge.gx .nudge-act:hover { background: rgba(255, 255, 255, .24); }
+.nudge.gx .nudge-x { color: rgba(255, 255, 255, .7); }
+.nudge.gx .nudge-x:hover { background: rgba(255, 255, 255, .14); color: #fff; }
+.nudges .nudge.gx:nth-child(2) { --gdel: -9s; } .nudges .nudge.gx:nth-child(3) { --gdel: -16s; }
+
+.toast.gx { border: 0 !important; border-radius: 20px; padding: 12px; box-shadow: 0 22px 46px -16px rgba(3, 20, 32, .6) !important; }
+.toast.gx .toast-ic { width: 36px; height: 36px; border-radius: 12px; background: #fff; color: #0B84A6; }
+.toast.gx.tone-bad .toast-ic { color: #D9534A; }
+.toast.gx.tone-info .toast-ic { color: #4A5966; }
+.toast.gx .toast-txt b { color: #fff; font-weight: 600; }
+.toast.gx .toast-txt span { color: rgba(255, 255, 255, .78); }
+.toast.gx .toast-txt:not(:has(b)) span { color: #fff; }
+.toast.gx .toast-btn { color: #fff; background: rgba(255, 255, 255, .16); }
+.toast.gx .toast-btn:hover { background: rgba(255, 255, 255, .26); }
+.toast.gx .toast-x { color: rgba(255, 255, 255, .7); }
+.toast.gx .toast-bar { background: rgba(127, 221, 245, .85); }
+
+.celebrate.gx { position: fixed !important; border: 0 !important; border-radius: 26px; box-shadow: 0 28px 60px -18px rgba(3, 20, 32, .7), 0 0 50px -14px rgba(127, 221, 245, .45) !important; }
+.celebrate.gx .cb-mark .ld { fill: #fff; }
+.celebrate.gx .cb-ring .t { stroke: rgba(255, 255, 255, .18); }
+.celebrate.gx .cb-ring .v { stroke: #7FDDF5; }
+.celebrate.gx b, .celebrate.gx h3, .celebrate.gx strong { color: #fff; }
+.celebrate.gx p, .celebrate.gx span:not(.cb-badge) { color: rgba(255, 255, 255, .78); }
+.celebrate.gx .cb-x, .celebrate.gx button { color: rgba(255, 255, 255, .8); }
+
+/* sheets: static gradient (they scroll, so no moving layer) */
+html .sheet.gx { position: relative !important; overflow: auto !important; border: 0 !important; border-radius: 28px;
+  background: radial-gradient(120% 80% at 100% 0%, var(--g-hi), transparent 60%), linear-gradient(150deg, var(--g1) 0%, var(--g2) 55%, var(--g3) 125%) !important;
+  box-shadow: 0 40px 90px -20px rgba(3, 20, 32, .7) !important; }
+html .sheet.gx::before { display: none !important; content: none !important; }
+.sheet.gx .field input, .sheet.gx .field textarea, .sheet.gx .field select, .sheet.gx input:not([type="checkbox"]):not([type="radio"]):not([type="range"]), .sheet.gx textarea, .sheet.gx select {
+  background: rgba(255, 255, 255, .08) !important; color: #fff !important; border: 0 !important; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .1) !important; }
+.sheet.gx input::placeholder, .sheet.gx textarea::placeholder { color: rgba(255, 255, 255, .45); }
+.sheet.gx input:focus, .sheet.gx textarea:focus, .sheet.gx select:focus { box-shadow: inset 0 0 0 2px rgba(127, 221, 245, .6) !important; outline: none; }
+.sheet.gx select option { color: #0B0D10; }
+.sheet.gx .btn.primary { background: #fff !important; color: #0B4F70 !important; }
+.sheet.gx .btn.primary:hover { box-shadow: 0 0 0 5px rgba(255, 255, 255, .16) !important; }
+.sheet.gx .btn.ghost, .sheet.gx .btn.secondary { background: rgba(255, 255, 255, .12) !important; color: #fff !important; border: 0 !important; }
+.sheet.gx .btn.ghost:hover { background: rgba(255, 255, 255, .2) !important; }
+.sheet.gx .btn.danger, .sheet.gx .btn.primary.danger { background: #E5534B !important; color: #fff !important; }
+.sheet.gx .sheet-title, .sheet.gx h2, .sheet.gx h3 { color: #fff; }
+.sheet.gx .muted, .sheet.gx .hint, .sheet.gx label > span, .sheet.gx .sheet-sub { color: rgba(255, 255, 255, .7); }
+.sheet.gx .seg, .sheet.gx .tabs { background: rgba(255, 255, 255, .08) !important; }
+.sheet.gx .seg .on, .sheet.gx .seg button.on, .sheet.gx .tabs .on { background: #fff !important; color: #0B4F70 !important; }
+.sheet.gx .chip { background: rgba(255, 255, 255, .12) !important; color: #fff !important; border: 0 !important; }
+.sheet.gx .chip.on { background: #fff !important; color: #0B4F70 !important; }
+.sheet.gx .pl-dp, .sheet.gx .pl-seg span, .sheet.gx .pl-switch { background: rgba(255, 255, 255, .1); color: #fff; }
+.sheet.gx .pl-dp.on { background: #fff; color: #0B4F70; }
+.sheet.gx .pl-seg input:checked + span { background: #fff; color: #0B4F70; }
+.sheet.gx .pl-switch input:checked + i { background: #12AAD4; }
+.sheet.gx .pl-quick button { background: rgba(255, 255, 255, .14); color: #fff; }
+.sheet.gx .sheet-header { background: rgba(4, 16, 26, .45) !important; -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); border-bottom: 0 !important; }
+:root:not([data-theme="dark"]) .sheet.gx .sheet-header { background: rgba(6, 40, 60, .35) !important; }
+.sheet.gx .sheet-header button, .sheet.gx .sheet-header a { color: #fff !important; }
+.rc-fact > span:first-child, .rc-fact .ic-wrap, .rc-fact i:first-child { background: #fff !important; color: #0B84A6 !important; }
