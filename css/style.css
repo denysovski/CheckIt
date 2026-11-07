@@ -2588,9 +2588,9 @@ html.pl-dragging, html.pl-dragging * { cursor: grabbing !important; user-select:
   --page-grad: radial-gradient(1200px 800px at 100% -15%, rgba(14, 152, 190, .20), transparent 60%), radial-gradient(1000px 800px at -15% 115%, rgba(8, 58, 91, .55), transparent 60%), linear-gradient(165deg, #08121A 0%, #060A0E 50%, #071420 100%); }
 
 /* ---- the gradient surface ---- */
-:where(.gx, .panel, .tile-card, .stats-page .kpi, .stats-page .card, .pl-goal, .sidebar, .rc-hero, .rc-card) { --g1: #06090C; --g2: #0A2A40; --g3: #0C7EA3; --g-hi: rgba(18, 170, 212, .5); --gdur: 22s; }
-:where(:root:not([data-theme="dark"])) :where(.gx, .panel, .tile-card, .stats-page .kpi, .stats-page .card, .pl-goal, .sidebar, .rc-hero, .rc-card) { --g1: #0A3854; --g2: #0B6F95; --g3: #2DBFE6; --g-hi: rgba(255, 255, 255, .28); }
-.gx, .panel, .tile-card, .stats-page .kpi, .stats-page .card, .pl-goal, .sidebar, .rc-hero, .rc-card {
+:where(.gx, .panel, .tile-card, .stats-page .kpi, .stats-page .card, .pl-goal, .sidebar, .rc-hero, .rc-card, .note-card) { --g1: #06090C; --g2: #0A2A40; --g3: #0C7EA3; --g-hi: rgba(18, 170, 212, .5); --gdur: 22s; }
+:where(:root:not([data-theme="dark"])) :where(.gx, .panel, .tile-card, .stats-page .kpi, .stats-page .card, .pl-goal, .sidebar, .rc-hero, .rc-card, .note-card) { --g1: #0A3854; --g2: #0B6F95; --g3: #2DBFE6; --g-hi: rgba(255, 255, 255, .28); }
+.gx, .panel, .tile-card, .stats-page .kpi, .stats-page .card, .pl-goal, .sidebar, .rc-hero, .rc-card, .note-card {
   --ink: #FFFFFF; --ink-2: rgba(255, 255, 255, .72); --ink-3: rgba(255, 255, 255, .5);
   --surface: rgba(255, 255, 255, .07); --bg-2: rgba(255, 255, 255, .09); --bg-3: rgba(255, 255, 255, .16); --hover: rgba(255, 255, 255, .08);
   --line: rgba(255, 255, 255, .09); --line-2: rgba(255, 255, 255, .16); --panel-line: transparent;
@@ -2605,7 +2605,7 @@ html.pl-dragging, html.pl-dragging * { cursor: grabbing !important; user-select:
   box-shadow: 0 20px 44px -18px rgba(8, 58, 91, .45), inset 0 1px 0 rgba(255, 255, 255, .18) !important;
 }
 /* the moving light: drifts, swings and tilts, on the compositor */
-:is(.gx, .panel, .tile-card, .stats-page .kpi, .stats-page .card, .pl-goal, .sidebar, .rc-hero, .rc-card)::before {
+:is(.gx, .panel, .tile-card, .stats-page .kpi, .stats-page .card, .pl-goal, .sidebar, .rc-hero, .rc-card, .note-card)::before {
   content: "" !important; display: block !important; position: absolute; z-index: -1; inset: -60%; pointer-events: none; opacity: 1 !important;
   background: radial-gradient(closest-side at 50% 50%, var(--g-hi), transparent 70%) 0 0 / 55% 55% no-repeat;
   animation: gxDrift var(--gdur) ease-in-out infinite alternate; animation-delay: var(--gdel, 0s);
@@ -2905,3 +2905,43 @@ html .shell > .sidebar::before { display: none !important; content: none !import
   html.sb-collapsed .sb-quick { max-height: 44px; opacity: 1; visibility: visible; margin-top: 4px; transition: max-height .45s var(--ease-out), opacity .35s var(--ease-out) .1s, margin .45s var(--ease-out), visibility 0s; }
   html.sb-collapsed .sb-search { margin-bottom: 6px; }
 }
+
+/* Today and Tasks pages: same gradient panel and cards as Home's Today */
+.panel.list-panel { padding: 14px; border-radius: 28px; margin: 0 0 18px; }
+.panel.list-panel .list { margin: 0; background: transparent !important; border: 0 !important; box-shadow: none !important; overflow: visible; display: flex; flex-direction: column; gap: 10px; }
+.panel.list-panel .list > .task { border-radius: 18px; margin: 0; padding: 12px 16px; border: 0 !important; }
+.panel.list-panel .list > .task::before, .panel.list-panel .list > .task::after { display: none !important; }
+.panel.list-panel .task-title { color: #fff; }
+.panel.list-panel .task-sub, .panel.list-panel .sub-txt { color: rgba(255, 255, 255, .7); }
+.panel.list-panel .icon-btn { color: rgba(255, 255, 255, .8); }
+.panel.list-panel .icon-btn:hover { background: rgba(255, 255, 255, .12); color: #fff; }
+.panel.list-panel .reorder .icon-btn:disabled { opacity: .3; }
+.page > .section-head { margin-top: 26px; }
+
+/* notes: gradient cards with an icon, header and a full date */
+.note-grid { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+.note-card { gap: 10px; padding: 18px; border-radius: 24px; min-height: 196px; transition: box-shadow .45s var(--ease-out) !important; }
+.note-card:hover { transform: none !important; box-shadow: 0 0 0 0 transparent, 0 26px 56px -20px rgba(18, 170, 212, .6), 0 0 40px -12px rgba(127, 221, 245, .35) !important; }
+.note-card:nth-child(3n+2) { --gdel: -8s; --gdur: 27s; }
+.note-card:nth-child(3n) { --gdel: -15s; --gdur: 19s; }
+.nc-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.nc-ic { width: 46px; height: 46px; border-radius: 15px; display: grid; place-items: center; background: #fff; color: #0B6F95; box-shadow: 0 8px 18px rgba(0, 10, 20, .25); flex: none; }
+.nc-flags { display: flex; align-items: center; gap: 6px; }
+.nc-tag { font-size: 12px; font-weight: 600; padding: 5px 10px; border-radius: 999px; background: rgba(255, 255, 255, .16); color: #fff; }
+.nc-pin { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; background: rgba(255, 255, 255, .16); color: #fff; }
+.note-card h3 { font-family: var(--display); font-size: 20px; font-weight: 700; color: #fff; margin-top: 4px; }
+.note-card p { color: rgba(255, 255, 255, .74); }
+.nc-foot { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding-top: 12px; border-top: 1px solid rgba(255, 255, 255, .12); font-size: 12.5px; color: rgba(255, 255, 255, .66); }
+.nc-foot span { display: inline-flex; align-items: center; gap: 6px; }
+.note-head { display: flex; align-items: center; gap: 14px; margin: 6px 0 4px; }
+.note-head .note-title { flex: 1; min-width: 0; margin: 0; }
+.note-ic { width: 58px; height: 58px; flex: none; border-radius: 18px; display: grid; place-items: center; color: #fff;
+  background: linear-gradient(150deg, #0A3854 0%, #0B6F95 55%, #2DBFE6 125%); box-shadow: 0 12px 26px -10px rgba(8, 58, 91, .55); transition: box-shadow .4s var(--ease-out); }
+.note-ic:hover { box-shadow: 0 0 0 5px rgba(14, 152, 190, .18), 0 12px 26px -10px rgba(8, 58, 91, .55); }
+.note-ic:focus-visible { outline: 3px solid rgba(14, 152, 190, .5); outline-offset: 2px; }
+.icon-pick { display: grid !important; grid-template-columns: repeat(8, 40px); gap: 4px; padding: 8px !important; }
+.icon-pick button { width: 40px; height: 40px; padding: 0 !important; justify-content: center !important; border-radius: 12px; }
+.icon-pick button.on { background: #0E98BE !important; color: #fff !important; }
+@media (max-width: 520px) { .icon-pick { grid-template-columns: repeat(6, 40px); } }
+.note-card { border: 0 !important; box-shadow: 0 22px 48px -20px rgba(5, 30, 48, .55) !important; }
+.icon-pick button.on .ic, .icon-pick button.on svg { color: #fff !important; stroke: currentColor; }

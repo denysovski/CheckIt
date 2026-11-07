@@ -134,6 +134,8 @@ The task list lets you reorder, edit, archive and delete tasks, and add new ones
 
 ### Notes
 
+Each note has its own icon (pick one from the tile next to the title) and shows on a gradient card with its tag, a pin, a short excerpt, the full date (for example *27th October 2026*) and the word count.
+
 Notes for school and anything else. Each note can have a tag and be pinned, and it saves as you type. Notes support light formatting: `# headings`, `- lists`, `[ ] checkboxes` and `**bold**`. There's a preview mode where you can tick the checkboxes, and you can download any note as Markdown.
 
 <img src="docs/screens/15-notes.png" alt="Notes">

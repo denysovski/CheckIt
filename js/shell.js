@@ -8,7 +8,7 @@ import {
   todayKey, weekStart, todayBuckets, daySummary, taskStats, streak, insights, dailySeries, prettyDate, parseKey, DAY_SHORT, weekday, frequencyLabel,
 } from './schedule.js';
 import { taskRow, bindRows, openEditor, showAccountMenu, toggleTask } from './views.js';
-import { sortedNotes, createNote, fmtDate } from './notes.js';
+import { sortedNotes, createNote, fmtDate, fullDate, noteIcon } from './notes.js';
 import { messagesOf, postMessage, newChannel } from './channels.js';
 import { openPalette } from './palette.js';
 import { recapBadge, ensureRecaps, showNewRecap, weekStats } from './recaps.js';
@@ -50,7 +50,7 @@ function sidebarHTML() {
     </div>
     <div class="sb-section">
       <div class="sb-head"><span class="sb-label">Notes</span><button class="icon-btn subtle xs2" id="sb-add-note" aria-label="New note" title="New note">${icon('plus', 16)}</button></div>
-      ${notes.length ? notes.map((n) => `<a href="#/note/${n.id}" data-nav="note:${n.id}" title="${esc(n.title || 'Untitled')}">${icon('doc', 16)}<span class="grow ellipsis sb-label">${esc(n.title || 'Untitled')}</span>${n.pinned ? `<span class="sb-pin sb-label">${icon('thumbtack', 13)}</span>` : ''}</a>`).join('') : '<p class="sb-empty sb-label">No notes yet</p>'}
+      ${notes.length ? notes.map((n) => `<a href="#/note/${n.id}" data-nav="note:${n.id}" title="${esc(n.title || 'Untitled')}">${icon(noteIcon(n), 16)}<span class="grow ellipsis sb-label">${esc(n.title || 'Untitled')}</span>${n.pinned ? `<span class="sb-pin sb-label">${icon('thumbtack', 13)}</span>` : ''}</a>`).join('') : '<p class="sb-empty sb-label">No notes yet</p>'}
     </div>
     </div>
     <div class="sb-bottom">
@@ -220,9 +220,9 @@ function viewHome(view) {
           <header class="panel-head"><h2>${icon('doc', 18)} Notes <span class="count">${d.notes.length}</span></h2><a href="#/notes" class="view-all">View all ${icon('chevR', 13)}</a></header>
           <div class="panel-rows">
             ${notes.map((n) => `<a class="prow" href="#/note/${n.id}">
-              <span class="prow-ic">${icon('doc', 17)}</span>
+              <span class="prow-ic">${icon(noteIcon(n), 17)}</span>
               <span class="prow-main"><b>${esc(n.title || 'Untitled')} ${n.tag ? `<em class="chip small">${esc(n.tag)}</em>` : ''}</b></span>
-              <span class="date-pill">${fmtDate(n.updatedAt)}</span></a>`).join('') || '<div class="panel-empty"><p>No notes yet.</p></div>'}
+              <span class="date-pill">${fullDate(n.updatedAt)}</span></a>`).join('') || '<div class="panel-empty"><p>No notes yet.</p></div>'}
             <button class="prow add" id="h-new-note"><span class="prow-ic">${icon('plus', 17)}</span><span class="prow-main"><b>New note</b></span></button>
           </div>
         </section>

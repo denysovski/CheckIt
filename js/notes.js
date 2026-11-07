@@ -15,13 +15,32 @@ const fmtDate = (ts) => {
 };
 export { fmtDate };
 
+// "27th October 2026"
+export function fullDate(ts) {
+  const d = new Date(ts); const n = d.getDate();
+  const suf = n % 100 >= 11 && n % 100 <= 13 ? 'th' : ['th', 'st', 'nd', 'rd'][n % 10] || 'th';
+  return `${n}${suf} ${d.toLocaleDateString('en-GB', { month: 'long' })} ${d.getFullYear()}`;
+}
+
+export const NOTE_ICONS = ['doc', 'book', 'pen', 'brain', 'star', 'heart', 'flag', 'calendar', 'clock', 'list', 'check', 'bell', 'code', 'music', 'camera', 'video', 'gamepad', 'dumbbell', 'run', 'leaf', 'plant', 'cart', 'wallet', 'mail', 'phone', 'users', 'location', 'link', 'tag', 'quote', 'flame', 'moon'];
+export const noteIcon = (n) => (n && NOTE_ICONS.includes(n.icon) ? n.icon : 'doc');
+const words = (b) => ((b || '').match(/\S+/g) || []).length;
+
+// Icon picker popover; calls onPick(name)
+function pickIcon(anchor, current, onPick) {
+  const el = popover(anchor, `<div class="menu icon-pick" role="listbox" aria-label="Note icon">${NOTE_ICONS.map((ic) => `<button role="option" aria-selected="${ic === current}" class="${ic === current ? 'on' : ''}" data-ic="${ic}" title="${ic}" aria-label="${ic}">${icon(ic, 20)}</button>`).join('')}</div>`, { align: 'start' });
+  if (!el) return;
+  $$('[data-ic]', el).forEach((b) => (b.onclick = () => { closePopover(); onPick(b.dataset.ic); }));
+  const first = $('.on', el) || $('[data-ic]', el); first && first.focus();
+}
+
 export function sortedNotes(d = userData()) {
   return [...d.notes].sort((a, b) => (b.pinned - a.pinned) || b.updatedAt - a.updatedAt);
 }
 
 export function createNote({ title = '', body = '', tag = '' } = {}) {
   const now = Date.now();
-  const n = { id: uid(), title, body, tag, pinned: false, createdAt: now, updatedAt: now };
+  const n = { id: uid(), title, body, tag, icon: 'doc', pinned: false, createdAt: now, updatedAt: now };
   update((d) => d.notes.unshift(n));
   refreshSidebar();
   return n;
@@ -75,10 +94,13 @@ function viewNotes(view) {
       </div>
       ${list.length ? `<div class="note-grid">${list.map((n, i) => `
         <a class="note-card" href="#/note/${n.id}" style="--i:${i}">
-          <div class="nc-top">${n.tag ? `<span class="chip small">${esc(n.tag)}</span>` : '<span></span>'}${n.pinned ? `<span class="nc-pin">${icon('thumbtack', 15)}</span>` : ''}</div>
+          <div class="nc-head">
+            <span class="nc-ic">${icon(noteIcon(n), 22)}</span>
+            <div class="nc-flags">${n.tag ? `<span class="nc-tag">${esc(n.tag)}</span>` : ''}${n.pinned ? `<span class="nc-pin" title="Pinned">${icon('thumbtack', 14)}</span>` : ''}</div>
+          </div>
           <h3>${esc(n.title || 'Untitled')}</h3>
           <p>${esc(excerpt(n.body)) || '<span class="muted">Empty note</span>'}</p>
-          <small>${fmtDate(n.updatedAt)}</small>
+          <div class="nc-foot"><span>${icon('calendar', 13)} ${fullDate(n.updatedAt)}</span><span>${words(n.body)} ${words(n.body) === 1 ? 'word' : 'words'}</span></div>
         </a>`).join('')}</div>`
         : `<div class="empty"><span class="empty-ic">${icon('doc', 26)}</span><p>${q || filterTag ? 'No notes match.' : 'No notes yet.'}</p></div>`}
     </section>`;
@@ -106,9 +128,12 @@ function viewNote(view, id) {
       </div>
       <div class="note-meta">
         <button class="chip tag-btn" id="tag-btn">${icon('tag', 14)} ${esc(n.tag || 'Add tag')}</button>
-        <span class="muted small">Edited ${fmtDate(n.updatedAt).toLowerCase()} · ${new Date(n.updatedAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}</span>
+        <span class="muted small">Edited ${fullDate(n.updatedAt)} · ${new Date(n.updatedAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}</span>
       </div>
-      <input class="note-title" id="nt" placeholder="Untitled" value="${esc(n.title)}" maxlength="120">
+      <div class="note-head">
+        <button class="note-ic" id="note-ic" aria-label="Change icon" title="Change icon" aria-haspopup="listbox">${icon(noteIcon(n), 28)}</button>
+        <input class="note-title" id="nt" placeholder="Untitled" value="${esc(n.title)}" maxlength="120" aria-label="Title">
+      </div>
       ${mode === 'write'
         ? `<textarea class="note-body" id="nb" placeholder="Start writing… (# heading, - list, [ ] checkbox, **bold**)">${esc(n.body)}</textarea>`
         : `<div class="note-preview md">${markdown(n.body) || '<p class="muted">Nothing to preview yet.</p>'}</div>`}
@@ -154,6 +179,11 @@ function viewNote(view, id) {
     });
   }));
   $$('[data-mode]', view).forEach((b) => (b.onclick = () => { if (nb) { clearTimeout(timer); update((x) => { const y = x.notes.find((z) => z.id === id); y.body = nb.value; y.title = $('#nt', view).value; }); } mode = b.dataset.mode; rerender(); }));
+
+  $('#note-ic', view).onclick = (e) => pickIcon(e.currentTarget, noteIcon(n), (ic) => {
+    update((x) => { const y = x.notes.find((z) => z.id === id); y.icon = ic; });
+    refreshSidebar(); rerender();
+  });
 
   $('#tag-btn', view).onclick = (e) => {
     const tags = [...new Set(userData().notes.map((x) => x.tag).filter(Boolean)), 'School', 'Personal', 'Work'].filter((v, i, a) => a.indexOf(v) === i);

@@ -471,16 +471,16 @@ function viewToday(view) {
         <button class="btn primary small" id="add">${icon('plus', 16)} New task</button>
       </div>
       ${quickAddBar('qa-today')}
-      ${b.required.length ? `<ul class="list">${b.required.map(({ t, s }) => taskRow(t, k, s)).join('')}</ul>`
+      ${b.required.length ? `<div class="panel list-panel"><ul class="list">${b.required.map(({ t, s }) => taskRow(t, k, s)).join('')}</ul></div>`
         : `<div class="empty">${d.tasks.length ? `<span class="empty-ic">${icon('check', 28)}</span><p>Everything due today is done.</p>` : emptyIllustration()}</div>`}
 
       ${b.flexible.length ? `
         <div class="section-head"><h2>This week</h2><span class="muted small">Do it whenever it suits you</span></div>
-        <ul class="list">${b.flexible.map(({ t, s }) => taskRow(t, k, s)).join('')}</ul>` : ''}
+        <div class="panel list-panel"><ul class="list">${b.flexible.map(({ t, s }) => taskRow(t, k, s)).join('')}</ul></div>` : ''}
 
       ${b.done.length ? `
         <div class="section-head"><h2>Done</h2><span class="muted small">${b.done.length}</span></div>
-        <ul class="list done-list">${b.done.map(({ t, s }) => taskRow(t, k, s)).join('')}</ul>` : ''}
+        <div class="panel list-panel"><ul class="list done-list">${b.done.map(({ t, s }) => taskRow(t, k, s)).join('')}</ul></div>` : ''}
     </section>`;
 
   bindRows(view, k);
@@ -685,12 +685,12 @@ function viewTasks(view) {
   const finished = d.tasks.filter((t) => t.finishedAt && !t.archivedAt);
   const archived = d.tasks.filter((t) => t.archivedAt);
   const row = (t, i, arr) => `
-    <li class="task editable" data-id="${t.id}">
+    <li class="task tcard editable" data-id="${t.id}">
       <div class="reorder">
         <button class="icon-btn subtle xs" data-up="${t.id}" aria-label="Move up" ${i === 0 ? 'disabled' : ''}>${icon('arrowUp', 15)}</button>
         <button class="icon-btn subtle xs" data-down="${t.id}" aria-label="Move down" ${i === arr.length - 1 ? 'disabled' : ''}>${icon('arrowDown', 15)}</button>
       </div>
-      <span class="tile">${taskIcon(t.icon, 22)}</span>
+      <span class="tile big">${taskIcon(t.icon, 22)}</span>
       <div class="task-main" data-edit="${t.id}">
         <span class="task-title">${esc(t.title)}</span>
         <span class="task-sub">${esc(frequencyLabel(t))}${t.goal ? ` · goal ${t.goal.done}/${t.goal.target} ${esc(t.goal.unit || '')}` : ''}</span>
@@ -714,9 +714,9 @@ function viewTasks(view) {
         </div>
       </div>
       ${quickAddBar('qa-tasks')}
-      ${active.length ? `<ul class="list">${active.map(row).join('')}</ul>` : `<div class="empty">${emptyIllustration()}</div>`}
-      ${finished.length ? `<div class="section-head"><h2>Goals reached</h2></div><ul class="list done-list">${finished.map(row).join('')}</ul>` : ''}
-      ${archived.length ? `<div class="section-head"><h2>Archive</h2></div><ul class="list done-list">${archived.map(row).join('')}</ul>` : ''}
+      ${active.length ? `<div class="panel list-panel"><ul class="list">${active.map(row).join('')}</ul></div>` : `<div class="empty">${emptyIllustration()}</div>`}
+      ${finished.length ? `<div class="section-head"><h2>Goals reached</h2></div><div class="panel list-panel"><ul class="list done-list">${finished.map(row).join('')}</ul></div>` : ''}
+      ${archived.length ? `<div class="section-head"><h2>Archive</h2></div><div class="panel list-panel"><ul class="list done-list">${archived.map(row).join('')}</ul></div>` : ''}
     </section>`;
   $('#add', view).onclick = () => openEditor();
   $('#presets', view).onclick = () => openPresets();
