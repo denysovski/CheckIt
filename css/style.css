@@ -3221,3 +3221,4 @@ html .sheet.gx :is(.search, .link-input, .pl-search, .pal-input, .loc-search) in
   color: #fff; background: linear-gradient(135deg, #0A3854, #0B6F95); box-shadow: 0 10px 24px -8px rgba(3, 20, 32, .5); opacity: 0; transition: opacity .2s ease-out; will-change: transform; }
 .future-tip.on { opacity: 1; }
 @media (hover: none) { .future-tip { display: none; } }
+details.more { gap: 0 !important; } details.more[open] > summary { margin-bottom: 12px; }

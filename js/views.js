@@ -391,12 +391,27 @@ async function onToggle(e, b, k, after) {
 
   if (res.completed) {
     row.classList.add('completing');
+    // The Today / Due badges fade out quickly; then the card eases to its new height
+    // while "Done at" fades in, in one move (no grow-then-shrink).
+    const whens = $('.whens', row);
     const txt = $('.sub-txt', row);
-    if (txt) {
-      const now = new Date();
-      txt.classList.add('swap-out');
-      setTimeout(() => { txt.textContent = `Done at ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`; txt.classList.remove('swap-out'); txt.classList.add('swap-in', 'done-at'); }, 160);
-    }
+    const now = new Date();
+    const doneAt = `Done at ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+    if (whens) whens.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 180, easing: 'ease-out', fill: 'forwards' });
+    if (txt) txt.classList.add('swap-out');
+    setTimeout(() => {
+      const st = (p, v) => row.style.setProperty(p, v, 'important');
+      const h0 = row.offsetHeight;
+      if (whens) whens.style.setProperty('display', 'none', 'important');
+      if (txt) { txt.textContent = doneAt; txt.classList.remove('swap-out'); txt.classList.add('swap-in', 'done-at'); }
+      st('height', 'auto');
+      const h1 = row.offsetHeight;
+      st('box-sizing', 'border-box'); st('height', `${h0}px`);
+      void row.offsetHeight;
+      st('transition', 'height .26s cubic-bezier(.22,1,.36,1)');
+      st('height', `${h1}px`);
+      setTimeout(() => { row.style.removeProperty('height'); row.style.removeProperty('transition'); }, 300);
+    }, 180);
     await wait(live ? 650 : 1100);
     if (live) await moveRow(row, id, k); else redraw();
     if (k === todayKey()) {
