@@ -14,7 +14,7 @@ import { exportMenu, openImport } from './export.js';
 import { getLocation, locationSheet, placeLabel } from './weather.js';
 import { refreshSidebar } from './shell.js';
 import { celebrate } from './celebrate.js';
-import { visibleNudges, nudgeStackHTML, bindNudges } from './nudges.js';
+import { visibleNudges, nudgeStackHTML, bindNudges, collapse } from './nudges.js';
 
 export const pl = (n, word, plural = word + 's') => `${n} ${n === 1 ? word : plural}`;
 export const REPO_URL = 'https://github.com/denysovski/CheckIt';
@@ -372,79 +372,99 @@ export function openTaskDetail(id) {
 }
 
 export function bindRows(root, k, after) {
-  $$('[data-toggle]', root).forEach((b) => b.addEventListener('click', (e) => {
-    e.stopPropagation();
-    const row = b.closest('.task');
-    if (row.classList.contains('completing')) return;
-    const res = toggleTask(b.dataset.toggle, k);
-    const redraw = () => (after || rerender)();
-    if (!res.completed) {
-      // partial tick (e.g. 1 of 2) or un-ticking: quick refresh
-      if (!row.classList.contains('is-done')) row.classList.add('pop');
-      setTimeout(redraw, row.classList.contains('is-done') ? 0 : 220);
-      return;
-    }
-    // Smooth finish: fill blue + strike, then fold the row away, then show the congratulation.
+  $$('[data-toggle]', root).forEach((b) => b.addEventListener('click', (e) => onToggle(e, b, k, after)));
+  bindMenus(root);
+  $$('[data-detail]', root).forEach((b) => (b.onclick = (e) => { e.stopPropagation(); openTaskDetail(b.dataset.detail); }));
+}
+
+const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+
+async function onToggle(e, b, k, after) {
+  e.stopPropagation();
+  const row = b.closest('.task');
+  if (row.classList.contains('completing') || row.classList.contains('moving')) return;
+  const id = b.dataset.toggle;
+  const res = toggleTask(id, k);
+  const redraw = () => (after || rerender)();
+  // On Today we move the card between lists in place: no re-render, no scroll jump.
+  const live = !after && !!document.querySelector('#view .done-list') && !!row.closest('.list-panel');
+
+  if (res.completed) {
     row.classList.add('completing');
-    const h = row.offsetHeight;
-    row.style.setProperty('--h', `${h}px`);
     const txt = $('.sub-txt', row);
     if (txt) {
       const now = new Date();
       txt.classList.add('swap-out');
       setTimeout(() => { txt.textContent = `Done at ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`; txt.classList.remove('swap-out'); txt.classList.add('swap-in', 'done-at'); }, 160);
     }
-    const stays = !!row.closest('.list.history, .panel-list');
-    // Leave slowly: fade and drift out in place, then close the gap so the cards below glide up.
-    const EASE = 'cubic-bezier(.22,1,.36,1)';
-    if (!stays) {
-      window.__justDone = row.dataset.id;
-      setTimeout(() => {
-        row.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateX(28px) scale(.98)' }],
-          { duration: 620, easing: 'cubic-bezier(.4,0,.2,1)', fill: 'forwards' });
-      }, 850);
-      setTimeout(() => {
-        // Inline !important so the stylesheet's !important paddings can't hold the row open.
-        const gap = parseFloat(getComputedStyle(row.parentElement).rowGap) || 0;
-        const st = (p, v) => row.style.setProperty(p, v, 'important');
-        st('box-sizing', 'border-box'); st('overflow', 'hidden'); st('min-height', '0px');
-        st('height', `${row.offsetHeight}px`);
-        void row.offsetHeight;
-        st('transition', 'height .9s cubic-bezier(.65,0,.35,1), padding .9s cubic-bezier(.65,0,.35,1), margin .9s cubic-bezier(.65,0,.35,1)');
-        st('height', '0px'); st('padding-top', '0px'); st('padding-bottom', '0px'); st('margin-top', '0px'); st('margin-bottom', `${-gap}px`);
-        st('border-width', '0px');
-      }, 1450);
+    await wait(live ? 650 : 1100);
+    if (live) await moveRow(row, id, k); else redraw();
+    if (k === todayKey()) {
+      const sum = daySummary(userData(), k);
+      celebrate({ title: res.title, done: sum.done, total: sum.total, goalDone: res.goalDone });
     }
-    setTimeout(() => {
-      // Remember every list's height so after the redraw each one resizes smoothly instead of jumping.
-      const oldHs = [...document.querySelectorAll('.list-panel > .list')].map((l) => l.getBoundingClientRect().height);
-      redraw();
-      const id = window.__justDone; window.__justDone = null;
-      const lists = [...document.querySelectorAll('.list-panel > .list')];
-      if (id && lists.length === oldHs.length) {
-        lists.forEach((l, i) => {
-          const newH = l.getBoundingClientRect().height;
-          if (Math.abs(newH - oldHs[i]) < 1) return;
-          l.style.overflow = 'hidden';
-          l.animate([{ height: `${oldHs[i]}px` }, { height: `${newH}px` }], { duration: 850, easing: 'cubic-bezier(.65,0,.35,1)' })
-            .finished.then(() => { l.style.overflow = ''; }).catch(() => {});
-        });
-      }
-      const empties = id ? [...document.querySelectorAll('.list-panel .done-empty')] : [];
-      empties.forEach((e) => e.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 600, delay: 150, easing: EASE, fill: 'backwards' }));
-      const arrived = id && document.querySelector(`.done-list [data-id="${id}"]`);
-      if (arrived) {
-        arrived.animate([{ opacity: 0, transform: 'translateY(-14px) scale(.98)' }, { opacity: 1, transform: 'none' }],
-          { duration: 800, delay: 200, easing: EASE, fill: 'backwards' });
-      }
-      if (k === todayKey()) {
-        const sum = daySummary(userData(), k);
-        celebrate({ title: res.title, done: sum.done, total: sum.total, goalDone: res.goalDone });
-      }
-    }, stays ? 1100 : 2400);
-  }));
-  bindMenus(root);
-  $$('[data-detail]', root).forEach((b) => (b.onclick = (e) => { e.stopPropagation(); openTaskDetail(b.dataset.detail); }));
+    return;
+  }
+  // partial tick (1 of 2) or un-ticking
+  if (live) { moveRow(row, id, k); return; }
+  if (!row.classList.contains('is-done')) row.classList.add('pop');
+  setTimeout(redraw, row.classList.contains('is-done') ? 0 : 220);
+}
+
+// Grow an element in from nothing: height opens while it fades and slides into place.
+function expandIn(el, ms = 450) {
+  const st = (p, v) => el.style.setProperty(p, v, 'important');
+  const h = el.offsetHeight;
+  const cs = getComputedStyle(el);
+  const pt = cs.paddingTop; const pb = cs.paddingBottom;
+  st('box-sizing', 'border-box'); st('overflow', 'hidden'); st('min-height', '0px');
+  st('height', '0px'); st('padding-top', '0px'); st('padding-bottom', '0px'); st('opacity', '0'); st('transform', 'translateY(-10px)');
+  void el.offsetHeight;
+  const e = 'cubic-bezier(.22,1,.36,1)';
+  st('transition', `height ${ms}ms ${e}, padding ${ms}ms ${e}, opacity ${ms}ms ease-out ${Math.round(ms * 0.25)}ms, transform ${ms}ms ${e} ${Math.round(ms * 0.25)}ms`);
+  st('height', `${h}px`); st('padding-top', pt); st('padding-bottom', pb); st('opacity', '1'); st('transform', 'none');
+  setTimeout(() => { ['transition', 'height', 'padding-top', 'padding-bottom', 'opacity', 'transform', 'overflow', 'min-height', 'box-sizing'].forEach((p) => el.style.removeProperty(p)); }, ms * 1.3 + 40);
+}
+
+async function moveRow(row, id, k) {
+  const view = document.getElementById('view');
+  const keep = window.scrollY;
+  // Render the new state off-screen and copy only what changed.
+  const tmp = document.createElement('div');
+  viewToday(tmp);
+  const liveLists = [...view.querySelectorAll('.list-panel > .list')];
+  const tmpLists = [...tmp.querySelectorAll('.list-panel > .list')];
+  const fresh = tmp.querySelector(`.list-panel [data-id="${id}"]`);
+  if (!fresh || liveLists.length !== tmpLists.length) { rerender(); window.__lenis ? window.__lenis.scrollTo(keep, { immediate: true, force: true }) : window.scrollTo(0, keep); return; }
+  const ti = tmpLists.findIndex((l) => l.contains(fresh));
+  const idx = [...tmpLists[ti].children].indexOf(fresh);
+  const target = liveLists[ti];
+  const src = row.parentElement;
+
+  // patch the header numbers and section counts
+  const heroLive = $('.hero-head', view); const heroTmp = $('.hero-head', tmp);
+  if (heroLive && heroTmp) heroLive.innerHTML = heroTmp.innerHTML;
+  const hl = $$('.section-head', view); const ht = $$('.section-head', tmp);
+  if (hl.length === ht.length) hl.forEach((h, i) => { const a = $('.muted.small', h); const b = $('.muted.small', ht[i]); if (a && b) a.textContent = b.textContent; });
+
+  // same list, same place: just swap the card (e.g. 1 of 2 ticked)
+  if (target === src && [...src.children].indexOf(row) === idx) {
+    row.replaceWith(fresh);
+    fresh.classList.add('pop');
+    return;
+  }
+  row.classList.add('moving');
+  await collapse(row, { fade: 220, close: 380 });
+  row.remove();
+  const ph = target.querySelector('.done-empty');
+  if (ph) collapse(ph, { fade: 160, close: 360 }).then(() => ph.remove());
+  const kids = [...target.children].filter((c) => c !== ph);
+  target.insertBefore(fresh, kids[idx] || null);
+  expandIn(fresh, 520);
+  // the list it left may now need its empty message
+  const si = liveLists.indexOf(src);
+  const srcPh = si >= 0 && tmpLists[si].querySelector('.done-empty');
+  if (srcPh && !src.querySelector('.task')) { src.appendChild(srcPh); expandIn(srcPh, 480); }
 }
 
 function bindMenus(root) {

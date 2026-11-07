@@ -4,6 +4,7 @@ import { icon, taskIcon } from './icons.js';
 import { esc, $, $$, uid, toast, sheet, confirmSheet } from './ui.js';
 import { userData, update } from './store.js';
 import { register, rerender } from './router.js';
+import { openEditor } from './views.js';
 import { DAY_NAMES, DAY_SHORT, activeTasks, weekStart, todayKey, frequencyLabel, weekday } from './schedule.js';
 
 const REPEAT = [['weekly', 'Every week'], ['biweekly', 'Every other week'], ['once', 'This week only']];
@@ -90,7 +91,7 @@ function viewPlanner(view) {
             const its = items.filter((it) => it.day === i).sort((a, b) => (a.time || '99').localeCompare(b.time || '99'));
             return `
             <div class="pl-day ${i === todayWd ? 'today' : ''}" data-day="${i}">
-              <header><b>${DAY_SHORT[i]}</b><span>${its.length || ''}</span></header>
+              <header><b>${name}</b><span>${its.length || ''}</span></header>
               <div class="pl-drop">${its.map((it) => chipHTML(it, byId.get(it.taskId))).join('')}
                 <button class="pl-add" data-add="${i}" aria-label="Add a task to ${name}">${icon('plus', 14)}</button>
               </div>
@@ -99,7 +100,7 @@ function viewPlanner(view) {
         </div>
 
         <aside class="pl-lib">
-          <header><h2>Your tasks</h2><span>Drag into a day</span></header>
+          <header><div><h2>Your tasks</h2><span>Drag into a day</span></div><button class="btn pill small" id="pl-create">${icon('plus', 14)} Create a task</button></header>
           <label class="pl-search">${icon('search', 15)}<input id="pl-q" placeholder="Search tasks" value="${esc(libQuery)}" aria-label="Search tasks"></label>
           <div class="pl-lib-list">
             ${lib.map((t) => `
@@ -133,6 +134,8 @@ function viewPlanner(view) {
     b.onpointerup = stop; b.onpointerleave = stop; b.onpointercancel = stop;
     b.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); bump(n); } };
   });
+
+  $('#pl-create', view).onclick = () => openEditor(null);
 
   const qi = $('#pl-q', view);
   qi.oninput = () => {
