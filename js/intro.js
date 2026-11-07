@@ -60,8 +60,6 @@ const SCENES = [
     title: () => 'See your week.', sub: 'Streaks, best days and a recap every Monday.',
     art: () => `<div class="ob-card ob-stats"><div class="ob-kpi"><b>86<small>%</small></b><span>done this week</span></div><div class="ob-bars">${[0.7, 0.9, 0.55, 1, 0.8, 0.4, 0.95].map((v, i) => `<div class="ob-bar"><i style="--v:${v}"></i><span>${DAYS[i][0]}</span></div>`).join('')}</div></div>`,
     play: (el) => {
-      const n = el.querySelector('.ob-kpi b'); let k = 0;
-      const t = setInterval(() => { k = Math.min(86, k + 4); n.firstChild.nodeValue = k; if (k >= 86) clearInterval(t); }, 28);
       return anim(el.querySelectorAll('.ob-bar i'), { scaleY: [0, 1] }, { duration: 0.6, delay: stagger(0.06, 0.25) });
     },
   },

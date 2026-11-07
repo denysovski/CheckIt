@@ -99,21 +99,9 @@ export function ring(ratio, size = 40, stroke = 4, cls = '') {
   </svg>`;
 }
 
-// Count numbers up from 0 for elements with data-count="<n>".
+// Numbers are shown as they are, no counting animation.
 export function countUp(root = document) {
-  $$('[data-count]', root).forEach((el) => {
-    const to = +el.dataset.count;
-    if (reducedMotion() || !to) { el.textContent = to; return; }
-    const dur = 900; const t0 = performance.now();
-    const step = (t) => {
-      const p = Math.min(1, (t - t0) / dur);
-      const e = 1 - Math.pow(1 - p, 3);
-      el.textContent = Math.round(to * e);
-      if (p < 1) requestAnimationFrame(step);
-    };
-    el.textContent = '0';
-    requestAnimationFrame(step);
-  });
+  $$('[data-count]', root).forEach((el) => { el.textContent = el.dataset.count; });
 }
 
 // Stagger fade-in for children (sets --i).
