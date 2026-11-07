@@ -64,7 +64,7 @@ There are **33 suggestions** in categories: Creator, Body care, Health, Home, Mi
 
 ### Home
 
-- **Overview:** a greeting and four tiles in four shades of blue: *Due today* (darkest), *Done today* (lightest), *Streak* (with a flickering flame and a pulse) and *This week*.
+- **Overview:** a greeting and four tiles in four shades of blue: *Due today* (darkest), *Done today* (lightest), *Streak* (a light-blue glow flickers above it like fire) and *This week*.
 - **Cards:** every section sits on its own slowly drifting blue gradient, so no two look the same. Task cards have an edit (pencil) button that opens the task in Tasks.
 - **Today:** what's planned for today.
 - **Journal:** today's word count, your mood and a weather tip.
@@ -182,7 +182,7 @@ Export is in Stats, Settings and the account menu:
 
 ### Dark mode and the sidebar
 
-Dark mode uses a charcoal background with a soft blue tint, not pure black, and has no white surfaces. You can collapse the sidebar to icons only (channels become `#G`, `#I`, …). *Leave dashboard* takes you back to the landing page without logging you out.
+Dark mode uses a blue-black background, and every card sits on its own drifting blue gradient. Collapsing the sidebar hides everything except a small floating card in the top-left corner with the logo, Create, Search and the same arrow to open it again. *Leave dashboard* takes you back to the landing page without logging you out.
 
 <img src="docs/screens/19-home-dark.png" alt="Home in dark mode">
 

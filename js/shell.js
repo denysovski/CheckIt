@@ -37,6 +37,7 @@ function sidebarHTML() {
       </div>
     </div>
     <button class="sb-search" id="sb-search" title="Search"><span>${icon('search', 17)}</span><span class="grow sb-label">Search</span><kbd class="sb-label sb-kbd">${isMac ? '⌘' : 'Ctrl'} + K</kbd></button>
+    <div class="sb-mid">
     <nav class="sb-nav" aria-label="Main">
       ${nav.map(([r, l, ic, badge]) => `<a href="#/${r}" data-nav="${r}" title="${l}">${icon(ic, 18)}<span class="grow sb-label">${l}</span>${badge ? `<span class="sb-badge">${badge}</span>` : ''}</a>`).join('')}
     </nav>
@@ -48,12 +49,15 @@ function sidebarHTML() {
       <div class="sb-head"><span class="sb-label">Notes</span><button class="icon-btn subtle xs2" id="sb-add-note" aria-label="New note" title="New note">${icon('plus', 16)}</button></div>
       ${notes.length ? notes.map((n) => `<a href="#/note/${n.id}" data-nav="note:${n.id}" title="${esc(n.title || 'Untitled')}">${icon('doc', 16)}<span class="grow ellipsis sb-label">${esc(n.title || 'Untitled')}</span>${n.pinned ? `<span class="sb-pin sb-label">${icon('thumbtack', 13)}</span>` : ''}</a>`).join('') : '<p class="sb-empty sb-label">No notes yet</p>'}
     </div>
+    </div>
+    <div class="sb-bottom">
     <a class="sb-leave" href="#/welcome" title="Leave dashboard">${icon('logout', 17)}<span class="sb-label">Leave dashboard</span></a>
     <button class="sb-user" id="account-btn" aria-label="Account and settings" aria-haspopup="menu" aria-expanded="false" title="Account and settings">
       <span class="avatar static sm">${esc((d.profile?.displayName || p.name || '?').slice(0, 1).toUpperCase())}<i class="online"></i></span>
       <span class="grow sb-label sb-user-txt"><b class="ellipsis">${esc(d.profile?.displayName || p.name)}</b><small>Settings &amp; account</small></span>
       <span class="sb-user-gear sb-label">${icon('gear', 18)}</span>
-    </button>`;
+    </button>
+    </div>`;
 }
 
 export function applySidebarState() {
@@ -77,10 +81,10 @@ function bindSidebar(sb) {
 export function refreshSidebar() {
   const sb = $('.sidebar');
   if (!sb) return;
-  const scroll = sb.scrollTop;
+  const mid = $('.sb-mid', sb); const scroll = mid ? mid.scrollTop : 0;
   sb.innerHTML = sidebarHTML();
   bindSidebar(sb);
-  sb.scrollTop = scroll;
+  const mid2 = $('.sb-mid', sb); if (mid2) mid2.scrollTop = scroll;
 }
 
 function markActive() {
@@ -161,34 +165,6 @@ function refreshSidebarCounts() {
   if (b) { if (n) b.textContent = n; else b.remove(); }
 }
 
-// ---------------------------------------------------------------- illustration (original line art)
-const ILLUSTRATION = `
-<svg class="illus-hero" viewBox="0 0 280 210" aria-hidden="true">
-  <g class="ih-float">
-    <path class="ih-line" d="M48 176c-10 0-16-7-16-15v-25h44v25c0 8-6 15-16 15z"/>
-    <path class="ih-line" d="M76 142c9 0 13 4 13 9s-4 9-13 9"/>
-    <path class="ih-steam" d="M46 124c-6-7 6-11 0-19M60 124c-6-7 6-11 0-19"/>
-  </g>
-  <g class="ih-board">
-    <rect class="ih-fill ih-line" x="98" y="30" width="122" height="160" rx="16"/>
-    <rect class="ih-ink" x="132" y="18" width="54" height="24" rx="9"/>
-    <rect class="ih-fill ih-line" x="118" y="66" width="20" height="20" rx="6"/>
-    <rect class="ih-fill ih-line" x="118" y="104" width="20" height="20" rx="6"/>
-    <rect class="ih-fill ih-line" x="118" y="142" width="20" height="20" rx="6"/>
-    <path class="ih-tick" d="M122 76l5 5 9-10"/>
-    <path class="ih-tick t2" d="M122 114l5 5 9-10"/>
-    <path class="ih-line thin" d="M150 76h50M150 114h38M150 152h46"/>
-  </g>
-  <g class="ih-pencil" transform="translate(196 176) rotate(-58)">
-    <rect class="ih-fill ih-line" x="0" y="-11" width="96" height="22" rx="4"/>
-    <path class="ih-line" d="M0-11L-22 0 0 11"/>
-    <path class="ih-ink-fill" d="M-14-4L-22 0-14 4z"/>
-    <path class="ih-line" d="M74-11v22M84-11v22"/>
-    <path class="ih-line thin" d="M8 0h58"/>
-  </g>
-  <path class="ih-spark" d="M250 34v14M243 41h14M30 60v10M25 65h10M262 130v8M258 134h8"/>
-  <circle class="ih-dot" cx="236" cy="78" r="5"/>
-</svg>`;
 
 // ---------------------------------------------------------------- home
 let composerTarget = { kind: 'task' };
@@ -221,7 +197,6 @@ function viewHome(view) {
           <p class="eyebrow date">${esc(date)}</p>
           <h1 class="home-title"><span>Welcome back<span class="hn">.</span></span></h1>
         </div>
-        ${ILLUSTRATION}
       </div>
 
       <div class="tiles">
