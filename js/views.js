@@ -457,7 +457,7 @@ function quickAddBar(id) {
     <form class="quick-add" id="${id}" autocomplete="off">
       <span class="qa-plus">${icon('plus', 18)}</span>
       <input name="t" placeholder="Add a daily task and press Enter…" maxlength="80" aria-label="New task">
-      <button type="button" class="btn text qa-more" data-more>Details</button>
+      <button type="button" class="btn text qa-more" data-more>Settings</button>
     </form>`;
 }
 
@@ -599,7 +599,7 @@ function viewCalendar(view) {
         </div>
       </div>
       <div class="cal-layout">
-        <div class="card cal-card">
+        <div class="card cal-card gx">
           <div class="cal-top">
             <span class="muted small">${monthTotal ? `${monthDone} of ${monthTotal} done` : ''}</span>
             <span class="info-tip" tabindex="0" role="button" aria-label="What the colors mean">
@@ -608,7 +608,7 @@ function viewCalendar(view) {
                 <b>Reading the calendar</b>
                 <span><i class="lg full"></i>Full ring: everything done</span>
                 <span><i class="lg part"></i>Partial ring: some tasks done</span>
-                <span><i class="lg miss"></i>Red dot: something was skipped</span>
+                <span><i class="lg miss"></i>Dot: something was skipped</span>
                 <span><i class="lg today"></i>Blue number: today</span>
               </span>
             </span>
@@ -616,7 +616,7 @@ function viewCalendar(view) {
           <div class="cal-grid head">${DAY_SHORT.map((x) => `<span>${x}</span>`).join('')}</div>
           <div class="cal-viewport"><div class="cal-grid ${calDir ? (calDir > 0 ? 'slide-next' : 'slide-prev') : ''}">${cells.join('')}</div></div>
         </div>
-        <div class="card day-card">
+        <div class="card day-card gx">
           <p class="eyebrow">${calSelected === today ? 'Today' : isFuture ? 'Planned' : 'History'}</p>
           <h3>${esc(prettyDate(calSelected))}</h3>
           <div class="day-chips">

@@ -3094,3 +3094,76 @@ html.lenis, html.lenis body { height: auto; }
 .done-empty span { color: rgba(255, 255, 255, .65); font-size: 14px; }
 html .sheet.gx :is(.search, .link-input, .pl-search, .pal-input, .loc-search) input:not([type="checkbox"]):not([type="radio"]):not([type="range"]) {
   background: transparent !important; box-shadow: none !important; border: 0 !important; border-radius: 0 !important; padding-left: 0 !important; padding-right: 0 !important; }
+
+/* =====================================================================
+   premium pass: calmer shadows, pencil chip, blue Stats, still planner rows
+   ===================================================================== */
+/* calmer depth: one soft shadow, no coloured glow */
+.home .panel, .panel, .panel.list-panel {
+  box-shadow: 0 1px 2px rgba(3, 20, 32, .12), 0 18px 40px -22px rgba(3, 20, 32, .45) !important; }
+:root:not([data-theme="dark"]) :is(.home .panel, .panel, .panel.list-panel) { box-shadow: 0 1px 2px rgba(8, 58, 91, .08), 0 18px 40px -24px rgba(8, 58, 91, .38) !important; }
+.panel .tcard:hover, .panel .prow:hover { box-shadow: 0 10px 24px -14px rgba(0, 10, 20, .5) !important; }
+.panel .tcard, .panel .prow { box-shadow: 0 8px 20px -14px rgba(0, 10, 20, .45) !important; }
+.tile-card.t-red::after { opacity: .45 !important; filter: blur(26px); height: 55%; top: -18px; }
+.tile-card.t-red { box-shadow: 0 -6px 26px -12px rgba(127, 221, 245, .4), 0 18px 40px -22px rgba(3, 20, 32, .45) !important; animation: none; }
+.note-card:hover { box-shadow: 0 1px 2px rgba(3, 20, 32, .12), 0 22px 46px -22px rgba(3, 20, 32, .55) !important; }
+
+/* pencil: already sits on a chip; hover darkens it */
+.t-detail, .panel .t-detail { background: rgba(255, 255, 255, .14) !important; color: #fff !important; transition: background-color .35s var(--ease-out) !important; }
+.t-detail:hover, .panel .t-detail:hover { background: rgba(0, 12, 22, .28) !important; color: #fff !important; }
+:root:not([data-theme="dark"]) .tcard:not(.panel .tcard) .t-detail { background: var(--blue-soft) !important; color: var(--blue-ink) !important; }
+:root:not([data-theme="dark"]) .tcard:not(.panel .tcard) .t-detail:hover { background: color-mix(in srgb, var(--blue-ink) 22%, transparent) !important; }
+
+/* Stats: no red, only blues */
+.stats-page .red-t { color: #fff !important; }
+.stats-page .wd-bar i { background: linear-gradient(90deg, #7FDDF5, #12AAD4) !important; opacity: 1; }
+.stats-page .wd-bar { background: rgba(255, 255, 255, .1) !important; }
+.stats-page .bc-fill.has-miss { background: linear-gradient(180deg, #A9E9F9, #4CC3E3) !important; }
+.stats-page .rate i, .stats-page .rate i.low { background: linear-gradient(90deg, #7FDDF5, #12AAD4) !important; }
+.stats-page .bars span.low { background: #7FDDF5 !important; }
+
+/* Planner library: no movement, just a darker background on hover */
+.pl-task, .pl-task:hover { transform: none !important; transition: background-color .3s var(--ease-out) !important; box-shadow: 0 1px 2px rgba(16, 24, 40, .05) !important; }
+.pl-task:hover { background: color-mix(in srgb, var(--surface) 88%, #000) !important; }
+:root[data-theme="dark"] .pl-task:hover { background: #171A1F !important; }
+
+/* calendar: gradient glass cards, white days, blue rings when complete */
+.cal-card.gx, .day-card.gx { border-radius: 28px; }
+.cal-card.gx .cal-top h2, .cal-card.gx .cal-top b, .day-card.gx h2, .day-card.gx h3 { color: #fff; }
+.cal-card.gx .cal-grid.head span { color: rgba(255, 255, 255, .6); }
+.cal-card.gx .cal-cell { background: rgba(255, 255, 255, .04); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); transition: background-color .3s var(--ease-out); }
+.cal-card.gx .cal-cell.blank { background: transparent; -webkit-backdrop-filter: none; backdrop-filter: none; }
+.cal-card.gx .cal-cell:hover:not(.blank) { background: rgba(255, 255, 255, .12); }
+.cal-card.gx .cal-num { color: #fff; }
+.cal-card.gx .cal-cell.future .cal-num { color: rgba(255, 255, 255, .45); }
+.cal-card.gx .cal-cell.today .cal-num { color: #7FDDF5; font-weight: 700; }
+.cal-card.gx .cal-cell .ring-track { stroke: rgba(255, 255, 255, .14); }
+.cal-card.gx .cal-cell .ring-val { stroke: #7FDDF5; }
+.cal-card.gx .cal-cell.full .ring-val, .cal-card.gx .cal-cell .ring.full .ring-val { stroke: #12AAD4; }
+.cal-card.gx .cal-cell.full .ring { filter: drop-shadow(0 0 6px rgba(18, 170, 212, .35)); }
+.cal-card.gx .cal-cell.full .cal-num { color: #fff; font-weight: 700; }
+.cal-card.gx .cal-cell.sel, .cal-card.gx .cal-cell.sel:hover:not(.blank) { background: #fff; }
+.cal-card.gx .cal-cell.sel .cal-num { color: #0B4F70; }
+.cal-card.gx .cal-cell.sel .ring-track { stroke: rgba(11, 79, 112, .15); }
+.cal-card.gx .cal-cell.sel .ring-val { stroke: #0E98BE; }
+.cal-card.gx .cal-cell.miss::after { background: #FF9C8F; }
+.cal-card.gx .icon-btn, .cal-card.gx .btn { color: #fff; }
+.cal-card.gx .icon-btn:hover, .cal-card.gx .btn:hover { background: rgba(255, 255, 255, .14); }
+.cal-card.gx .btn.ghost { background: rgba(255, 255, 255, .12) !important; border: 0 !important; color: #fff !important; }
+.day-card.gx .muted, .day-card.gx .small { color: rgba(255, 255, 255, .7); }
+.day-card.gx .tcard { background: linear-gradient(135deg, rgba(127, 221, 245, .2), rgba(18, 170, 212, .08)) !important; box-shadow: 0 8px 20px -14px rgba(0, 10, 20, .45) !important; border: 0 !important; }
+.day-card.gx .tile.big { background: #fff !important; color: #0B6F95 !important; }
+.day-card.gx .tile.big .ic-mask { background: #0B6F95; }
+.cal-legend .lg.full, .lg.full { background: #12AAD4; }
+.lg.miss { background: #FF9C8F !important; } .lg.part { background: #7FDDF5; }
+
+/* calendar month title: always flush left (the outgoing month no longer widens the box) */
+.month-btn { justify-content: flex-start; text-align: left; }
+.roller { position: relative; justify-items: start; text-align: left; }
+.roller > span { justify-self: start; text-align: left; }
+.roller > .roll-old { position: absolute; left: 0; top: 0; }
+
+/* sidebar type: user name in the text font, wordmark in the headline font */
+.sb-user b, .sb-user-txt b { font-family: var(--font) !important; font-weight: 500 !important; letter-spacing: 0 !important; font-size: 15px; }
+.brand-word, .brand-word b { font-family: var(--display) !important; font-weight: 700 !important; letter-spacing: -.04em; }
+.brand-word b { margin-left: 0; }
