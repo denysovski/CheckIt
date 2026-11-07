@@ -93,7 +93,7 @@ export function playIntro({ name = '' } = {}) {
         <button class="ob-next" type="button"><span class="ob-next-dot">${icon('check', 18)}</span><span class="ob-next-l">Continue</span><span class="ob-chev">${icon('chevR', 16)}${icon('chevR', 16)}${icon('chevR', 16)}</span></button>
       </div>`;
     document.body.appendChild(root);
-    document.documentElement.classList.add('scroll-locked');
+    document.documentElement.classList.add('scroll-locked'); window.__lenis && window.__lenis.stop();
     const stage = root.querySelector('.ob-stage');
     const bars = [...root.querySelectorAll('.ob-progress span')];
     const next = root.querySelector('.ob-next');
@@ -102,7 +102,7 @@ export function playIntro({ name = '' } = {}) {
     const finish = async () => {
       if (done) return; done = true; clearTimeout(timer);
       await anim(root, { opacity: [1, 0] }, { duration: 0.35 });
-      root.remove(); document.documentElement.classList.remove('scroll-locked'); document.removeEventListener('keydown', onKey); resolve();
+      root.remove(); document.documentElement.classList.remove('scroll-locked'); window.__lenis && window.__lenis.start(); document.removeEventListener('keydown', onKey); resolve();
     };
     const go = async (to) => {
       if (busy || done || to < 0 || to >= SCENES.length) return;

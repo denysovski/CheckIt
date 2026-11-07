@@ -3070,3 +3070,27 @@ html .sheet.gx::before { display: none !important; content: none !important; }
 :root:not([data-theme="dark"]) .sheet.gx .sheet-header { background: rgba(6, 40, 60, .35) !important; }
 .sheet.gx .sheet-header button, .sheet.gx .sheet-header a { color: #fff !important; }
 .rc-fact > span:first-child, .rc-fact .ic-wrap, .rc-fact i:first-child { background: #fff !important; color: #0B84A6 !important; }
+
+/* input wrappers (icon + input): the wrapper is the field, the input stays transparent */
+.sheet.gx :is(.search, .link-input, .pl-search, .pal-input, .loc-search) { background: rgba(255, 255, 255, .08) !important; border: 0 !important; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .1) !important; color: rgba(255, 255, 255, .7) !important; border-radius: 14px; transition: box-shadow .3s var(--ease-out); }
+.sheet.gx :is(.search, .link-input, .pl-search, .pal-input, .loc-search):focus-within { box-shadow: inset 0 0 0 2px rgba(127, 221, 245, .6) !important; color: #fff !important; }
+html .sheet.gx :is(.search, .link-input, .pl-search, .pal-input, .loc-search) input,
+html :is(.search, .link-input, .pl-search, .pal-input, .loc-search) input { background: transparent !important; box-shadow: none !important; border: 0 !important; border-radius: 0 !important; padding-left: 0 !important; padding-right: 0 !important; min-width: 0; }
+.link-input input { flex: 1; height: 46px; }
+.search { min-height: 46px; }
+/* helper text inside icon grids spans the whole row */
+.icon-grid > p, .icon-grid > .muted, .icon-grid > .empty { grid-column: 1 / -1; width: 100%; line-height: 1.5; margin: 6px 2px; }
+.sheet.gx .icon-grid > p a { color: #fff; text-decoration: underline; text-underline-offset: 3px; }
+/* Lenis */
+html.lenis, html.lenis body { height: auto; }
+.lenis.lenis-smooth { scroll-behavior: auto !important; }
+.lenis.lenis-smooth [data-lenis-prevent] { overscroll-behavior: contain; }
+.lenis.lenis-stopped { overflow: clip; }
+.lenis.lenis-smooth iframe { pointer-events: none; }
+/* Done: empty state */
+.done-empty { display: flex; align-items: center; gap: 14px; padding: 16px; border-radius: 18px; background: rgba(255, 255, 255, .06); list-style: none; }
+.de-ic { width: 40px; height: 40px; flex: none; border-radius: 50%; display: grid; place-items: center; color: rgba(255, 255, 255, .8); box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .25); }
+.done-empty b { display: block; color: #fff; font-weight: 600; }
+.done-empty span { color: rgba(255, 255, 255, .65); font-size: 14px; }
+html .sheet.gx :is(.search, .link-input, .pl-search, .pal-input, .loc-search) input:not([type="checkbox"]):not([type="radio"]):not([type="range"]) {
+  background: transparent !important; box-shadow: none !important; border: 0 !important; border-radius: 0 !important; padding-left: 0 !important; padding-right: 0 !important; }

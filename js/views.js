@@ -395,14 +395,32 @@ export function bindRows(root, k, after) {
       setTimeout(() => { txt.textContent = `Done at ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`; txt.classList.remove('swap-out'); txt.classList.add('swap-in', 'done-at'); }, 160);
     }
     const stays = !!row.closest('.list.history, .panel-list');
-    if (!stays) setTimeout(() => row.classList.add('fold'), 1050);
+    // Fold the card away with WAAPI so the cards below glide up into its space (gap included).
+    if (!stays) setTimeout(() => {
+      const gap = parseFloat(getComputedStyle(row.parentElement).rowGap) || 0;
+      row.style.overflow = 'hidden';
+      row.animate([
+        { height: `${row.offsetHeight}px`, opacity: 1, marginBottom: '0px', transform: 'scale(1)' },
+        { height: '0px', opacity: 0, marginBottom: `${-gap}px`, paddingTop: '0px', paddingBottom: '0px', transform: 'scale(.97)' },
+      ], { duration: 420, easing: 'cubic-bezier(.22,1,.36,1)', fill: 'forwards' });
+    }, 900);
+    if (!stays) window.__justDone = row.dataset.id;
     setTimeout(() => {
       redraw();
+      // The finished card arrives at the top of Done.
+      const arrived = window.__justDone && document.querySelector(`.done-list [data-id="${window.__justDone}"]`);
+      window.__justDone = null;
+      if (arrived) {
+        const h = arrived.offsetHeight;
+        arrived.style.overflow = 'hidden';
+        arrived.animate([{ height: '0px', opacity: 0, transform: 'translateY(-8px)' }, { height: `${h}px`, opacity: 1, transform: 'none' }], { duration: 420, easing: 'cubic-bezier(.22,1,.36,1)' })
+          .finished.then(() => { arrived.style.overflow = ''; }).catch(() => {});
+      }
       if (k === todayKey()) {
         const sum = daySummary(userData(), k);
         celebrate({ title: res.title, done: sum.done, total: sum.total, goalDone: res.goalDone });
       }
-    }, stays ? 1100 : 1450);
+    }, stays ? 1100 : 1340);
   }));
   bindMenus(root);
   $$('[data-detail]', root).forEach((b) => (b.onclick = (e) => { e.stopPropagation(); openTaskDetail(b.dataset.detail); }));
@@ -478,9 +496,8 @@ function viewToday(view) {
         <div class="section-head"><h2>This week</h2><span class="muted small">Do it whenever it suits you</span></div>
         <div class="panel list-panel"><ul class="list">${b.flexible.map(({ t, s }) => taskRow(t, k, s)).join('')}</ul></div>` : ''}
 
-      ${b.done.length ? `
-        <div class="section-head"><h2>Done</h2><span class="muted small">${b.done.length}</span></div>
-        <div class="panel list-panel"><ul class="list done-list">${b.done.map(({ t, s }) => taskRow(t, k, s)).join('')}</ul></div>` : ''}
+      <div class="section-head"><h2>Done</h2><span class="muted small">${b.done.length || ''}</span></div>
+      <div class="panel list-panel"><ul class="list done-list">${b.done.length ? b.done.map(({ t, s }) => taskRow(t, k, s)).join('') : `<li class="done-empty"><span class="de-ic">${icon('check', 18)}</span><div><b>Nothing checked off yet${k === todayKey() ? ' today' : ''}.</b><span>Finished tasks land here.</span></div></li>`}</ul></div>
     </section>`;
 
   bindRows(view, k);

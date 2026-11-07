@@ -5,6 +5,7 @@ import { mountShell, renderRoute } from './shell.js';
 import './notes.js';
 import './journal.js';
 import './planner.js';
+import { initSmooth, toTop } from './smooth.js';
 import { ensureRecaps, showNewRecap } from './recaps.js';
 import { locationSheet } from './weather.js';
 import './channels.js';
@@ -64,15 +65,16 @@ function showWelcome() {
 }
 
 async function boot() {
+  initSmooth();
   await initStore();
   notify.registerSW();
   window.addEventListener('hashchange', () => {
     if (profile()) {
-      if (parse().name === 'welcome') { window.scrollTo(0, 0); showWelcome(); return; }
+      if (parse().name === 'welcome') { toTop(); showWelcome(); return; }
       if (['privacy', 'terms', 'cookies'].includes(parse().name)) { document.body.classList.remove('drawer-open'); renderLegal(parse().name, true); return; }
       if (!document.querySelector('.shell')) startApp(); else renderRoute();
     } else {
-      window.scrollTo(0, 0);
+      toTop();
       renderPublic();
     }
   });

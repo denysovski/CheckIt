@@ -1,3 +1,4 @@
+import { toTop } from './smooth.js';
 // App shell: sidebar, mobile drawer, Home dashboard and the "write anything" composer.
 import { icon, taskIcon, logoMark } from './icons.js';
 import { esc, $, $$, popover, closePopover, ring, toast, countUp, stagger } from './ui.js';
@@ -148,7 +149,7 @@ export function renderRoute() {
   const view = $('#view');
   if (!view) return;
   render(view, { enter: true });
-  window.scrollTo({ top: 0 });
+  toTop();
   view.scrollTop = 0;
 }
 

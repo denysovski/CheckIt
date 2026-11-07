@@ -212,7 +212,7 @@ All of it runs in the browser on your own data.
 - Plain HTML, CSS and JavaScript modules with no build step. It's hosted on GitHub Pages and deployed by a GitHub Actions workflow on every push to `main`.
 - Works offline once loaded (service worker) and can be installed as an app.
 - Responsive from phones to wide desktop screens. On phones a bottom tab bar replaces the sidebar.
-- Motion uses CSS and [Motion](https://motion.dev) (bundled in `vendor/`, MIT) for the onboarding. Animations can be turned off in Settings and follow the system *reduce motion* setting.
+- Motion uses CSS, [Motion](https://motion.dev) for the onboarding and [Lenis](https://lenis.darkroom.engineering) smooth scrolling on every page (both bundled in `vendor/`, MIT). Animations can be turned off in Settings and follow the system *reduce motion* setting.
 
 ## License
 

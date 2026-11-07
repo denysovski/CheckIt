@@ -1,3 +1,4 @@
+import { scrollToEl, toTop } from './smooth.js';
 // Public landing page (minimal, follows the theme, with a live product demo), legal pages and auth screens.
 import { icon, logoMark } from './icons.js';
 import { esc, $, $$, reducedMotion } from './ui.js';
@@ -333,8 +334,7 @@ export function renderLanding({ loggedIn = false } = {}) {
   cleanup = () => { alive = false; disposers.forEach((f) => f()); };
 
   $$('[data-scroll]', root).forEach((a) => (a.onclick = (e) => {
-    e.preventDefault(); const t = $(a.getAttribute('href'));
-    t.scrollIntoView({ behavior: reducedMotion() ? 'auto' : 'smooth' });
+    e.preventDefault(); scrollToEl($(a.getAttribute('href')));
   }));
   const nav = $('.l-nav', root);
   const demo = $('.lx-stage .demo', root);
@@ -422,7 +422,7 @@ export function renderLegal(kind, loggedIn = false) {
     </article>
     ${footerHTML()}
   </div>`;
-  window.scrollTo(0, 0);
+  toTop();
   bindFooter($('#app'));
 }
 
