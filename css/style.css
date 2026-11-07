@@ -2945,3 +2945,61 @@ html .shell > .sidebar::before { display: none !important; content: none !import
 @media (max-width: 520px) { .icon-pick { grid-template-columns: repeat(6, 40px); } }
 .note-card { border: 0 !important; box-shadow: 0 22px 48px -20px rgba(5, 30, 48, .55) !important; }
 .icon-pick button.on .ic, .icon-pick button.on svg { color: #fff !important; stroke: currentColor; }
+
+/* =====================================================================
+   journal: gradient cards, mood faces
+   ===================================================================== */
+.journal .gx { border-radius: 28px; }
+.j-editor.gx { padding: 24px; }
+.j-editor .j-label { color: rgba(255, 255, 255, .7); }
+.mood-row { gap: 10px; }
+.mood { gap: 10px; padding: 16px 6px 14px; border-radius: 20px; border: 0 !important; background: rgba(255, 255, 255, .07) !important; color: rgba(255, 255, 255, .78) !important; font-size: 14px; font-weight: 600;
+  transition: background-color .35s var(--ease-out), box-shadow .45s var(--ease-out), color .25s !important; transform: none !important; }
+.mood .mface { color: var(--mc); transition: color .25s; }
+.mood:hover { background: rgba(255, 255, 255, .12) !important; color: #fff !important; box-shadow: 0 0 0 1px color-mix(in srgb, var(--mc) 40%, transparent) inset; }
+.mood.on { background: var(--mc) !important; color: #fff !important; box-shadow: 0 14px 30px -10px color-mix(in srgb, var(--mc) 75%, transparent), 0 0 0 4px color-mix(in srgb, var(--mc) 25%, transparent) !important; }
+.mood.on .mface { color: #fff; }
+.mface .f { fill: currentColor; stroke: none; }
+.mface path.f { stroke: currentColor; stroke-width: 1.2; }
+.j-prompts .chip, .j-editor .chip { background: rgba(255, 255, 255, .12) !important; color: #fff !important; border: 0 !important; }
+.j-prompts .chip:hover, .j-editor .chip:hover { background: rgba(255, 255, 255, .2) !important; }
+.j-text { background: rgba(255, 255, 255, .06) !important; color: #fff !important; border: 0 !important; border-radius: 18px !important; padding: 16px 18px !important; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .06); }
+.j-text::placeholder { color: rgba(255, 255, 255, .45); }
+.j-text:focus { box-shadow: inset 0 0 0 2px rgba(127, 221, 245, .55) !important; outline: none; }
+.j-bar { background: rgba(255, 255, 255, .12) !important; }
+.j-bar i { background: linear-gradient(90deg, #7FDDF5, #12AAD4) !important; }
+.j-meter span, .j-foot .muted { color: rgba(255, 255, 255, .7) !important; }
+.j-meter.ok span { color: #8FE0F5 !important; }
+.j-weather.gx, .j-stats.gx { padding: 20px; }
+.j-stats .card-head h3 { color: #fff; }
+.mc-track { background: rgba(255, 255, 255, .08) !important; border-radius: 999px !important; }
+.mc-track i { border-radius: 999px !important; }
+.mc-face { display: grid; place-items: center; height: 14px; }
+.mc-none { width: 4px; height: 4px; border-radius: 50%; background: rgba(255, 255, 255, .25); }
+.mood-chart { height: 150px !important; }
+.j-avg { display: flex; align-items: center; gap: 8px; color: rgba(255, 255, 255, .75) !important; }
+.j-avg b { color: #fff; }
+.j-avg-face { display: inline-grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: rgba(255, 255, 255, .12); }
+.j-words .chip { background: rgba(255, 255, 255, .12) !important; color: #fff !important; border: 0 !important; }
+.js-kpis > div { background: rgba(255, 255, 255, .07) !important; border: 0 !important; border-radius: 16px; }
+.js-kpis b { color: #fff !important; }
+.js-kpis span { color: rgba(255, 255, 255, .65) !important; }
+.mood-pill { gap: 6px; padding: 4px 10px 4px 6px !important; background: color-mix(in srgb, var(--mc) 22%, transparent) !important; color: #fff !important; font-weight: 600; }
+.mood-pill .mface { color: var(--mc); }
+.mood-face-pill { flex: none; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; color: #fff; background: var(--mc); box-shadow: 0 6px 14px -4px color-mix(in srgb, var(--mc) 70%, transparent); }
+/* book: pages on the gradient */
+.book-spread.gx { padding: 10px; border-radius: 30px; }
+.book-spread.gx .bpage { background: rgba(255, 255, 255, .07) !important; border: 0 !important; box-shadow: none !important; color: #fff; }
+.book-spread.gx .bpage + .bpage { box-shadow: inset 1px 0 0 rgba(255, 255, 255, .1) !important; }
+.book-spread.gx .bpage header b { color: #fff; }
+.book-spread.gx .bp-text { color: rgba(255, 255, 255, .86); }
+.book-spread.gx .bpage footer, .book-spread.gx .bpage footer a { color: rgba(255, 255, 255, .65); }
+.book-spread.gx .bpage footer a:hover { color: #fff; }
+.book-spread.gx::after { display: none !important; }
+.book-nav .icon-btn { background: var(--surface); }
+.mood-pill { background: var(--mc) !important; color: #fff !important; box-shadow: 0 6px 14px -6px color-mix(in srgb, var(--mc) 80%, #000); }
+.mood-pill .mface { color: #fff; }
+.gx a:not(.btn):not(.view-all):not(.chip) { color: #fff; }
+.gx .link-btn, .j-weather.gx button.link, .j-weather.gx .jw-change { color: #fff !important; text-decoration: underline; text-underline-offset: 3px; }
+.book-spread.gx .bpage footer .short { color: #FFC9B5 !important; }
+.gx .btn.text { color: #fff !important; text-decoration: underline; text-underline-offset: 3px; }

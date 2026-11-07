@@ -9,8 +9,21 @@ import { nudgeStackHTML, bindNudges } from './nudges.js';
 
 export const MIN_WORDS = 20;
 export const MOODS = [
-  [1, 'Rough', '#E5534B'], [2, 'Low', '#E9925A'], [3, 'Okay', '#C9B458'], [4, 'Good', '#5BB98C'], [5, 'Great', '#0E98BE'],
+  [1, 'Bad', '#E5534B'], [2, 'Low', '#EE8F5B'], [3, 'Neutral', '#E2C25A'], [4, 'Good', '#4CC38A'], [5, 'Great', '#12AAD4'],
 ];
+
+// Line-drawn faces for each mood (not emoji): eyes and mouth change with the mood.
+const FACE = {
+  1: '<path d="M7 8.6l3 1M17 8.6l-3 1"/><circle cx="9" cy="11.6" r="1.1" class="f"/><circle cx="15" cy="11.6" r="1.1" class="f"/><path d="M8 17.2q4-3.6 8 0"/>',
+  2: '<circle cx="9" cy="10.4" r="1.1" class="f"/><circle cx="15" cy="10.4" r="1.1" class="f"/><path d="M8.6 16.4q3.4-2 6.8 0"/>',
+  3: '<circle cx="9" cy="10.4" r="1.1" class="f"/><circle cx="15" cy="10.4" r="1.1" class="f"/><path d="M8.6 15.4h6.8"/>',
+  4: '<circle cx="9" cy="10.4" r="1.1" class="f"/><circle cx="15" cy="10.4" r="1.1" class="f"/><path d="M8 14q4 3.8 8 0"/>',
+  5: '<path d="M7.4 10.6q1.6-2 3.2 0M13.4 10.6q1.6-2 3.2 0"/><path d="M7.6 13.6h8.8q-.6 4.6-4.4 4.6t-4.4-4.6z" class="f"/>',
+};
+export function moodFace(v, size = 24) {
+  if (!FACE[v]) return '';
+  return `<svg class="mface" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/>${FACE[v]}</svg>`;
+}
 const PROMPTS = [
   'Today I…', 'The best part of today was', 'Something that was hard:', 'I feel… because', 'Tomorrow I want to', 'I’m grateful for',
 ];
@@ -103,10 +116,10 @@ function viewJournal(view, param) {
 
       <div class="j-layout">
         <div class="j-main">
-          <div class="card j-editor">
+          <div class="card j-editor gx">
             <div class="j-mood" role="radiogroup" aria-label="Mood">
               <span class="j-label">Mood</span>
-              <div class="mood-row">${MOODS.map(([v, l, c]) => `<button type="button" role="radio" aria-checked="${e.mood === v}" class="mood ${e.mood === v ? 'on' : ''}" data-mood="${v}" style="--mc:${c}"><i></i><span>${l}</span></button>`).join('')}</div>
+              <div class="mood-row">${MOODS.map(([v, l, c]) => `<button type="button" role="radio" aria-checked="${e.mood === v}" class="mood ${e.mood === v ? 'on' : ''}" data-mood="${v}" style="--mc:${c}" aria-label="${l}">${moodFace(v, 34)}<span>${l}</span></button>`).join('')}</div>
             </div>
             <div class="j-prompts">${prompts}</div>
             <textarea id="j-text" class="j-text" placeholder="What did you do, how do you feel, what’s on your mind? At least ${MIN_WORDS} words.">${esc(e.text)}</textarea>
@@ -119,7 +132,7 @@ function viewJournal(view, param) {
           <div class="section-head"><h2>Past entries</h2><span class="muted small">${a.written} in the last 30 days</span></div>
           ${past.length ? `
           <div class="book" id="book" tabindex="0" aria-label="Past entries. Use the arrow keys to turn pages">
-            <div class="book-spread" id="book-spread"></div>
+            <div class="book-spread gx" id="book-spread"></div>
             <div class="book-nav">
               <button class="icon-btn" id="book-prev" aria-label="Newer page">${icon('chevL', 18)}</button>
               <span class="book-pos" id="book-pos"></span>
@@ -129,11 +142,11 @@ function viewJournal(view, param) {
         </div>
 
         <aside class="j-side">
-          <div class="card j-weather" id="j-weather">
+          <div class="card j-weather gx" id="j-weather">
             ${loc ? `<div class="jw-loading"><span class="muted small">${icon('location', 14)} ${esc(placeLabel(loc))}</span><p class="muted">Checking the weather…</p></div>`
               : `<div class="jw-empty"><span class="notice-ic small">${icon('sun', 22)}</span><b>Add your city for weather tips</b><p class="muted small">We’ll suggest a walk when the weather and your mood fit.</p><button class="btn ghost small" id="j-setloc">${icon('location', 14)} Set location</button></div>`}
           </div>
-          <div class="card j-stats">
+          <div class="card j-stats gx">
             <div class="card-head"><h3>Your journal</h3><span class="muted small">30 days</span></div>
             <div class="js-kpis">
               <div><b class="num" data-count="${a.streak}">${a.streak}</b><span>day streak</span></div>
@@ -141,9 +154,9 @@ function viewJournal(view, param) {
               <div><b class="num" data-count="${a.avgWords}">${a.avgWords}</b><span>avg. words</span></div>
             </div>
             <div class="mood-chart" aria-label="Mood over the last 14 days">
-              ${a.moodSeries.map((x) => { const m = moodOf(x.mood); return `<div class="mc-col" title="${shortDate(x.k)}${m ? ` · ${m[1]}` : ' · no mood'}"><div class="mc-track"><i style="height:${x.mood ? x.mood * 20 : 0}%;${m ? `background:${m[2]}` : ''}"></i></div><span>${DAY_NAMES[weekday(x.k)].slice(0, 1)}</span></div>`; }).join('')}
+              ${a.moodSeries.map((x) => { const m = moodOf(x.mood); return `<div class="mc-col" title="${shortDate(x.k)}${m ? ` · ${m[1]}` : ' · no mood'}"><div class="mc-track"><i style="height:${x.mood ? x.mood * 20 : 0}%;${m ? `background:${m[2]}` : ''}"></i></div><span class="mc-face" style="${m ? `color:${m[2]}` : ''}">${m ? moodFace(m[0], 14) : '<i class="mc-none"></i>'}</span><span>${DAY_NAMES[weekday(x.k)].slice(0, 1)}</span></div>`; }).join('')}
             </div>
-            ${a.avgMood != null ? `<p class="muted small">Average mood: <b>${moodOf(Math.round(a.avgMood))[1]}</b>${a.last7 != null && a.prev7 != null ? ` · ${a.last7 > a.prev7 + 0.2 ? 'up' : a.last7 < a.prev7 - 0.2 ? 'down' : 'steady'} vs last week` : ''}</p>` : '<p class="muted small">Pick a mood each day to see the trend.</p>'}
+            ${a.avgMood != null ? `<p class="muted small j-avg"><span class="j-avg-face" style="color:${moodOf(Math.round(a.avgMood))[2]}">${moodFace(Math.round(a.avgMood), 20)}</span>Average mood: <b>${moodOf(Math.round(a.avgMood))[1]}</b>${a.last7 != null && a.prev7 != null ? ` · ${a.last7 > a.prev7 + 0.2 ? 'up' : a.last7 < a.prev7 - 0.2 ? 'down' : 'steady'} vs last week` : ''}</p>` : '<p class="muted small">Pick a mood each day to see the trend.</p>'}
             ${a.topWords.length ? `<div class="j-words"><span class="j-label">You write about</span><div>${a.topWords.map(([w, n]) => `<span class="chip small">${esc(w)} <em>${n}</em></span>`).join('')}</div></div>` : ''}
           </div>
         </aside>
@@ -214,7 +227,7 @@ function pageHTML(p, no) {
   const m = moodOf(p.e.mood); const n = wordCount(p.e.text);
   return `
     <article class="bpage">
-      <header><b>${esc(longDate(p.k))}</b>${m ? `<span class="mood-pill" style="--mc:${m[2]}"><i></i>${m[1]}</span>` : ''}</header>
+      <header><b>${esc(longDate(p.k))}</b>${m ? `<span class="mood-pill" style="--mc:${m[2]}">${moodFace(m[0], 15)}${m[1]}</span>` : ''}</header>
       <div class="bp-text">${esc(p.e.text).replace(/\n/g, '<br>')}</div>
       <footer><a href="#/journal/${p.k}">${icon('pen', 13)} Edit</a><span class="${n < MIN_WORDS ? 'short' : ''}">${words(n)}</span><span class="bp-no">${no}</span></footer>
     </article>`;
@@ -292,7 +305,7 @@ export function journalPanelHTML(d) {
       <a class="prow j-prow" href="#/journal">
         <span class="prow-ic">${icon(isComplete(e) ? 'check' : 'pen', 17)}</span>
         <span class="prow-main"><b>${isComplete(e) ? 'Today’s entry is written' : n ? 'Keep going, almost there' : 'How was your day?'}</b><small>${n} / ${MIN_WORDS} words${m ? ` · feeling ${m[1].toLowerCase()}` : ''}</small></span>
-        ${m ? `<span class="mood-dot" style="--mc:${m[2]}"></span>` : ''}
+        ${m ? `<span class="mood-face-pill" style="--mc:${m[2]}" title="${m[1]}">${moodFace(m[0], 20)}</span>` : ''}
       </a>
     </section>`;
 }

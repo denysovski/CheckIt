@@ -110,7 +110,7 @@ Every day is a ring: a full ring means everything was done, a partial ring means
 
 ### Journal
 
-- **Daily entry:** one entry per day, at least 20 words. Pick a mood (Rough, Low, Okay, Good, Great), tap a prompt like *The best part of today was…* or just write.
+- **Daily entry:** one entry per day, at least 20 words. Pick a mood (Bad, Low, Neutral, Good, Great), tap a prompt like *The best part of today was…* or just write.
 - **Word bar:** fills up until you reach 20 words.
 - **Weather tip:** the side card shows the weather where you live with a suggestion. For example, on a low day: *“Feeling low? It's 9° and cloudy in Prague , a 15-minute walk outside might help.”*
 - **Your journal card:** your journaling streak, how many entries are complete, your average length, your mood over the last 14 days and the words you use most.
