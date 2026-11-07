@@ -592,8 +592,11 @@ function viewCalendar(view) {
     if (!future) { monthDone += s.done; monthTotal += s.total; }
     const cls = ['cal-cell', k === today ? 'today' : '', k === calSelected ? 'sel' : '', future ? 'future' : '',
       !future && s.total && s.done === s.total ? 'full' : '', !future && k < today && s.total && s.done < s.total ? 'miss' : ''].join(' ');
-    cells.push(`<button class="${cls}" data-day="${k}" aria-label="${prettyDate(k)}: ${s.done} of ${s.total}">
-      ${ring(future ? 0 : s.ratio, 40, 3.5, s.total && s.done === s.total && !future ? 'full' : '')}
+    cells.push(future ? `<span class="${cls}" data-future aria-disabled="true" aria-label="${prettyDate(k)}: future date">
+      ${ring(0, 40, 3.5, '')}
+      <span class="cal-num">${i}</span>
+    </span>` : `<button class="${cls}" data-day="${k}" aria-label="${prettyDate(k)}: ${s.done} of ${s.total}">
+      ${ring(s.ratio, 40, 3.5, s.total && s.done === s.total ? 'full' : '')}
       <span class="cal-num">${i}</span>
     </button>`);
   }
@@ -661,6 +664,15 @@ function viewCalendar(view) {
   $('#prev', view).onclick = () => move(-1);
   $('#next', view).onclick = () => move(1);
   $('#now', view).onclick = () => { calSelected = today; const key = today.slice(0, 7); if (key === calCursor) { view.classList.remove('enter'); viewCalendar(view); } else go2(key, key > calCursor ? 1 : -1); };
+  // Future days: faded, not selectable; a small bubble follows the cursor.
+  const tip = document.getElementById('future-tip') || Object.assign(document.body.appendChild(document.createElement('div')), { id: 'future-tip', className: 'future-tip', textContent: 'This day hasn’t happened yet' });
+  tip.classList.remove('on');
+  if (!tip.dataset.bound) { tip.dataset.bound = '1'; window.addEventListener('hashchange', () => tip.classList.remove('on')); }
+  $$('[data-future]', view).forEach((c) => {
+    c.addEventListener('pointerenter', () => tip.classList.add('on'));
+    c.addEventListener('pointermove', (e) => { tip.style.transform = `translate(${e.clientX + 14}px, ${e.clientY + 16}px)`; });
+    c.addEventListener('pointerleave', () => tip.classList.remove('on'));
+  });
   $$('[data-day]', view).forEach((b) => (b.onclick = () => { calSelected = b.dataset.day; view.classList.remove('enter'); viewCalendar(view); const dc = $('.day-card', view); dc.classList.add('swap'); }));
   $('#month-pick', view).onclick = (e) => monthPicker(e.currentTarget, y, m, (ny, nm) => { const key = `${ny}-${String(nm).padStart(2, '0')}`; go2(key, key > calCursor ? 1 : -1); });
   if (isFuture) $$('[data-toggle]', view).forEach((b) => (b.disabled = true));
