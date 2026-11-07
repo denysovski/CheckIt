@@ -756,7 +756,6 @@ function viewTasks(view) {
       </div>
       <div class="task-actions">
         ${linkBtn(t)}
-        <button class="icon-btn subtle" data-edit="${t.id}" aria-label="Edit ${esc(t.title)}">${icon('edit', 18)}</button>
         <button class="icon-btn subtle" data-menu="${t.id}" aria-haspopup="menu" aria-label="More for ${esc(t.title)}">${icon('more', 20)}</button>
       </div>
     </li>`;

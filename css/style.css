@@ -3191,3 +3191,4 @@ html .sheet.gx :is(.search, .link-input, .pl-search, .pal-input, .loc-search) in
 .pl-chip { padding: 7px 8px; }
 @media (max-width: 820px) { .pl-week { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; } .pl-drop { min-height: 140px; } }
 @media (max-width: 460px) { .pl-week { grid-template-columns: minmax(0, 1fr) !important; } .pl-drop { min-height: 90px; } }
+.editable .task-main[data-edit] { cursor: pointer; }
