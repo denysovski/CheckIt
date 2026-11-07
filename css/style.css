@@ -3167,3 +3167,8 @@ html .sheet.gx :is(.search, .link-input, .pl-search, .pal-input, .loc-search) in
 .sb-user b, .sb-user-txt b { font-family: var(--font) !important; font-weight: 500 !important; letter-spacing: 0 !important; font-size: 15px; }
 .brand-word, .brand-word b { font-family: var(--display) !important; font-weight: 700 !important; letter-spacing: -.04em; }
 .brand-word b { margin-left: 0; }
+
+/* sidebar icons all in the accent blue (same as the Ctrl+K key) */
+.sidebar :is(.sb-nav, .sb-quick, .sb-section, .sb-bottom, .sb-search, .sb-top-actions, .sb-head) .ic,
+.sidebar .sb-hash { color: var(--blue) !important; }
+.sidebar :is(a, button):hover .ic, .sidebar a.active .ic { color: color-mix(in srgb, var(--blue) 70%, #fff) !important; }
