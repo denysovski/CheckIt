@@ -395,32 +395,53 @@ export function bindRows(root, k, after) {
       setTimeout(() => { txt.textContent = `Done at ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`; txt.classList.remove('swap-out'); txt.classList.add('swap-in', 'done-at'); }, 160);
     }
     const stays = !!row.closest('.list.history, .panel-list');
-    // Fold the card away with WAAPI so the cards below glide up into its space (gap included).
-    if (!stays) setTimeout(() => {
-      const gap = parseFloat(getComputedStyle(row.parentElement).rowGap) || 0;
-      row.style.overflow = 'hidden';
-      row.animate([
-        { height: `${row.offsetHeight}px`, opacity: 1, marginBottom: '0px', transform: 'scale(1)' },
-        { height: '0px', opacity: 0, marginBottom: `${-gap}px`, paddingTop: '0px', paddingBottom: '0px', transform: 'scale(.97)' },
-      ], { duration: 420, easing: 'cubic-bezier(.22,1,.36,1)', fill: 'forwards' });
-    }, 900);
-    if (!stays) window.__justDone = row.dataset.id;
+    // Leave slowly: fade and drift out in place, then close the gap so the cards below glide up.
+    const EASE = 'cubic-bezier(.22,1,.36,1)';
+    if (!stays) {
+      window.__justDone = row.dataset.id;
+      setTimeout(() => {
+        row.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateX(28px) scale(.98)' }],
+          { duration: 620, easing: 'cubic-bezier(.4,0,.2,1)', fill: 'forwards' });
+      }, 850);
+      setTimeout(() => {
+        // Inline !important so the stylesheet's !important paddings can't hold the row open.
+        const gap = parseFloat(getComputedStyle(row.parentElement).rowGap) || 0;
+        const st = (p, v) => row.style.setProperty(p, v, 'important');
+        st('box-sizing', 'border-box'); st('overflow', 'hidden'); st('min-height', '0px');
+        st('height', `${row.offsetHeight}px`);
+        void row.offsetHeight;
+        st('transition', 'height .9s cubic-bezier(.65,0,.35,1), padding .9s cubic-bezier(.65,0,.35,1), margin .9s cubic-bezier(.65,0,.35,1)');
+        st('height', '0px'); st('padding-top', '0px'); st('padding-bottom', '0px'); st('margin-top', '0px'); st('margin-bottom', `${-gap}px`);
+        st('border-width', '0px');
+      }, 1450);
+    }
     setTimeout(() => {
+      // Remember every list's height so after the redraw each one resizes smoothly instead of jumping.
+      const oldHs = [...document.querySelectorAll('.list-panel > .list')].map((l) => l.getBoundingClientRect().height);
       redraw();
-      // The finished card arrives at the top of Done.
-      const arrived = window.__justDone && document.querySelector(`.done-list [data-id="${window.__justDone}"]`);
-      window.__justDone = null;
+      const id = window.__justDone; window.__justDone = null;
+      const lists = [...document.querySelectorAll('.list-panel > .list')];
+      if (id && lists.length === oldHs.length) {
+        lists.forEach((l, i) => {
+          const newH = l.getBoundingClientRect().height;
+          if (Math.abs(newH - oldHs[i]) < 1) return;
+          l.style.overflow = 'hidden';
+          l.animate([{ height: `${oldHs[i]}px` }, { height: `${newH}px` }], { duration: 850, easing: 'cubic-bezier(.65,0,.35,1)' })
+            .finished.then(() => { l.style.overflow = ''; }).catch(() => {});
+        });
+      }
+      const empties = id ? [...document.querySelectorAll('.list-panel .done-empty')] : [];
+      empties.forEach((e) => e.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 600, delay: 150, easing: EASE, fill: 'backwards' }));
+      const arrived = id && document.querySelector(`.done-list [data-id="${id}"]`);
       if (arrived) {
-        const h = arrived.offsetHeight;
-        arrived.style.overflow = 'hidden';
-        arrived.animate([{ height: '0px', opacity: 0, transform: 'translateY(-8px)' }, { height: `${h}px`, opacity: 1, transform: 'none' }], { duration: 420, easing: 'cubic-bezier(.22,1,.36,1)' })
-          .finished.then(() => { arrived.style.overflow = ''; }).catch(() => {});
+        arrived.animate([{ opacity: 0, transform: 'translateY(-14px) scale(.98)' }, { opacity: 1, transform: 'none' }],
+          { duration: 800, delay: 200, easing: EASE, fill: 'backwards' });
       }
       if (k === todayKey()) {
         const sum = daySummary(userData(), k);
         celebrate({ title: res.title, done: sum.done, total: sum.total, goalDone: res.goalDone });
       }
-    }, stays ? 1100 : 1340);
+    }, stays ? 1100 : 2400);
   }));
   bindMenus(root);
   $$('[data-detail]', root).forEach((b) => (b.onclick = (e) => { e.stopPropagation(); openTaskDetail(b.dataset.detail); }));
@@ -490,7 +511,8 @@ function viewToday(view) {
       </div>
       ${quickAddBar('qa-today')}
       ${b.required.length ? `<div class="panel list-panel"><ul class="list">${b.required.map(({ t, s }) => taskRow(t, k, s)).join('')}</ul></div>`
-        : `<div class="empty">${d.tasks.length ? `<span class="empty-ic">${icon('check', 28)}</span><p>Everything due today is done.</p>` : emptyIllustration()}</div>`}
+        : d.tasks.length ? `<div class="panel list-panel"><ul class="list"><li class="done-empty"><span class="de-ic">${icon('check', 18)}</span><div><b>Everything due today is done.</b><span>Enjoy the rest of your day.</span></div></li></ul></div>`
+        : `<div class="empty">${emptyIllustration()}</div>`}
 
       ${b.flexible.length ? `
         <div class="section-head"><h2>This week</h2><span class="muted small">Do it whenever it suits you</span></div>
