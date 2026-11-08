@@ -136,13 +136,13 @@ function viewNotes(view) {
           ${tags.map((t) => `<button class="chip ${filterTag === t ? 'on' : ''}" data-tag="${esc(t)}">${esc(t)}</button>`).join('')}
         </div>
       </div>
-      ${`<div class="note-grid">${!q && !filterTag ? `
+      ${`<div class="note-grid">${`
         <a class="note-card guide-card" href="#/note/guide">
-          <div class="nc-head"><span class="nc-ic">${icon('book', 22)}</span><div class="nc-flags"><span class="nc-tag">Guide</span></div></div>
+          <div class="nc-head"><span class="nc-ic">${icon('book', 22)}</span><div class="nc-flags"><span class="nc-tag">Guide</span><span class="nc-pin" title="Pinned">${icon('thumbtack', 14)}</span></div></div>
           <h3>How to format notes</h3>
           <p>Headings, bold, lists, checkboxes, colours, fonts, quotes, code and more. Every trick, with examples.</p>
-          <div class="nc-foot"><span>${icon('info', 13)} Always here</span><span>Open guide</span></div>
-        </a>` : ''}${list.map((n, i) => `
+          <div class="nc-foot"><span>${icon('info', 13)} Always pinned</span><span>Open guide</span></div>
+        </a>`}${list.map((n, i) => `
         <a class="note-card" href="#/note/${n.id}" style="--i:${i}">
           <div class="nc-head">
             <span class="nc-ic">${icon(noteIcon(n), 22)}</span>

@@ -125,12 +125,11 @@ export function userData() {
   if (!d.plans) d.plans = [];
   if (!d.profile) d.profile = {};
   if (!d.settings.hiddenNudges) d.settings.hiddenNudges = {};
-  if (!d.notes) {
-    const now = Date.now();
-    d.notes = [{
-      id: 'n-welcome', title: 'Welcome to Notes', tag: 'Guide', pinned: true, createdAt: now, updatedAt: now,
-      body: '# Notes\n\nWrite anything here, school notes, plans, lists.\n\n- Use **bold** with two stars\n- Start a line with `- ` for a list\n- Start with `[ ] ` for a checkbox\n\n[ ] Try making your first note\n',
-    }];
+  if (!d.notes) d.notes = [];
+  // The built-in Guide replaces the old seeded welcome note (only if it was never edited).
+  if (!d.settings.welcomeNoteRemoved) {
+    d.notes = d.notes.filter((n) => !(n.id === 'n-welcome' && n.createdAt === n.updatedAt) && !(n.id === 'n-welcome' && n.body && n.body.startsWith('# Notes\n\nWrite anything here')));
+    d.settings.welcomeNoteRemoved = true;
   }
   return d;
 }
