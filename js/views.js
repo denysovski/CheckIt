@@ -828,19 +828,60 @@ function viewTasks(view) {
           <button class="btn primary" id="add">${icon('plus', 16)} New task</button>
         </div>
       </div>
-      ${quickAddBar('qa-tasks')}
+      <div class="qa-row">
+        ${quickAddBar('qa-tasks')}
+        <button class="btn archive-btn" id="archive-btn" aria-haspopup="dialog">${icon('archive', 17)}<span>Archive</span>${archived.length ? `<b>${archived.length}</b>` : ''}</button>
+      </div>
       ${active.length ? `<div class="panel list-panel"><ul class="list">${active.map(row).join('')}</ul></div>` : `<div class="empty">${emptyIllustration()}</div>`}
       ${finished.length ? `<div class="section-head"><h2>Goals reached</h2></div><div class="panel list-panel"><ul class="list done-list">${finished.map(row).join('')}</ul></div>` : ''}
-      ${archived.length ? `<div class="section-head"><h2>Archive</h2></div><div class="panel list-panel"><ul class="list done-list">${archived.map(row).join('')}</ul></div>` : ''}
     </section>`;
   $('#add', view).onclick = () => openEditor();
   $('#presets', view).onclick = () => openPresets();
+  $('#archive-btn', view).onclick = () => openArchive();
   bindQuickAdd(view, 'qa-tasks');
   const eb = $('#empty-presets', view); if (eb) eb.onclick = () => openPresets();
   $$('[data-edit]', view).forEach((b) => (b.onclick = () => openEditor(b.dataset.edit)));
   $$('[data-up]', view).forEach((b) => (b.onclick = () => moveTask(b.dataset.up, -1)));
   $$('[data-down]', view).forEach((b) => (b.onclick = () => moveTask(b.dataset.down, 1)));
   bindMenus(view);
+}
+
+// Archived tasks live behind the Archive button: restore or delete them here.
+function openArchive() {
+  const paint = () => {
+    const list = userData().tasks.filter((t) => t.archivedAt);
+    return list.length ? `<ul class="arch-list">${list.map((t) => `
+      <li data-id="${t.id}">
+        <span class="tile big">${taskIcon(t.icon, 20)}</span>
+        <div class="arch-main"><b>${esc(t.title)}</b><small>${esc(frequencyLabel(t))} · archived ${esc(prettyDate(t.archivedAt))}</small></div>
+        <button class="btn small arch-restore" data-restore="${t.id}">${icon('arrowUp', 14)} Restore</button>
+        <button class="icon-btn subtle arch-del" data-del="${t.id}" aria-label="Delete ${esc(t.title)} for good">${icon('trash', 17)}</button>
+      </li>`).join('')}</ul>`
+      : `<div class="arch-empty"><span class="de-ic">${icon('archive', 18)}</span><div><b>The archive is empty.</b><span>Archive a task from its ⋯ menu to hide it without losing its history.</span></div></div>`;
+  };
+  const s = sheet(`
+    <div class="sheet-body">
+      <h3 class="sheet-title">Archive</h3>
+      <p class="sheet-sub">Hidden tasks keep their history. Restore one to bring it back to your list.</p>
+      <div id="arch-body">${paint()}</div>
+      <div class="row gap pl-actions-row"><button class="btn ghost" data-close>Done</button></div>
+    </div>`, { wide: true });
+  const bind = () => {
+    $$('[data-restore]', s.el).forEach((b) => (b.onclick = () => {
+      const li = b.closest('li');
+      update((x) => { const y = x.tasks.find((z) => z.id === b.dataset.restore); if (y) y.archivedAt = null; });
+      notify.syncBadge();
+      collapse(li, { fade: 200, close: 300 }).then(() => { li.remove(); if (!$('.arch-list li', s.el)) { $('#arch-body', s.el).innerHTML = paint(); } });
+      rerender();
+    }));
+    $$('[data-del]', s.el).forEach((b) => (b.onclick = async () => {
+      const t = userData().tasks.find((z) => z.id === b.dataset.del);
+      if (!t || !(await confirmSheet('Delete for good?', `“${t.title}” and its history will be removed.`, 'Delete'))) return;
+      deleteTask(t.id);
+      $('#arch-body', s.el).innerHTML = paint(); bind();
+    }));
+  };
+  bind();
 }
 
 // ============================================================ settings

@@ -3323,3 +3323,25 @@ html.no-motion .sidebar .sb-badge, html.no-motion .sidebar .sb-badge::after { an
 .chart-tip.on { visibility: visible; transition: opacity .22s var(--ease-out), visibility 0s; }
 .chart-tip.glide { transition: opacity .22s var(--ease-out), transform .22s var(--ease-out), visibility 0s; }
 .barchart { margin-top: 18px; }
+
+/* Tasks: quick add + Archive button side by side */
+.qa-row { display: flex; gap: 10px; align-items: stretch; margin-bottom: 18px; }
+.qa-row .quick-add { flex: 1; min-width: 0; margin: 0 !important; }
+.archive-btn { flex: none; display: inline-flex; align-items: center; gap: 8px; padding: 0 18px; border-radius: 18px; font-weight: 600; color: #fff;
+  background: linear-gradient(150deg, #0A3854 0%, #0B6F95 70%, #1593BB 130%); box-shadow: 0 10px 24px -16px rgba(3, 20, 32, .6); transition: box-shadow .35s var(--ease-out), filter .3s; }
+:root[data-theme="dark"] .archive-btn { background: linear-gradient(150deg, #06121B 0%, #0A2A40 60%, #0C5878 130%); }
+.archive-btn:hover { filter: brightness(1.08); box-shadow: 0 0 0 4px rgba(14, 152, 190, .16), 0 10px 24px -16px rgba(3, 20, 32, .6); }
+.archive-btn b { min-width: 22px; height: 22px; padding: 0 6px; border-radius: 999px; display: grid; place-items: center; font-size: 12px; background: #fff; color: #0B4F70; }
+@media (max-width: 560px) { .archive-btn span { display: none; } .archive-btn { padding: 0 14px; } }
+.arch-list { list-style: none; margin: 14px 0 6px; padding: 0; display: flex; flex-direction: column; gap: 8px; max-height: 56vh; overflow-y: auto; }
+.arch-list li { display: flex; align-items: center; gap: 12px; padding: 10px; border-radius: 16px; background: rgba(255, 255, 255, .08); }
+.arch-main { flex: 1; min-width: 0; }
+.arch-main b { display: block; font-weight: 500; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.arch-main small { color: rgba(255, 255, 255, .65); font-size: 12.5px; }
+.arch-restore { background: #fff !important; color: #0B4F70 !important; border: 0 !important; }
+.arch-del { color: rgba(255, 255, 255, .75) !important; }
+.arch-del:hover { background: rgba(229, 83, 75, .25) !important; color: #fff !important; }
+.arch-empty { display: flex; gap: 14px; align-items: center; padding: 16px; margin: 14px 0 6px; border-radius: 16px; background: rgba(255, 255, 255, .06); }
+.arch-empty b { display: block; color: #fff; font-weight: 600; }
+.arch-empty span { color: rgba(255, 255, 255, .65); font-size: 14px; }
+.arch-list .tile.big { background: #fff !important; color: #0B6F95 !important; } .arch-list .tile.big .ic-mask { background: #0B6F95; } .arch-list .tile.big .ic-img { filter: none; }
