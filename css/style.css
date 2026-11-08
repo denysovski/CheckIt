@@ -3222,3 +3222,16 @@ html .sheet.gx :is(.search, .link-input, .pl-search, .pal-input, .loc-search) in
 .future-tip.on { opacity: 1; }
 @media (hover: none) { .future-tip { display: none; } }
 details.more { gap: 0 !important; } details.more[open] > summary { margin-bottom: 12px; }
+
+/* stats: bar bubble and bigger labels */
+.chart-tip { position: fixed; left: 0; top: 0; z-index: 900; pointer-events: none; display: flex; flex-direction: column; gap: 2px; padding: 9px 13px; border-radius: 14px; white-space: nowrap;
+  background: #fff; color: #0B0D10; box-shadow: 0 14px 30px -10px rgba(3, 20, 32, .45); opacity: 0; transition: opacity .18s ease-out; }
+.chart-tip.on { opacity: 1; }
+.chart-tip::after { content: ""; position: absolute; left: var(--ax, 50%); bottom: -5px; width: 10px; height: 10px; background: #fff; transform: translateX(-50%) rotate(45deg); border-radius: 2px; }
+.chart-tip b { font-family: var(--display); font-size: 14px; font-weight: 700; }
+.chart-tip span { font-size: 13px; color: #4A5560; }
+.chart-tip span::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #12AAD4; margin-right: 6px; vertical-align: 1px; }
+.bc-col { cursor: default; outline: none; }
+.bc-col:hover .bc-track, .bc-col:focus-visible .bc-track { background: rgba(255, 255, 255, .18) !important; }
+.stats-page .card-head .muted.small { font-size: 14px !important; color: #fff !important; opacity: .9; font-weight: 500; }
+.stats-page .section-head .muted.small { font-size: 14px !important; color: var(--ink) !important; font-weight: 500; }
