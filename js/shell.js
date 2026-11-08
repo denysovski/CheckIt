@@ -54,7 +54,7 @@ function sidebarHTML() {
     </div>
     <div class="sb-section">
       <div class="sb-head"><span class="sb-label">Notes</span><button class="icon-btn subtle xs2" id="sb-add-note" aria-label="New note" title="New note">${icon('plus', 16)}</button></div>
-      ${notes.length ? notes.map((n) => `<a href="#/note/${n.id}" data-nav="note:${n.id}" title="${esc(n.title || 'Untitled')}">${icon(noteIcon(n), 16)}<span class="grow ellipsis sb-label">${esc(n.title || 'Untitled')}</span>${n.pinned ? `<span class="sb-pin sb-label">${icon('thumbtack', 13)}</span>` : ''}</a>`).join('') : `<button class="sb-first-note" id="sb-first-note">${icon('plus', 16)}<span><b>Create your first note</b><small>Plans, lists, ideas</small></span></button>`}
+      ${notes.length ? notes.map((n) => `<a href="#/note/${n.id}" data-nav="note:${n.id}" title="${esc(n.title || 'Untitled')}">${icon(noteIcon(n), 16)}<span class="grow ellipsis sb-label">${esc(n.title || 'Untitled')}</span>${n.pinned ? `<span class="sb-pin sb-label">${icon('thumbtack', 13)}</span>` : ''}</a>`).join('') : `<div class="sb-first-wrap"><button class="sb-first-note" id="sb-first-note"><span>Create your first note.</span></button><span class="sb-info" tabindex="0" role="button" aria-label="Why notes help" data-info="Documenting your life with notes helps you reach your goals.">${icon('info', 15)}</span></div>`}
     </div>
     </div>
     <div class="sb-bottom">
@@ -81,17 +81,36 @@ function bindSidebar(sb) {
   $('#sb-add-note', sb).onclick = () => { closeDrawer(); const n = createNote(); go('note', n.id); };
   const first = $('#sb-first-note', sb);
   if (first) first.onclick = () => { closeDrawer(); const n = createNote(); go('note', n.id); };
+  $$('[data-info]', sb).forEach(bindInfoTip);
   $('#sb-new', sb).onclick = (e) => createMenu(e.currentTarget);
   applySidebarState();
   $$('a', sb).forEach((a) => a.addEventListener('click', closeDrawer));
   markActive();
 }
 
+// Small bubble next to an info icon (fixed, so the sidebar can't clip it).
+function bindInfoTip(el) {
+  let tip = document.getElementById('info-tip');
+  if (!tip) { tip = Object.assign(document.createElement('div'), { id: 'info-tip', className: 'info-tip' }); tip.setAttribute('role', 'tooltip'); document.body.appendChild(tip); }
+  const show = () => {
+    tip.textContent = el.dataset.info;
+    const r = el.getBoundingClientRect();
+    tip.classList.add('on');
+    const h = tip.offsetHeight;
+    const x = Math.min(innerWidth - tip.offsetWidth - 8, r.right + 12);
+    tip.style.transform = `translate(${Math.round(x)}px, ${Math.round(r.top + r.height / 2 - h / 2)}px)`;
+  };
+  const hide = () => tip.classList.remove('on');
+  el.addEventListener('pointerenter', show); el.addEventListener('focus', show);
+  el.addEventListener('pointerleave', hide); el.addEventListener('blur', hide);
+  el.addEventListener('click', (e) => { e.stopPropagation(); tip.classList.contains('on') ? hide() : show(); });
+}
+
 export function refreshSidebar() {
   const sb = $('.sidebar');
   if (!sb) return;
   const html = sidebarHTML();
-  const oldBtn = $('#sb-first-note', sb);
+  const oldBtn = $('.sb-first-wrap', sb);
   const willHave = html.includes('id="sb-first-note"');
   const paint = () => {
     const mid = $('.sb-mid', sb); const scroll = mid ? mid.scrollTop : 0;
@@ -99,8 +118,8 @@ export function refreshSidebar() {
     bindSidebar(sb);
     const mid2 = $('.sb-mid', sb); if (mid2) mid2.scrollTop = scroll;
     // the "first note" button eases in when it comes back
-    const nb = $('#sb-first-note', sb);
-    if (nb && !oldBtn) nb.animate([{ opacity: 0, transform: 'translateY(6px)' }, { opacity: 1, transform: 'none' }], { duration: 380, easing: 'cubic-bezier(.22,1,.36,1)' });
+    const nb = $('.sb-first-wrap', sb);
+    if (nb && oldBtn) nb.style.animation = 'none'; // already shown: don't replay its fade-in
   };
   // ...and fades out before the first note takes its place
   if (oldBtn && !willHave) {
