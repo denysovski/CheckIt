@@ -3345,3 +3345,4 @@ html.no-motion .sidebar .sb-badge, html.no-motion .sidebar .sb-badge::after { an
 .arch-empty b { display: block; color: #fff; font-weight: 600; }
 .arch-empty span { color: rgba(255, 255, 255, .65); font-size: 14px; }
 .arch-list .tile.big { background: #fff !important; color: #0B6F95 !important; } .arch-list .tile.big .ic-mask { background: #0B6F95; } .arch-list .tile.big .ic-img { filter: none; }
+.sheet:has(.arch-sheet) { width: min(760px, calc(100vw - 32px)) !important; max-width: none !important; }

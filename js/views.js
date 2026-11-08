@@ -860,7 +860,7 @@ function openArchive() {
       : `<div class="arch-empty"><span class="de-ic">${icon('archive', 18)}</span><div><b>The archive is empty.</b><span>Archive a task from its ⋯ menu to hide it without losing its history.</span></div></div>`;
   };
   const s = sheet(`
-    <div class="sheet-body">
+    <div class="sheet-body arch-sheet">
       <h3 class="sheet-title">Archive</h3>
       <p class="sheet-sub">Hidden tasks keep their history. Restore one to bring it back to your list.</p>
       <div id="arch-body">${paint()}</div>
