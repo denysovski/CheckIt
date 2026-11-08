@@ -26,8 +26,11 @@ function sidebarHTML() {
   const pending = notify.syncBadge();
   const notes = sortedNotes(d).slice(0, 6);
   const nav = [
-    ['home', 'Home', 'home'], ['today', 'Today', 'today', pending], ['tasks', 'Tasks', 'list'], ['calendar', 'Calendar', 'calendar'], ['planner', 'Planner', 'clock'],
-    ['stats', 'Stats', 'chart'], ['journal', 'Journal', 'pen'], ['notes', 'Notes', 'book'], ['recaps', 'Recaps', 'archive', recapBadge()],
+    // do → plan → write → look back
+    ['home', 'Home', 'home'], ['today', 'Today', 'today', pending], ['tasks', 'Tasks', 'list'],
+    ['planner', 'Planner', 'clock'], ['calendar', 'Calendar', 'calendar'],
+    ['journal', 'Journal', 'pen'], ['notes', 'Notes', 'book'],
+    ['stats', 'Stats', 'chart'], ['recaps', 'Recaps', 'archive', recapBadge()],
   ];
   const initial = (name) => esc((name || '?').replace(/[^a-z0-9]/gi, '').slice(0, 1).toUpperCase() || '#');
   return `
@@ -39,7 +42,7 @@ function sidebarHTML() {
     </div>
     <button class="sb-search" id="sb-search" title="Search"><span>${icon('search', 17)}</span><span class="grow sb-label">Search</span><kbd class="sb-label sb-kbd">${isMac ? '⌘' : 'Ctrl'} + K</kbd></button>
     <nav class="sb-quick" aria-label="Quick links">
-      ${[['home', 'Home', 'home'], ['today', 'Today', 'today'], ['tasks', 'Tasks', 'list'], ['calendar', 'Calendar', 'calendar'], ['planner', 'Planner', 'clock']].map(([r, l, ic]) => `<a href="#/${r}" data-nav="${r}" title="${l}" aria-label="${l}">${icon(ic, 18)}</a>`).join('')}
+      ${[['home', 'Home', 'home'], ['today', 'Today', 'today'], ['tasks', 'Tasks', 'list'], ['planner', 'Planner', 'clock'], ['calendar', 'Calendar', 'calendar']].map(([r, l, ic]) => `<a href="#/${r}" data-nav="${r}" title="${l}" aria-label="${l}">${icon(ic, 18)}</a>`).join('')}
     </nav>
     <div class="sb-mid">
     <nav class="sb-nav" aria-label="Main">
