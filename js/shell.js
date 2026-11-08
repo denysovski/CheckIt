@@ -208,7 +208,9 @@ function viewHome(view) {
   const hour = new Date().getHours();
   // keep the user's own order so a ticked task stays exactly where it was
   const order = new Map(d.tasks.map((t, i) => [t.id, i]));
-  const list = [...b.required, ...b.flexible, ...b.done].sort((x, y) => order.get(x.t.id) - order.get(y.t.id)).slice(0, 7);
+  const all = [...b.required, ...b.flexible, ...b.done].sort((x, y) => order.get(x.t.id) - order.get(y.t.id));
+  const list = all.slice(0, 5);
+  const more = all.length - list.length;
   const wk = weekStats(d, weekStart(k), k);
   const notes = sortedNotes(d).slice(0, 4);
   const chans = d.channels.map((c) => ({ c, msgs: messagesOf(c.id, d) })).sort((a, z) => ((z.msgs.at(-1)?.ts || z.c.createdAt) - (a.msgs.at(-1)?.ts || a.c.createdAt))).slice(0, 4);
@@ -235,7 +237,8 @@ function viewHome(view) {
         <div class="home-col">
         <section class="panel p-blue">
           <header class="panel-head"><h2>${icon('today', 18)} Today <span class="count">${sum.total}</span></h2><a href="#/today" class="view-all">View all ${icon('chevR', 13)}</a></header>
-          ${list.length ? `<ul class="list compact panel-list">${list.map(({ t, s }) => taskRow(t, k, s, { compact: true })).join('')}</ul>`
+          ${list.length ? `<ul class="list compact panel-list">${list.map(({ t, s }) => taskRow(t, k, s, { compact: true })).join('')}</ul>
+            ${more ? `<a href="#/today" class="panel-more">${icon('list', 16)}<span><b>${more} more ${more === 1 ? 'task' : 'tasks'}</b> for today</span><span class="pm-go">View all ${icon('chevR', 13)}</span></a>` : ''}`
             : `<div class="panel-empty"><p>Nothing planned yet.</p><button class="btn ghost small" id="h-add-task">${icon('plus', 14)} Add a task</button></div>`}
         </section>
         <section class="panel p-yellow">
