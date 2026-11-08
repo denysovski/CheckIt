@@ -734,7 +734,7 @@ function viewStats(view) {
           <div class="barchart" role="img" aria-label="Tasks done over the last 14 days">
             ${series.map((s) => `
               <div class="bc-col" data-tip-date="${esc(prettyDate(s.k))}" data-tip-done="${s.done}" data-tip-total="${s.total}" tabindex="0" aria-label="${esc(prettyDate(s.k))}: ${s.done} of ${s.total} done">
-                <div class="bc-track" style="height:${(s.total / maxBar) * 100}%">
+                <div class="bc-track" style="height:${(s.total / maxBar) * 100}%">${s.done ? `<em class="bc-n" style="bottom:${s.total ? (s.done / s.total) * 100 : 0}%">${s.done}</em>` : ''}
                   <div class="bc-fill ${s.total && s.done < s.total && s.k < todayKey() ? 'has-miss' : ''}" style="height:${s.total ? (s.done / s.total) * 100 : 0}%"></div>
                 </div>
                 <span>${parseKey(s.k).getDate()}</span>
@@ -778,6 +778,8 @@ function bindChartTips(view) {
     const done = +col.dataset.tipDone; const total = +col.dataset.tipTotal;
     tip.innerHTML = `<b>${col.dataset.tipDate}</b><span>${total ? `${done} of ${total} ${total === 1 ? 'task' : 'tasks'} done` : 'Nothing planned'}</span>`;
     const r = col.getBoundingClientRect();
+    const was = tip.classList.contains('on');
+    tip.classList.toggle('glide', was); // already visible: slide over to the new bar instead of jumping
     tip.classList.add('on');
     const w = tip.offsetWidth; const h = tip.offsetHeight;
     const x = Math.max(8, Math.min(innerWidth - w - 8, r.left + r.width / 2 - w / 2));

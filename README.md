@@ -136,6 +136,8 @@ The task list lets you reorder, edit, archive and delete tasks, and add new ones
 
 Each note has its own icon (pick one from the tile next to the title) and shows on a gradient card with its tag, a pin, a short excerpt, the full date (for example *27th October 2026*) and the word count.
 
+Above every note is a formatting toolbar: three heading sizes, bold, italic, underline, strikethrough, highlight, six text colours, big and small text, bullet, numbered and nested lists (Tab / Shift + Tab), checklists, quotes, callouts, code blocks, dividers and links, plus a Sans, Serif or Mono font per note. Ctrl + B / I / U work too. A **Guide** card always sits first in Notes and shows every format with what you type and what you get.
+
 Notes for school and anything else. Each note can have a tag and be pinned, and it saves as you type. Notes support light formatting: `# headings`, `- lists`, `[ ] checkboxes` and `**bold**`. There's a preview mode where you can tick the checkboxes, and you can download any note as Markdown.
 
 <img src="docs/screens/15-notes.png" alt="Notes">
