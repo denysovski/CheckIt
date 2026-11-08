@@ -54,7 +54,7 @@ function sidebarHTML() {
     </div>
     <div class="sb-section">
       <div class="sb-head"><span class="sb-label">Notes</span><button class="icon-btn subtle xs2" id="sb-add-note" aria-label="New note" title="New note">${icon('plus', 16)}</button></div>
-      ${notes.length ? notes.map((n) => `<a href="#/note/${n.id}" data-nav="note:${n.id}" title="${esc(n.title || 'Untitled')}">${icon(noteIcon(n), 16)}<span class="grow ellipsis sb-label">${esc(n.title || 'Untitled')}</span>${n.pinned ? `<span class="sb-pin sb-label">${icon('thumbtack', 13)}</span>` : ''}</a>`).join('') : '<p class="sb-empty sb-label">No notes yet</p>'}
+      ${notes.length ? notes.map((n) => `<a href="#/note/${n.id}" data-nav="note:${n.id}" title="${esc(n.title || 'Untitled')}">${icon(noteIcon(n), 16)}<span class="grow ellipsis sb-label">${esc(n.title || 'Untitled')}</span>${n.pinned ? `<span class="sb-pin sb-label">${icon('thumbtack', 13)}</span>` : ''}</a>`).join('') : `<button class="sb-first-note" id="sb-first-note">${icon('plus', 16)}<span><b>Create your first note</b><small>Plans, lists, ideas</small></span></button>`}
     </div>
     </div>
     <div class="sb-bottom">
@@ -79,6 +79,8 @@ function bindSidebar(sb) {
   $('#account-btn', sb).onclick = (e) => showAccountMenu(e.currentTarget);
   $('#sb-add-ch', sb).onclick = () => { closeDrawer(); newChannel(); };
   $('#sb-add-note', sb).onclick = () => { closeDrawer(); const n = createNote(); go('note', n.id); };
+  const first = $('#sb-first-note', sb);
+  if (first) first.onclick = () => { closeDrawer(); const n = createNote(); go('note', n.id); };
   $('#sb-new', sb).onclick = (e) => createMenu(e.currentTarget);
   applySidebarState();
   $$('a', sb).forEach((a) => a.addEventListener('click', closeDrawer));
@@ -88,10 +90,26 @@ function bindSidebar(sb) {
 export function refreshSidebar() {
   const sb = $('.sidebar');
   if (!sb) return;
-  const mid = $('.sb-mid', sb); const scroll = mid ? mid.scrollTop : 0;
-  sb.innerHTML = sidebarHTML();
-  bindSidebar(sb);
-  const mid2 = $('.sb-mid', sb); if (mid2) mid2.scrollTop = scroll;
+  const html = sidebarHTML();
+  const oldBtn = $('#sb-first-note', sb);
+  const willHave = html.includes('id="sb-first-note"');
+  const paint = () => {
+    const mid = $('.sb-mid', sb); const scroll = mid ? mid.scrollTop : 0;
+    sb.innerHTML = sidebarHTML();
+    bindSidebar(sb);
+    const mid2 = $('.sb-mid', sb); if (mid2) mid2.scrollTop = scroll;
+    // the "first note" button eases in when it comes back
+    const nb = $('#sb-first-note', sb);
+    if (nb && !oldBtn) nb.animate([{ opacity: 0, transform: 'translateY(6px)' }, { opacity: 1, transform: 'none' }], { duration: 380, easing: 'cubic-bezier(.22,1,.36,1)' });
+  };
+  // ...and fades out before the first note takes its place
+  if (oldBtn && !willHave) {
+    oldBtn.style.overflow = 'hidden';
+    oldBtn.animate([{ opacity: 1, height: `${oldBtn.offsetHeight}px` }, { opacity: 0, height: '0px', paddingTop: '0px', paddingBottom: '0px', marginTop: '0px', marginBottom: '0px' }],
+      { duration: 320, easing: 'cubic-bezier(.4,0,.2,1)', fill: 'forwards' }).finished.then(paint).catch(paint);
+    return;
+  }
+  paint();
 }
 
 function markActive() {
