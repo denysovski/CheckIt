@@ -54,7 +54,7 @@ function sidebarHTML() {
     </div>
     <div class="sb-section">
       <div class="sb-head"><span class="sb-label">Notes</span><button class="icon-btn subtle xs2" id="sb-add-note" aria-label="New note" title="New note">${icon('plus', 16)}</button></div>
-      ${notes.length ? notes.map((n) => `<a href="#/note/${n.id}" data-nav="note:${n.id}" title="${esc(n.title || 'Untitled')}">${icon(noteIcon(n), 16)}<span class="grow ellipsis sb-label">${esc(n.title || 'Untitled')}</span>${n.pinned ? `<span class="sb-pin sb-label">${icon('thumbtack', 13)}</span>` : ''}</a>`).join('') : `<div class="sb-first-wrap"><button class="sb-first-note" id="sb-first-note"><span>Create your first note.</span></button><span class="sb-info" tabindex="0" role="button" aria-label="Why notes help" data-info="Documenting your life with notes helps you reach your goals.">${icon('info', 15)}</span></div>`}
+      ${notes.length ? notes.map((n) => `<a href="#/note/${n.id}" data-nav="note:${n.id}" title="${esc(n.title || 'Untitled')}">${icon(noteIcon(n), 16)}<span class="grow ellipsis sb-label">${esc(n.title || 'Untitled')}</span>${n.pinned ? `<span class="sb-pin sb-label">${icon('thumbtack', 13)}</span>` : ''}</a>`).join('') : `<div class="sb-first-wrap"><button class="sb-first-note" id="sb-first-note"><span>Create your first notes.</span></button><span class="sb-info" tabindex="0" role="button" aria-label="Why notes help" data-info="Documenting your life with notes helps you reach your goals.">${icon('info', 15)}</span></div>`}
     </div>
     </div>
     <div class="sb-bottom">

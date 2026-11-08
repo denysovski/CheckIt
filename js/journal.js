@@ -4,7 +4,7 @@ import { esc, $, $$, toast, countUp } from './ui.js';
 import { userData, update } from './store.js';
 import { register, go, rerender } from './router.js';
 import { todayKey, addDays, parseKey, keyOf, daySummary, DAY_NAMES, weekday } from './schedule.js';
-import { getLocation, getWeather, walkAdvice, locationSheet, placeLabel } from './weather.js';
+import { getLocation, getWeather, walkAdvice, lowMoodAdvice, locationSheet, placeLabel } from './weather.js';
 import { nudgeStackHTML, bindNudges } from './nudges.js';
 
 export const MIN_WORDS = 20;
@@ -207,7 +207,7 @@ function viewJournal(view, param) {
     const now = entryOf(userData(), k).mood;
     $$('[data-mood]', view).forEach((x) => { const on = +x.dataset.mood === now; x.classList.toggle('on', on); x.setAttribute('aria-checked', on); });
     $('#j-save', view).textContent = 'Saved';
-    paintWeather(view, now);
+    if (now && now <= 2) moodBubble(view); else hideMoodBubble(view);
   }));
   // Day to day: the page fades out, the next one fades in.
   const fadeTo = (key) => { const pg = $('.page.journal', view); pg.classList.add('j-out'); pg.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 220, easing: 'ease-in', fill: 'forwards' }); setTimeout(() => go('journal', key), 220); };
@@ -273,6 +273,32 @@ function mountBook(view, pages) {
   draw();
 }
 
+// A bubble that rises out of the weather card when the mood is Bad or Low.
+async function moodBubble(view) {
+  const box = $('#j-weather', view); const loc = getLocation();
+  if (!box || !loc) return;
+  let w; try { w = await getWeather(loc); } catch { return; }
+  if (!w || !document.body.contains(box)) return;
+  hideMoodBubble(view, true);
+  const b = document.createElement('div');
+  b.className = 'mood-bubble'; b.setAttribute('role', 'status');
+  b.innerHTML = `<span class="mb-ic">${icon(w.icon, 20)}</span><p>${esc(lowMoodAdvice(w, loc.name))}</p><button class="mb-x" aria-label="Close">${icon('close', 14)}</button>`;
+  // lives next to the card (the card clips its own overflow), placed just above it
+  const host = box.parentElement;
+  if (getComputedStyle(host).position === 'static') host.style.position = 'relative';
+  host.appendChild(b);
+  b.style.left = `${box.offsetLeft + 14}px`; b.style.width = `${box.offsetWidth - 28}px`;
+  b.style.top = `${box.offsetTop - b.offsetHeight - 12}px`;
+  b.animate([{ opacity: 0, transform: 'translateY(12px) scale(.96)' }, { opacity: 1, transform: 'none' }], { duration: 420, easing: 'cubic-bezier(.22,1,.36,1)' });
+  $('.mb-x', b).onclick = () => hideMoodBubble(view);
+  clearTimeout(box._mbT); box._mbT = setTimeout(() => hideMoodBubble(view), 9000);
+}
+function hideMoodBubble(view, now = false) {
+  const b = $('.mood-bubble', view); if (!b) return;
+  if (now) { b.remove(); return; }
+  b.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateY(8px) scale(.97)' }], { duration: 260, easing: 'ease-in', fill: 'forwards' }).finished.then(() => b.remove()).catch(() => b.remove());
+}
+
 async function paintWeather(view, mood) {
   const box = $('#j-weather', view);
   const loc = getLocation();
@@ -284,7 +310,7 @@ async function paintWeather(view, mood) {
       <div class="jw">
         <div class="jw-top"><span class="muted small">${icon('location', 14)} ${esc(placeLabel(loc))}</span><button class="btn text small" id="jw-change">Change</button></div>
         <div class="jw-now"><span class="jw-ic">${icon(w.icon, 34)}</span><b class="num">${w.temp}°</b><div><b>${esc(w.text)}</b><small>Feels like ${w.feels}° · ${w.min}° / ${w.max}°${w.rain != null ? ` · ${w.rain}% rain` : ''}</small></div></div>
-        <p class="jw-advice">${esc(walkAdvice(w, mood, loc.name))}</p>
+        <p class="jw-advice">${esc(walkAdvice(w, null, loc.name))}</p>
       </div>`;
     // Only the weather card updates; the page itself stays put (no re-render, no fade-in replay).
     $('#jw-change', box).onclick = async () => {

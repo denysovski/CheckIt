@@ -53,6 +53,33 @@ export async function getWeather(loc = getLocation()) {
 }
 
 // A short, honest suggestion based on mood + weather.
+// A nudge for a bad or low mood, worded a little differently each time.
+export function lowMoodAdvice(w, place) {
+  if (!w) return '';
+  const where = place ? ` in ${place}` : '';
+  const sky = w.text.toLowerCase();
+  const wet = ['rain', 'storm', 'snow'].includes(w.icon) || (w.rain ?? 0) >= 60;
+  const pick = (a) => a[Math.floor(Math.random() * a.length)];
+  if (w.icon === 'storm') return pick([`Rough day? There’s a storm${where}, so try ten slow minutes of stretching inside.`, `Not your day? It’s stormy${where}. Open a window, breathe, and stretch for a bit.`]);
+  if (wet) return pick([
+    `Feeling low? It’s ${w.temp}° and ${sky}${where}, a short walk with a jacket still helps.`,
+    `Heavy day? ${w.temp}° and ${sky}${where}. Grab a hood and get ten minutes of fresh air.`,
+    `Not great today? It’s ${sky}${where}, but even a quick loop around the block can clear your head.`,
+  ]);
+  if (w.temp <= 0) return pick([
+    `Feeling low? It’s ${w.temp}°${where}, even 10 minutes of cold air can reset your head.`,
+    `Rough one? ${w.temp}° and ${sky}${where}. Wrap up warm and take a brisk 10-minute walk.`,
+    `Hard day? It’s cold${where} at ${w.temp}°, a few minutes outside can wake you up a little.`,
+  ]);
+  return pick([
+    `Feeling low? It’s ${w.temp}° and ${sky}${where}, a 15-minute walk outside might help.`,
+    `Rough day? ${w.temp}° and ${sky}${where}. A short walk could take the edge off.`,
+    `Not feeling great? It’s ${sky}${where} at ${w.temp}°, step outside for 15 minutes and see how it feels.`,
+    `Heavy day? ${w.temp}° and ${sky}${where}. Some fresh air and a slow walk might lift it a bit.`,
+    `Down today? It’s ${w.temp}°${where}, a walk around the block is a small, good start.`,
+  ]);
+}
+
 export function walkAdvice(w, mood, place) {
   if (!w) return '';
   const where = place ? ` in ${place}` : '';

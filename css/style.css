@@ -3378,3 +3378,29 @@ html.sb-collapsed .sb-first-wrap { opacity: 0; pointer-events: none; }
   26% { opacity: 0; transform: scale(1.85); }
   100% { opacity: 0; transform: scale(1.85); }
 }
+
+/* first-note: one bordered component, info icon inside, normal cursor */
+.sb-first-wrap { gap: 0 !important; border-radius: 14px; background: rgba(18, 170, 212, .08); box-shadow: inset 0 0 0 1.5px #12AAD4; padding-right: 6px; transition: background-color .3s var(--ease-out), box-shadow .3s var(--ease-out); }
+.sb-first-wrap:hover { background: rgba(18, 170, 212, .18); box-shadow: inset 0 0 0 1.5px #5FD0EE; }
+.sb-first-note { background: transparent !important; box-shadow: none !important; }
+.sb-info { cursor: default !important; }
+
+/* Ctrl+K key lighter */
+.sb-kbd, .sidebar kbd, .sb-search kbd { font-weight: 500 !important; }
+
+/* journal prompt chips lighter */
+.j-prompts .chip, .j-editor .j-prompts button { font-weight: 400 !important; }
+
+/* low-mood bubble out of the weather card */
+.mood-bubble { position: absolute; z-index: 20; box-sizing: border-box; display: flex; gap: 12px; align-items: flex-start; padding: 14px 40px 14px 14px; border-radius: 18px;
+  background: #fff; color: #0B0D10; box-shadow: 0 18px 40px -14px rgba(3, 20, 32, .55); }
+.mood-bubble::after { content: ""; position: absolute; left: 34px; bottom: -6px; width: 12px; height: 12px; background: #fff; transform: rotate(45deg); border-radius: 2px; }
+.mood-bubble p { margin: 0; font-size: 14.5px; line-height: 1.45; font-weight: 500; }
+.mb-ic { flex: none; width: 36px; height: 36px; border-radius: 12px; display: grid; place-items: center; color: #fff; background: linear-gradient(145deg, #12AAD4, #083A5B); }
+.mb-x { position: absolute; top: 8px; right: 8px; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; color: #5B6470; transition: background-color .2s; }
+.mb-x:hover { background: #EEF2F5; }
+
+/* journal: all the small labels on the gradient cards in white */
+.journal .gx { --ink-2: rgba(255, 255, 255, .95); --ink-3: rgba(255, 255, 255, .88); }
+.journal .gx :is(.muted, .small, small, .j-label, .j-meter span, #j-save, .card-head span, .js-kpis span, .mc-col > span, .j-avg, .j-words-label, label > span) { color: #fff !important; opacity: 1; }
+.journal .gx .js-kpis b, .journal .gx .num { color: #fff !important; }
