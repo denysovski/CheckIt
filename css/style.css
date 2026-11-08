@@ -3369,3 +3369,12 @@ html.no-motion .sidebar .sb-badge, html.no-motion .sidebar .sb-badge::after { an
 html.sb-collapsed .sb-first-wrap { opacity: 0; pointer-events: none; }
 .info-tip { width: max-content; max-width: 240px; white-space: normal; box-sizing: border-box; }
 #info-tip.info-tip { display: block !important; height: auto !important; min-height: 0 !important; }
+/* Today badge: badge stays still; a quick soft ring every ~2.5 s */
+.sidebar .sb-nav a[data-nav="today"] .sb-badge { animation: none !important; transform: none !important; }
+.sidebar .sb-nav a[data-nav="today"] .sb-badge::after { inset: 0; box-shadow: none !important; border: 2px solid rgba(255, 255, 255, .85); border-radius: 999px;
+  opacity: 0; transform: scale(1); will-change: transform, opacity; animation: badgeRing 3.4s cubic-bezier(.22, .61, .36, 1) infinite !important; }
+@keyframes badgeRing {
+  0% { opacity: .75; transform: scale(1); }
+  26% { opacity: 0; transform: scale(1.85); }
+  100% { opacity: 0; transform: scale(1.85); }
+}
