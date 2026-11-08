@@ -214,7 +214,7 @@ function viewJournal(view, param) {
   $('#j-prev', view).onclick = () => fadeTo(addDays(k, -1));
   $('#j-next', view).onclick = () => { const n = addDays(k, 1); fadeTo(n >= today ? null : n); };
   const sl = $('#j-setloc', view);
-  if (sl) sl.onclick = async () => { await locationSheet(); rerender(); };
+  if (sl) sl.onclick = async () => { if (await locationSheet()) rerender(); };
   bindNudges(view, () => rerender());
   if (past.length) mountBook(view, past.map((x) => ({ k: x, e: d.journal[x] })));
   paintWeather(view, e.mood);
@@ -286,7 +286,16 @@ async function paintWeather(view, mood) {
         <div class="jw-now"><span class="jw-ic">${icon(w.icon, 34)}</span><b class="num">${w.temp}°</b><div><b>${esc(w.text)}</b><small>Feels like ${w.feels}° · ${w.min}° / ${w.max}°${w.rain != null ? ` · ${w.rain}% rain` : ''}</small></div></div>
         <p class="jw-advice">${esc(walkAdvice(w, mood, loc.name))}</p>
       </div>`;
-    $('#jw-change', box).onclick = async () => { await locationSheet(); rerender(); };
+    // Only the weather card updates; the page itself stays put (no re-render, no fade-in replay).
+    $('#jw-change', box).onclick = async () => {
+      const changed = await locationSheet();
+      if (!changed) return;
+      const cur = entryOf(userData(), todayKey())?.mood;
+      box.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 160, easing: 'ease-in', fill: 'forwards' }).finished.then(async () => {
+        await paintWeather(view, cur);
+        box.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 260, easing: 'ease-out', fill: 'forwards' });
+      });
+    };
   } catch {
     box.innerHTML = `<p class="muted small">${icon('location', 14)} ${esc(placeLabel(loc))}, weather is unavailable right now.</p>`;
   }

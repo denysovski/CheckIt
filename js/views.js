@@ -947,7 +947,12 @@ function viewSettings(view) {
 
   const nm = $('#s-name', view);
   nm.onchange = () => { const v = nm.value.trim().slice(0, 30); update((x) => { x.profile.displayName = v || p.name; }); toast('Name updated'); viewSettings(view); };
-  $('#s-loc', view).onclick = async () => { await locationSheet(); view.classList.remove('enter'); viewSettings(view); };
+  $('#s-loc', view).onclick = async () => {
+    if (!(await locationSheet())) return;
+    const row = $('#s-loc', view).closest('.g-row');
+    const loc = getLocation(userData());
+    if (row && loc) { $('small', row).textContent = `${placeLabel(loc)}${loc.source === 'ip' ? ' · approximate' : ''}, used only for weather on your Journal`; $('#s-loc', view).innerHTML = `${icon('location', 14)} Change`; }
+  };
   $('#s-nudges', view).onchange = (e) => { update((x) => { x.settings.nudgesOff = !e.target.checked; }); toast(e.target.checked ? 'Nudges on' : 'Nudges off', { tone: 'info' }); };
   const permBtn = $('#perm', view);
   if (permBtn) permBtn.onclick = async () => { await turnOnNotifications(); view.classList.remove('enter'); viewSettings(view); };
