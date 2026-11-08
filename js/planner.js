@@ -337,10 +337,15 @@ function pickTaskSheet(day) {
   const s = sheet(`
     <div class="sheet-body pl-form">
       <h3 class="sheet-title">Add to ${DAY_NAMES[day]}</h3>
+      <button class="pl-create-row" id="pl-pick-create">${icon('plus', 18)}<span><b>Create a task</b><small>Make a new one and add it to ${DAY_NAMES[day]}</small></span></button>
       <div class="pl-pick">${tasks.map((t) => `<button class="pl-task" data-pick="${t.id}"><span class="pl-ic">${taskIcon(t.icon, 18)}</span><span class="pl-task-main"><b>${esc(t.title)}</b><small>${esc(frequencyLabel(t))}</small></span>${icon('plus', 16)}</button>`).join('') || '<p class="pl-empty">No tasks yet.</p>'}</div>
       <div class="row gap pl-actions-row"><button class="btn ghost" data-close>Close</button></div>
     </div>`);
   $$('[data-pick]', s.el).forEach((b) => (b.onclick = () => { const it = addToPlan(b.dataset.pick, day); s.close(); rerender(); if (it) setTimeout(() => itemSheet(it.id), 320); }));
+  $('#pl-pick-create', s.el).onclick = () => {
+    s.close();
+    setTimeout(() => openEditor(null, { onSaved: (t) => { const it = addToPlan(t.id, day); if (it) setTimeout(() => itemSheet(it.id), 360); } }), 320);
+  };
 }
 
 register('planner', (v) => viewPlanner(v));

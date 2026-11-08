@@ -3346,3 +3346,9 @@ html.no-motion .sidebar .sb-badge, html.no-motion .sidebar .sb-badge::after { an
 .arch-empty span { color: rgba(255, 255, 255, .65); font-size: 14px; }
 .arch-list .tile.big { background: #fff !important; color: #0B6F95 !important; } .arch-list .tile.big .ic-mask { background: #0B6F95; } .arch-list .tile.big .ic-img { filter: none; }
 .sheet:has(.arch-sheet) { width: min(760px, calc(100vw - 32px)) !important; max-width: none !important; }
+.pl-create-row { width: 100%; display: flex; align-items: center; gap: 12px; padding: 10px; margin: 6px 0 12px; border-radius: 16px; text-align: left; color: #fff;
+  background: rgba(255, 255, 255, .1); box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, .22); transition: background-color .3s var(--ease-out); }
+.pl-create-row:hover { background: rgba(255, 255, 255, .17); }
+.pl-create-row > .ic { width: 38px; height: 38px; padding: 10px; border-radius: 12px; background: #fff; color: #0B6F95; box-sizing: border-box; flex: none; }
+.pl-create-row b { display: block; font-weight: 600; }
+.pl-create-row small { color: rgba(255, 255, 255, .7); font-size: 12.5px; }

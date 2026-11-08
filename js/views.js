@@ -972,7 +972,7 @@ function viewSettings(view) {
 }
 
 // ============================================================ editor
-export function openEditor(taskId, { focus = null, title = '' } = {}) {
+export function openEditor(taskId, { focus = null, title = '', onSaved = null } = {}) {
   const d = userData();
   const existing = taskId ? d.tasks.find((t) => t.id === taskId) : null;
   const t = existing ? JSON.parse(JSON.stringify(existing)) : makeTask({ title, perWeek: 7 });
@@ -1153,6 +1153,7 @@ export function openEditor(taskId, { focus = null, title = '' } = {}) {
     s.close();
     toast(existing ? 'Task updated' : 'Task added');
     notify.syncBadge();
+    if (onSaved) onSaved(t);
     rerender();
   };
 
