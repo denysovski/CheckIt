@@ -585,12 +585,31 @@ export function renderAuthPage(mode, onDone) {
   destroyLanding();
   const isSignup = mode === 'signup';
   const app = $('#app');
+  const preview = [['tooth', 'Brush teeth', true], ['dumbbell', 'Gym, 30 minutes', true], ['book', 'Read 10 pages', false]];
   app.innerHTML = `
-    <div class="auth2">
-      <a class="back-link" href="#/">${icon('chevL', 16)} Home</a>
-      <form class="auth2-card" novalidate>
+    <div class="auth3">
+      <div class="lx-bg" aria-hidden="true"><i></i><i></i><i></i></div>
+      <header class="auth3-top">
+        <a class="auth3-home" href="#/">${icon('chevL', 16)} Home</a>
+        <button class="theme-tg" id="auth-theme" aria-label="Switch light or dark theme">${icon('sun', 18)}${icon('moon', 18)}</button>
+      </header>
+      <aside class="auth3-brand" aria-hidden="true">
+        <a class="auth3-logo" href="#/"><span class="auth3-mark">${logoMark('plain')}</span><span>Check<b>It</b></span></a>
+        <div class="auth3-copy">
+          <h2>${isSignup ? 'Plan the day.<br><span>Tick it off.</span>' : 'Good to see<br><span>you again.</span>'}</h2>
+          <p>${isSignup ? 'Free while in testing. Your data stays in this browser.' : 'Your tasks, streak and notes are waiting.'}</p>
+        </div>
+        <div class="auth3-preview">
+          <div class="ap-head"><span>Today</span><b>2 of 3</b></div>
+          ${preview.map(([ic, t, d]) => `<div class="ap-row ${d ? 'on' : ''}"><i class="ap-ck">${icon('check', 12)}</i><span class="ap-ic">${icon(ic, 16)}</span>${t}</div>`).join('')}
+          <div class="ap-bar"><i></i></div>
+        </div>
+      </aside>
+      <main class="auth3-main">
+      <form class="auth2-card auth3-card" novalidate>
         <div class="auth2-icon">${logoMark('tile', 'animate')}</div>
-        <h1>${isSignup ? 'Sign up for Check It' : 'Log in to Check It'}</h1>
+        <h1>${isSignup ? 'Create your account' : 'Log in'}</h1>
+        <p class="auth3-sub">${isSignup ? 'Takes ten seconds. No email needed.' : 'Welcome back to Check It.'}</p>
         <div class="auth2-fields">
           <input class="a-in" id="a-user" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="Username" aria-label="Username" required>
           ${isSignup ? '<small class="field-msg" id="u-msg"></small>' : ''}
@@ -604,11 +623,13 @@ export function renderAuthPage(mode, onDone) {
           <label class="remember"><input type="checkbox" id="a-remember" checked><span class="cb">${icon('check', 12)}</span>Remember me</label>`}
         </div>
         <p class="error" id="a-err" role="alert"></p>
-        <button class="btn blue large full fx" id="a-submit" type="submit" ${isSignup ? 'disabled' : ''}>${isSignup ? 'Create account' : 'Log in'}</button>
+        <button class="btn pill large full" id="a-submit" type="submit" ${isSignup ? 'disabled' : ''}>${isSignup ? 'Create account' : 'Log in'}</button>
         <p class="auth2-switch">${isSignup ? 'Already have an account? <a href="#/login">Log in</a>' : 'New here? <a href="#/signup">Create an account</a>'}</p>
-        <p class="auth2-note">${icon('info', 14)} Your account is stored only in this browser. <a href="#/privacy">Privacy</a> · <a href="#/terms">Terms</a></p>
+        <p class="auth2-note">${icon('info', 14)} Stored only in this browser. <a href="#/privacy">Privacy</a> · <a href="#/terms">Terms</a></p>
       </form>
+      </main>
     </div>`;
+  $('#auth-theme', app).onclick = () => setPrefs({ theme: document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark' });
 
   const form = $('.auth2-card', app);
   $$('[data-eye]', form).forEach((b) => (b.onclick = () => {
