@@ -3,7 +3,7 @@ import { scrollToEl, toTop } from './smooth.js';
 import { icon, logoMark } from './icons.js';
 import { esc, $, $$, reducedMotion } from './ui.js';
 import { login, register, PASSWORD_RULES, passwordOk, usernameError } from './auth.js';
-import { setPrefs, applyPrefs } from './store.js';
+import { setPrefs } from './store.js';
 
 const REPO_URL = 'https://github.com/denysovski/CheckIt';
 
@@ -17,75 +17,112 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 // ------------------------------------------------------------------ the demo dashboard
 const check = '<svg viewBox="0 0 24 24"><path d="M6 12.5l4 4L18 8"/></svg>';
 const TASKS = [
-  ['tooth', 'Brush teeth', '2× a day', true],
-  ['pin', 'Upload Pinterest pins', '120 / 200 pins', false, 'Pinterest'],
-  ['interdental', 'Interdental brushes', 'Every day', false],
-  ['braces', 'Retainer for the night', 'Every day', false],
+  ['tooth', 'Brush teeth', ['Today', '1 of 2 today'], true],
+  ['pin', 'Upload Pinterest pins', ['Today'], false],
+  ['gamepad', 'Download new Marvel Rivals videos', ['Due today', '0 of 1 this week'], false],
+  ['interdental', 'Interdental brushes', ['Today'], false],
+  ['braces', 'Put on retainer for the night', ['Today'], false],
 ];
+const dzRow = ([ic, t, whens, done], i, extra = '') => `<li class="dz-task ${done ? 'done' : ''} ${extra}" data-row="${i}"><span class="dm-ck dz-ck">${check}</span><span class="dz-tile">${icon(ic, 26)}</span><span class="dz-tm"><b>${t}</b><span class="dz-whens">${whens.map((w, j) => `<em class="${j ? 'pl' : ''}">${w}</em>`).join('')}</span></span><span class="dz-edit">${icon('edit', 16)}</span></li>`;
+
+// A 1:1 copy of the real Home screen, built at 1440×900 and scaled to fit.
+// It always shows the opposite theme to the page so it stands out.
 function demoHTML() {
+  const now = new Date();
+  const month = now.toLocaleDateString('en-GB', { month: 'long' });
+  const first = (new Date(now.getFullYear(), now.getMonth(), 1).getDay() + 6) % 7;
+  const days = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+  const today = now.getDate();
+  const navs = [['home', 'Home', 'home'], ['today', 'Today', 'today', 4], ['list', 'Tasks'], ['clock', 'Planner'], ['calendar', 'Calendar', 'cal'], ['pen', 'Journal'], ['book', 'Notes'], ['chart', 'Stats'], ['archive', 'Recaps']];
   return `
   <div class="demo" aria-hidden="true">
     <div class="dm-bar">
       <span class="dm-dots"><i></i><i></i><i></i></span>
       <span class="dm-url">${icon('search', 12)} denysovski.github.io/CheckIt</span>
-      <span class="dm-bar-r"><span class="dm-av">U</span></span>
+      <span class="dm-bar-r"></span>
     </div>
-    <div class="dm-body">
-      <aside class="dm-side">
-        <div class="dm-brand"><span class="dm-mark">${logoMark('plain')}</span>Check<b>It</b></div>
-        <div class="dm-search">${icon('search', 12)} Search <kbd>Ctrl + K</kbd></div>
-        ${[['home', 'Home', 1], ['today', 'Today'], ['list', 'Tasks'], ['clock', 'Planner'], ['calendar', 'Calendar', 0, 'cal'], ['pen', 'Journal'], ['book', 'Notes'], ['chart', 'Stats']].map(([ic, l, on, id]) => `<div class="dm-nav ${on ? 'on' : ''}" ${id ? `data-dm="${id}"` : ''}>${icon(ic, 13)}${l}</div>`).join('')}
-        <div class="dm-sec">Channels</div>
-        <div class="dm-nav" data-dm="ch-school"><span class="dm-hash">#</span>school</div>
-        <div class="dm-nav"><span class="dm-hash">#</span>ideas</div>
-        <div class="dm-sec">Notes</div>
-        <div class="dm-nav">${icon('doc', 13)}Biology: cells</div>
-        <div class="dm-nav">${icon('doc', 13)}Trip packing list</div>
-        <div class="dm-user"><span class="dm-av sm">U</span>user</div>
+    <div class="dz-fit"><div class="dz">
+      <aside class="dz-side">
+        <div class="dz-top"><span class="dz-brand"><span class="dz-mark">${logoMark('plain')}</span><span>Check<b>It</b></span></span><span class="dz-ib">${icon('compose', 19)}</span></div>
+        <div class="dz-search">${icon('search', 17)}<span>Search</span><kbd>Ctrl + K</kbd></div>
+        <nav class="dz-nav">${navs.map(([ic, l, id, n], i) => `<span class="dm-nav ${i === 0 ? 'on' : ''}" ${id ? `data-dm="${id}"` : ''}>${icon(ic, 18)}<span>${l}</span>${n ? `<i class="dz-badge">${n}</i>` : ''}</span>`).join('')}</nav>
+        <div class="dz-sec">Channels ${icon('plus', 15)}</div>
+        <span class="dm-nav" data-dm="ch-school"><i class="dz-hash">#</i><span>school</span><em>2</em></span>
+        <span class="dm-nav"><i class="dz-hash">#</i><span>ideas</span></span>
+        <div class="dz-sec">Notes ${icon('plus', 15)}</div>
+        <span class="dm-nav">${icon('doc', 18)}<span>Biology: cells</span></span>
+        <span class="dm-nav">${icon('doc', 18)}<span>Trip packing list</span></span>
+        <div class="dz-bottom">
+          <span class="dz-leave">${icon('logout', 17)} Leave dashboard</span>
+          <span class="dz-user"><span class="dz-av">U<i></i></span><span class="dz-ut"><b>user</b><small>Settings &amp; account</small></span>${icon('gear', 18)}</span>
+        </div>
       </aside>
-      <div class="dm-main">
+      <div class="dz-main">
         <section class="dm-view dm-home on">
-          <p class="dm-date">${new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
-          <h3 class="dm-title">Welcome back,<br><span>user</span></h3>
-          <div class="dm-tiles">
-            <div class="dm-tile c1"><span>Due today</span><b id="dm-due">4</b><small>Left for today</small></div>
-            <div class="dm-tile c2"><span>Done today</span><b id="dm-done">1</b><small>of 5 planned</small></div>
-            <div class="dm-tile c3"><span>Streak</span><b>12</b><small>Days in a row</small></div>
-            <div class="dm-tile c4"><span>This week</span><b>86%</b><small>Success</small></div>
+          <p class="dz-date">${now.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
+          <h3 class="dz-title">Welcome back<i>.</i></h3>
+          <div class="dz-tiles">
+            <div class="dz-tc c1"><div class="dz-tct">${icon('flag', 20)}<span>Due today</span></div><b id="dm-due">4</b><small>Left for today</small></div>
+            <div class="dz-tc c2"><div class="dz-tct">${icon('check', 20)}<span>Done today</span></div><b id="dm-done">1</b><small>of 5 planned</small></div>
+            <div class="dz-tc c3"><div class="dz-tct">${icon('flame', 20)}<span>Streak</span></div><b>12</b><small>Days in a row</small></div>
+            <div class="dz-tc c4"><div class="dz-tct">${icon('chart', 20)}<span>This week</span></div><b>86<sup>%</sup></b><small>Success in the last 7 days</small></div>
           </div>
-          <div class="dm-grid">
-            <div class="dm-panel p1">
-              <div class="dm-ph">${icon('today', 12)} Today</div>
-              <ul class="dm-list" id="dm-list">
-                ${TASKS.map(([ic, t, f, done, link], i) => `<li class="${done ? 'done' : ''}" data-row="${i}"><span class="dm-ck">${check}</span><span class="dm-ic">${icon(ic, 13)}</span><span class="dm-tx"><b>${t}</b><small>${f}</small></span>${link ? `<span class="dm-link">${icon('link', 10)} ${link}</span>` : ''}</li>`).join('')}
-              </ul>
+          <div class="dz-grid">
+            <div class="dz-panel p1">
+              <div class="dz-ph">${icon('today', 18)} Today <i class="dz-count">5</i><span class="dz-va">View all ${icon('chevR', 13)}</span></div>
+              <ul class="dz-list" id="dm-list">${TASKS.map((t, i) => dzRow(t, i)).join('')}</ul>
             </div>
-            <div class="dm-panel p2">
-              <div class="dm-ph">${icon('hash', 12)} Channels</div>
-              <div class="dm-row"><span class="dm-hash">#</span><span><b>school</b><small>Exam on Friday, chapters 4–6</small></span></div>
-              <div class="dm-row"><span class="dm-hash">#</span><span><b>ideas</b><small>Make a gym log channel</small></span></div>
-              <div class="dm-ph mt">${icon('doc', 12)} Notes</div>
-              <div class="dm-row">${icon('doc', 12)}<span><b>Biology: cells</b></span><em>Today</em></div>
+            <div class="dz-col">
+              <div class="dz-panel p2">
+                <div class="dz-ph">${icon('pen', 18)} Journal<span class="dz-va">${icon('edit', 13)} Open</span></div>
+                <div class="dz-card"><span class="dz-wic">${icon('cloud', 26)}</span><span><b>8° Sunny</b><small>Good day for a walk</small></span></div>
+                <div class="dz-card"><span class="dz-sic">${icon('pen', 16)}</span><span><b>How was your day?</b><small>0 / 20 words</small></span></div>
+              </div>
+              <div class="dz-panel p3">
+                <div class="dz-ph"><i class="dz-hash big">#</i> Channels <i class="dz-count">2</i><span class="dz-va">${icon('plus', 13)} New</span></div>
+                <div class="dz-card"><span class="dz-sic">#</span><span><b>school</b><small>Exam on Friday, chapters 4–6</small></span><em class="dz-n">2</em></div>
+                <div class="dz-card"><span class="dz-sic">#</span><span><b>ideas</b><small>Make a gym log channel</small></span></div>
+              </div>
             </div>
           </div>
-          <div class="dm-composer"><span class="dm-chip">Add task</span><span class="dm-type" id="dm-type"></span><span class="dm-caret"></span><span class="dm-send">${icon('send', 12)}</span></div>
+          <div class="dz-composer dm-composer">
+            <div class="dz-chips"><span class="on">Add task</span><span>Jot a note</span><span>Log to #school</span></div>
+            <div class="dz-field"><span class="dz-ph2" id="dz-ph">Add a task for today…</span><span class="dm-type" id="dm-type"></span><span class="dz-caret"></span></div>
+            <div class="dz-crow"><span class="dz-target">${icon('check', 16)} Task ${icon('chevR', 13)}</span><span class="dm-send dz-send">${icon('send', 18)}</span></div>
+          </div>
         </section>
         <section class="dm-view dm-channel">
-          <h3 class="dm-chtitle"><span class="dm-hash">#</span>school</h3>
-          <div class="dm-msgs" id="dm-msgs">
-            <div class="dm-sep">Yesterday</div>
-            <div class="dm-msg"><em>18:02</em>Exam on Friday, chapters 4–6</div>
-            <div class="dm-msg"><em>18:05</em>Ask about the lab report</div>
-            <div class="dm-sep">Today</div>
+          <p class="dz-date">Channel</p>
+          <h3 class="dz-title sm"><i class="dz-hash">#</i>school</h3>
+          <div class="dz-panel p1 dz-msgs" id="dm-msgs">
+            <div class="dz-sep">Yesterday</div>
+            <div class="dm-msg dz-msg"><em>18:02</em>Exam on Friday, chapters 4–6</div>
+            <div class="dm-msg dz-msg"><em>18:05</em>Ask about the lab report</div>
+            <div class="dz-sep">Today</div>
           </div>
-          <div class="dm-composer"><span class="dm-type" id="dm-type2"></span><span class="dm-caret"></span><span class="dm-send">${icon('send', 12)}</span></div>
+          <div class="dz-composer dm-composer">
+            <div class="dz-chips"><span>Add task</span><span>Jot a note</span><span class="on">Log to #school</span></div>
+            <div class="dz-field"><span class="dm-type" id="dm-type2"></span><span class="dz-caret"></span></div>
+            <div class="dz-crow"><span class="dz-target">${icon('hash', 16)} school ${icon('chevR', 13)}</span><span class="dm-send dz-send">${icon('send', 18)}</span></div>
+          </div>
         </section>
         <section class="dm-view dm-cal">
-          <h3 class="dm-chtitle">October <span>2026</span></h3>
-          <div class="dm-calgrid">${Array.from({ length: 28 }, (_, i) => { const v = [1, 1, .7, 1, 1, .5, 1, 1, 1, .8, 1, 1, .3, 1, 1, 1, .9, 1, .6, 1, 1, 1, 1, .8, 1, 1, .5, .6][i]; return `<span style="--v:${v};--i:${i}"><svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="14" class="t"/><circle cx="18" cy="18" r="14" class="v"/></svg><em>${i + 1}</em></span>`; }).join('')}</div>
+          <h3 class="dz-title cal">${month} <span>${now.getFullYear()}</span></h3>
+          <p class="dz-date">${Math.round(((today - 1) * 0.86 / days) * 100)}% of tasks done this month.</p>
+          <div class="dz-calwrap">
+            <div class="dz-panel p1 dz-cal">
+              <div class="dz-dows">${['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((d) => `<span>${d}</span>`).join('')}</div>
+              <div class="dz-calgrid dm-calgrid">${Array.from({ length: first }, () => '<i></i>').join('')}${Array.from({ length: days }, (_, i) => { const d = i + 1; const v = [1, 1, .7, 1, 1, .5, 1, 1, 1, .8, 1, 1, .3, 1, 1, 1, .9, 1, .6, 1, 1, 1, 1, .8, 1, 1, .5, .6, 1, .9, 1][i]; return `<span class="${d === today ? 'today' : ''} ${d > today ? 'fut' : ''}" style="--v:${d < today ? v : d === today ? .6 : 0}"><svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="15" class="t"/><circle cx="18" cy="18" r="15" class="v"/></svg><em>${d}</em></span>`; }).join('')}</div>
+            </div>
+            <div class="dz-panel p2 dz-day">
+              <small>Today</small><b>${now.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}</b>
+              <span class="dz-donechip">${icon('check', 13)} 3 done</span>
+              <ul class="dz-list">${TASKS.slice(0, 4).map((t, i) => dzRow([t[0], t[1], [i < 3 ? 'Done' : 'Not done yet'], i < 3], 'c' + i)).join('')}</ul>
+            </div>
+          </div>
         </section>
       </div>
-    </div>
+    </div></div>
     <div class="dm-cursor" id="dm-cursor"><svg viewBox="0 0 24 24"><path d="M5 3l14 8-6 1.5L10 19z"/></svg><span class="dm-click"></span></div>
   </div>`;
 }
@@ -119,11 +156,12 @@ function runDemo(root, alive) {
     $('#dm-due', root).textContent = '4'; $('#dm-done', root).textContent = '1';
     $('#dm-type', root).textContent = ''; $('#dm-type2', root).textContent = '';
     $$('.dm-calgrid span', root).forEach((s) => s.classList.remove('fill'));
+    const ph = $('#dz-ph', root); if (ph) ph.style.opacity = '';
   };
   const tick = (i, done, due) => { $(`[data-row="${i}"]`, root).classList.add('done'); $('#dm-done', root).textContent = done; $('#dm-due', root).textContent = due; };
 
   (async () => {
-    await sleep(2600);
+    await sleep(1200);
     while (alive()) {
       reset();
       await moveTo($('[data-row="1"] .dm-ck', root), 0.5, 0.5, 1100); await click(); tick(1, '2', '3');
@@ -131,12 +169,12 @@ function runDemo(root, alive) {
       await moveTo($('[data-row="2"] .dm-ck', root), 0.5, 0.5, 600); await click(); tick(2, '3', '2');
       await sleep(400);
       await moveTo($('.dm-home .dm-composer', root), 0.3, 0.5, 900); await click();
+      $('#dz-ph', root).style.opacity = '0';
       await type($('#dm-type', root), 'Finish math homework');
       await sleep(250); await moveTo($('.dm-home .dm-send', root), 0.5, 0.5, 500); await click();
       if (!alive()) return;
-      const li = document.createElement('li');
-      li.className = 'added'; li.innerHTML = `<span class="dm-ck">${check}</span><span class="dm-ic">${icon('star', 13)}</span><span class="dm-tx"><b>Finish math homework</b><small>Every day</small></span>`;
-      $('#dm-list', root).appendChild(li); $('#dm-type', root).textContent = ''; $('#dm-due', root).textContent = '3';
+      const tmp = document.createElement('ul'); tmp.innerHTML = dzRow(['star', 'Finish math homework', ['Today']], 9, 'added');
+      $('#dm-list', root).appendChild(tmp.firstChild); $('#dz-ph', root).style.opacity = ''; $('#dm-type', root).textContent = ''; $('#dm-due', root).textContent = '3';
       await sleep(1100); if (!alive()) return;
       await moveTo($('[data-dm="ch-school"]', root), 0.4, 0.5, 1000); await click();
       show('dm-channel'); nav('ch-school');
@@ -222,7 +260,7 @@ function donutHTML() {
   const R = 120; const C = 2 * Math.PI * R;
   const segs = [[69, 'Completed', '#12AAD4'], [30, 'Still open', '#7FDDF5'], [1, 'Forgotten', '#FF9C8F']];
   let off = 0;
-  const arcs = segs.map(([p, , c], i) => { const len = (p / 100) * C; const a = `<circle class="dn-arc" style="--d:${i * 0.25}s" cx="160" cy="160" r="${R}" fill="none" stroke="${c}" stroke-width="34" stroke-dasharray="${Math.max(len - 4, 2)} ${C}" stroke-dashoffset="${-off}" transform="rotate(-90 160 160)"/>`; off += len; return a; }).join('');
+  const arcs = segs.map(([p, , c], i) => { const len = (p / 100) * C; const a = `<circle class="dn-arc" style="--d:${0.2 + i * 0.9}s;--len:${Math.max(len - 4, 2).toFixed(1)}px;--C:${C.toFixed(1)}px" cx="160" cy="160" r="${R}" fill="none" stroke="${c}" stroke-width="34" stroke-dashoffset="${-off}" transform="rotate(-90 160 160)"/>`; off += len; return a; }).join('');
   return `
     <div class="lx-donut">
       <svg viewBox="0 0 320 320"><circle cx="160" cy="160" r="${R}" fill="none" stroke="rgba(255,255,255,.07)" stroke-width="34"/>${arcs}</svg>
@@ -306,11 +344,11 @@ export function renderLanding({ loggedIn = false } = {}) {
   const cta = loggedIn ? ['#/home', 'Open dashboard'] : ['#/signup', 'Create free account'];
   app.innerHTML = `
   <div class="landing lx">
-    <div class="lx-bg" aria-hidden="true"><i></i><i></i><i></i></div>
+    <div class="lx-bg" aria-hidden="true"><i></i><i></i><i></i><b class="lx-calm t"></b><b class="lx-calm b"></b></div>
     <header class="l-nav">
       <a class="brand" href="#/" aria-label="Check It home"><span class="brand-mark">${logoMark('plain')}</span><span class="brand-word">Check<b>It</b></span></a>
       <nav class="l-links" aria-label="Sections"><a href="#how" data-scroll>Product</a><a href="#analytics" data-scroll>Analytics</a><a href="#recaps" data-scroll>Recaps</a></nav>
-      <div class="l-nav-actions"><button class="lx-theme" id="lx-theme" aria-label="Switch light or dark theme">${icon('sun', 18)}${icon('moon', 18)}</button>${loggedIn ? `<a class="btn pill small" href="#/home">Open dashboard</a>` : `<a class="l-login" href="#/login">Log in</a><a class="btn pill small" href="#/signup">Sign up</a>`}</div>
+      <div class="l-nav-actions"><button class="lx-theme theme-tg" id="lx-theme" aria-label="Switch light or dark theme">${icon('sun', 18)}${icon('moon', 18)}</button>${loggedIn ? `<a class="btn pill small" href="#/home">Open dashboard</a>` : `<a class="l-login" href="#/login">Log in</a><a class="btn pill small" href="#/signup">Sign up</a>`}</div>
     </header>
 
     <section class="lx-hero">
@@ -328,11 +366,11 @@ export function renderLanding({ loggedIn = false } = {}) {
     </section>
 
     <section class="lx-peek" aria-label="A look inside">
-      ${[['today', 'Today', 'peek-today'], ['clock', 'Planner', 'peek-plan'], ['pen', 'Journal', 'peek-journal'], ['book', 'Notes', 'peek-notes'], ['chart', 'Stats', 'peek-stats']].map(([ic, t, c]) => `
-        <div class="pk ${c}"><span class="pk-ic">${icon(ic, 20)}</span><b>${t}</b><div class="pk-art" aria-hidden="true">${peekArt(c)}</div></div>`).join('')}
+      ${[['today', 'Today', 'peek-today', 'Everything due today, one tap to tick.'], ['clock', 'Planner', 'peek-plan', 'Drag tasks into the days of your week.'], ['pen', 'Journal', 'peek-journal', 'A mood and a few lines every evening.'], ['book', 'Notes', 'peek-notes', 'Quick notes with simple formatting.'], ['chart', 'Stats', 'peek-stats', 'Streaks, best days and what slipped.']].map(([ic, t, c, d]) => `
+        <div class="pk ${c}"><span class="pk-ic">${icon(ic, 20)}</span><b>${t}</b><p>${d}</p><div class="pk-art" aria-hidden="true">${peekArt(c)}</div></div>`).join('')}
     </section>
 
-    <section class="lx-band">
+    <section class="lx-band lx-week">
       <div class="lx-split">
         <div class="lx-copy">
           <h2 class="lx-h2 big">A week you can see.</h2>
@@ -384,13 +422,20 @@ export function renderLanding({ loggedIn = false } = {}) {
     e.preventDefault(); scrollToEl($(a.getAttribute('href')));
   }));
   const nav = $('.l-nav', root);
-  const demo = $('.lx-stage .demo', root);
+  const demo = $('.lx-stage .lx-demo-glow', root); // tilt the frame, so the ripples tilt with it
   const tilt = $('#lx-tilt', root);
+  const bgEl = $('.lx-bg', root);
+  const foot = $('.lx-footer', root);
   const still = reducedMotion();
   let raf = 0;
   const paint = () => {
     raf = 0;
     nav.classList.toggle('scrolled', window.scrollY > 24);
+    // no glow behind the nav at the very top, nor behind the footer
+    if (bgEl) {
+      bgEl.classList.toggle('at-top', window.scrollY < 40);
+      bgEl.classList.toggle('at-foot', !!foot && foot.getBoundingClientRect().top < innerHeight * 0.85);
+    }
     if (still) return;
     // 3D: the demo lies back and stands up as it scrolls into view
     if (demo) {
@@ -421,7 +466,8 @@ export function renderLanding({ loggedIn = false } = {}) {
   // donut draws itself once it scrolls into view
   const donut = $('.lx-donut', root);
   if (donut && 'IntersectionObserver' in window) {
-    const io = new IntersectionObserver((es) => es.forEach((en) => { if (en.isIntersecting) { donut.classList.add('in'); io.disconnect(); } }), { threshold: 0.35 });
+    // draws itself every time it scrolls into view
+    const io = new IntersectionObserver((es) => es.forEach((en) => donut.classList.toggle('in', en.isIntersecting)), { threshold: 0.35 });
     io.observe(donut); disposers.push(() => io.disconnect());
   } else if (donut) donut.classList.add('in');
 
@@ -437,8 +483,14 @@ export function renderLanding({ loggedIn = false } = {}) {
   bindFooter(root);
   bindLandingExtras(root, disposers);
 
-  $$('.dm-side > *', root).forEach((el, i) => el.style.setProperty('--k', i));
-  $$('.dm-list li', root).forEach((el, i) => el.style.setProperty('--k', i));
+  // scale the 1440×900 screen to whatever width the demo has
+  const fit = $('.dz-fit', root);
+  if (fit) {
+    const size = () => { const w = fit.clientWidth; fit.style.setProperty('--dz-s', w / 1440); fit.style.height = `${(w / 1440) * 900}px`; };
+    size();
+    const ro = new ResizeObserver(size); ro.observe(fit);
+    disposers.push(() => ro.disconnect());
+  }
   if (reducedMotion()) { root.classList.add('static'); return; }
   runDemo(root, () => alive);
   runCheckCard(root, () => alive);
@@ -447,7 +499,7 @@ export function renderLanding({ loggedIn = false } = {}) {
 // Theme switch, pointer-following background with a click ripple, cookie question.
 function bindLandingExtras(root, disposers) {
   const tb = $('#lx-theme', root);
-  if (tb) tb.onclick = () => { const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'; setPrefs({ theme: next }); applyPrefs(); };
+  if (tb) tb.onclick = () => { const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'; setPrefs({ theme: next }); };
 
   const bg = $('.lx-bg', root);
   if (bg && !reducedMotion()) {

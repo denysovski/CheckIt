@@ -222,7 +222,12 @@ export function resolvedTheme() {
 export function applyPrefs() {
   const root = document.documentElement;
   const theme = resolvedTheme();
-  root.dataset.theme = theme;
+  const prev = root.dataset.theme;
+  if (prev && prev !== theme && getPrefs().motion && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    // cross-fade the whole page instead of a hard switch
+    if (document.startViewTransition) { document.startViewTransition(() => { root.dataset.theme = theme; }); }
+    else { root.classList.add('theme-fading'); root.dataset.theme = theme; setTimeout(() => root.classList.remove('theme-fading'), 700); }
+  } else root.dataset.theme = theme;
   root.classList.toggle('no-motion', !getPrefs().motion);
   const meta = document.querySelector('meta[name="theme-color"]');
   if (meta) meta.content = theme === 'dark' ? '#000000' : '#FFFFFF';

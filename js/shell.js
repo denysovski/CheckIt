@@ -165,8 +165,9 @@ export function mountShell() {
       <header class="m-bar">
         <button class="icon-btn subtle" id="m-menu" aria-label="Open menu">${icon('menu', 22)}</button>
         <a class="brand" href="#/home"><span class="brand-mark">${logoMark('plain')}</span><span class="brand-word">Check<b>It</b></span></a>
-        <button class="icon-btn subtle" id="m-search" aria-label="Search">${icon('search', 20)}</button>
+        <span class="m-bar-r"><button class="theme-tg" data-theme-toggle aria-label="Switch light or dark theme">${icon('sun', 19)}${icon('moon', 19)}</button><button class="icon-btn subtle" id="m-search" aria-label="Search">${icon('search', 20)}</button></span>
       </header>
+      <button class="theme-tg app-theme" data-theme-toggle aria-label="Switch light or dark theme" title="Light or dark">${icon('sun', 19)}${icon('moon', 19)}</button>
       <aside class="sidebar" aria-label="Sidebar"></aside>
       <button class="sb-toggle" id="sb-toggle" aria-label="Collapse sidebar" title="Collapse sidebar">${icon('chevL', 15)}</button>
       <div class="drawer-backdrop" id="drawer-bd"></div>
@@ -183,6 +184,7 @@ export function mountShell() {
   $('#m-more', app).onclick = openDrawer;
   $('#drawer-bd', app).onclick = closeDrawer;
   $('#m-search', app).onclick = () => openPalette();
+  $$('[data-theme-toggle]', app).forEach((b) => (b.onclick = () => setPrefs({ theme: document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark' })));
 }
 
 export function renderRoute() {
