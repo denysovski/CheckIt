@@ -3,6 +3,7 @@ import { scrollToEl, toTop } from './smooth.js';
 import { icon, logoMark } from './icons.js';
 import { esc, $, $$, reducedMotion } from './ui.js';
 import { login, register, PASSWORD_RULES, passwordOk, usernameError } from './auth.js';
+import { setPrefs, applyPrefs } from './store.js';
 
 const REPO_URL = 'https://github.com/denysovski/CheckIt';
 
@@ -33,7 +34,7 @@ function demoHTML() {
       <aside class="dm-side">
         <div class="dm-brand"><span class="dm-mark">${logoMark('plain')}</span>Check<b>It</b></div>
         <div class="dm-search">${icon('search', 12)} Search <kbd>Ctrl + K</kbd></div>
-        ${[['home', 'Home', 1], ['today', 'Today'], ['calendar', 'Calendar', 0, 'cal'], ['chart', 'Stats'], ['book', 'Notes']].map(([ic, l, on, id]) => `<div class="dm-nav ${on ? 'on' : ''}" ${id ? `data-dm="${id}"` : ''}>${icon(ic, 13)}${l}</div>`).join('')}
+        ${[['home', 'Home', 1], ['today', 'Today'], ['list', 'Tasks'], ['clock', 'Planner'], ['calendar', 'Calendar', 0, 'cal'], ['pen', 'Journal'], ['book', 'Notes'], ['chart', 'Stats']].map(([ic, l, on, id]) => `<div class="dm-nav ${on ? 'on' : ''}" ${id ? `data-dm="${id}"` : ''}>${icon(ic, 13)}${l}</div>`).join('')}
         <div class="dm-sec">Channels</div>
         <div class="dm-nav" data-dm="ch-school"><span class="dm-hash">#</span>school</div>
         <div class="dm-nav"><span class="dm-hash">#</span>ideas</div>
@@ -207,6 +208,15 @@ function ownStats() {
   } catch { return null; }
 }
 
+// Small illustrations for the sneak-peek cards (pure markup, no images).
+function peekArt(c) {
+  if (c === 'peek-today') return ['Brush teeth', 'Gym', 'Read'].map((t, i) => `<i class="pa-row ${i < 2 ? 'on' : ''}"><em></em>${t}</i>`).join('');
+  if (c === 'peek-plan') return ['M', 'T', 'W', 'T', 'F'].map((d, i) => `<i class="pa-col"><span>${d}</span>${i % 2 ? '<em></em>' : '<em></em><em></em>'}</i>`).join('');
+  if (c === 'peek-journal') return `<i class="pa-faces">${[1, 2, 3, 4, 5].map((v) => `<em class="${v === 4 ? 'on' : ''}"></em>`).join('')}</i><i class="pa-lines"><em></em><em></em><em></em></i>`;
+  if (c === 'peek-notes') return '<i class="pa-note"><b></b><em></em><em></em><em class="s"></em></i>';
+  return [0.5, 0.8, 0.6, 1, 0.7, 0.9, 0.4].map((v) => `<i class="pa-bar" style="--v:${v}"></i>`).join('');
+}
+
 // Analytics donut: three arcs with leader lines and labels.
 function donutHTML() {
   const R = 120; const C = 2 * Math.PI * R;
@@ -300,12 +310,12 @@ export function renderLanding({ loggedIn = false } = {}) {
     <header class="l-nav">
       <a class="brand" href="#/" aria-label="Check It home"><span class="brand-mark">${logoMark('plain')}</span><span class="brand-word">Check<b>It</b></span></a>
       <nav class="l-links" aria-label="Sections"><a href="#how" data-scroll>Product</a><a href="#analytics" data-scroll>Analytics</a><a href="#recaps" data-scroll>Recaps</a></nav>
-      <div class="l-nav-actions">${loggedIn ? `<a class="btn pill small" href="#/home">Open dashboard</a>` : `<a class="l-login" href="#/login">Log in</a><a class="btn pill small" href="#/signup">Sign up</a>`}</div>
+      <div class="l-nav-actions"><button class="lx-theme" id="lx-theme" aria-label="Switch light or dark theme">${icon('sun', 18)}${icon('moon', 18)}</button>${loggedIn ? `<a class="btn pill small" href="#/home">Open dashboard</a>` : `<a class="l-login" href="#/login">Log in</a><a class="btn pill small" href="#/signup">Sign up</a>`}</div>
     </header>
 
     <section class="lx-hero">
       <h1 class="lx-title">Plan the day.</h1>
-      <p class="lx-sub">A calm checklist for the things you repeat. Private, free, and it runs in your browser.</p>
+      <p class="lx-sub">Repeat tasks. Tick them off. See your week.</p>
       <div class="lx-cta">
         <a class="btn pill large" href="${cta[0]}">${cta[1]} ${icon('chevR', 16)}</a>
         <a class="btn pill large ghost" href="#how" data-scroll>See it work</a>
@@ -313,15 +323,20 @@ export function renderLanding({ loggedIn = false } = {}) {
     </section>
 
     <section class="lx-stage" id="how" aria-label="Live product demo">
-      <div class="lx-demo-glow">${demoHTML()}</div>
-      <p class="lx-caption-big">The real app, running on its own.<br><span>Nothing here is a mock-up.</span></p>
+      <div class="lx-demo-glow"><i class="lx-wave"></i><i class="lx-wave w2"></i><i class="lx-wave w3"></i>${demoHTML()}</div>
+      <p class="lx-caption-big">The real app.<br><span>Running on its own.</span></p>
+    </section>
+
+    <section class="lx-peek" aria-label="A look inside">
+      ${[['today', 'Today', 'peek-today'], ['clock', 'Planner', 'peek-plan'], ['pen', 'Journal', 'peek-journal'], ['book', 'Notes', 'peek-notes'], ['chart', 'Stats', 'peek-stats']].map(([ic, t, c]) => `
+        <div class="pk ${c}"><span class="pk-ic">${icon(ic, 20)}</span><b>${t}</b><div class="pk-art" aria-hidden="true">${peekArt(c)}</div></div>`).join('')}
     </section>
 
     <section class="lx-band">
       <div class="lx-split">
         <div class="lx-copy">
           <h2 class="lx-h2 big">A week you can see.</h2>
-          <p>Every day you finish fills a ring. Close all seven and the week is checked.</p>
+          <p>Finish a day, fill a ring.</p>
           <a class="btn pill large lx-copy-btn" href="${loggedIn ? '#/home' : '#/signup'}">Open the dashboard ${icon('chevR', 16)}</a>
         </div>
         <div class="lx-tilt" id="lx-tilt">${checkCardHTML()}</div>
@@ -333,12 +348,7 @@ export function renderLanding({ loggedIn = false } = {}) {
         <div class="lx-donut-wrap" aria-hidden="true">${donutHTML()}</div>
         <div class="lx-copy">
           <h2 class="lx-h2 big">Know how you’re doing.</h2>
-          <p>Check It counts what you finish, what is still open and what slipped. Streaks, best days and your usual finish time, all from your own history.</p>
-          <ul class="lx-points">
-            <li><b>Done vs. planned</b><span>for every day and week</span></li>
-            <li><b>Most skipped</b><span>so you can make a task smaller</span></li>
-            <li><b>Best day and time</b><span>to plan around what works</span></li>
-          </ul>
+          <p>What you finished. What slipped.</p>
         </div>
       </div>
     </section>
@@ -347,9 +357,18 @@ export function renderLanding({ loggedIn = false } = {}) {
       <div class="lx-recap-wide">
         <div class="lx-copy">
           <h2 class="lx-h2 big">A recap every Monday.</h2>
-          <p>When a week ends, Check It writes it up for you: what went well, what slipped and one thing to try next. Save it, download it, read it back months later.</p>
+          <p>What went well. What to fix.</p>
         </div>
         <div class="lx-tilt lx-tilt-b" id="lx-tilt-b">${recapCardHTML()}</div>
+      </div>
+    </section>
+
+    <section class="lx-trial">
+      <div class="lx-trial-card">
+        <span class="lx-trial-tag">Free while in testing</span>
+        <h2 class="lx-h2">Try it today.</h2>
+        <p>Free for personal use.</p>
+        <a class="btn pill large" href="${cta[0]}">${loggedIn ? 'Open dashboard' : 'Start for free'} ${icon('chevR', 16)}</a>
       </div>
     </section>
 
@@ -411,17 +430,54 @@ export function renderLanding({ loggedIn = false } = {}) {
   top.className = 'lx-top'; top.setAttribute('aria-label', 'Back to top'); top.innerHTML = icon('arrowUp', 20);
   root.appendChild(top);
   top.onclick = () => (window.__lenis ? window.__lenis.scrollTo(0, { duration: 1.4 }) : window.scrollTo({ top: 0, behavior: 'smooth' }));
-  const showTop = () => top.classList.toggle('on', window.scrollY > innerHeight * 0.8);
+  const showTop = () => top.classList.toggle('on', window.scrollY > 200);
   window.addEventListener('scroll', showTop, { passive: true });
   disposers.push(() => window.removeEventListener('scroll', showTop));
   showTop();
   bindFooter(root);
+  bindLandingExtras(root, disposers);
 
   $$('.dm-side > *', root).forEach((el, i) => el.style.setProperty('--k', i));
   $$('.dm-list li', root).forEach((el, i) => el.style.setProperty('--k', i));
   if (reducedMotion()) { root.classList.add('static'); return; }
   runDemo(root, () => alive);
   runCheckCard(root, () => alive);
+}
+
+// Theme switch, pointer-following background with a click ripple, cookie question.
+function bindLandingExtras(root, disposers) {
+  const tb = $('#lx-theme', root);
+  if (tb) tb.onclick = () => { const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'; setPrefs({ theme: next }); applyPrefs(); };
+
+  const bg = $('.lx-bg', root);
+  if (bg && !reducedMotion()) {
+    let tx = 0.5; let ty = 0.3; let x = tx; let y = ty; let raf = 0;
+    const loop = () => { x += (tx - x) * 0.06; y += (ty - y) * 0.06; bg.style.setProperty('--mx', `${(x * 100).toFixed(2)}%`); bg.style.setProperty('--my', `${(y * 100).toFixed(2)}%`); raf = Math.abs(tx - x) + Math.abs(ty - y) > 0.001 ? requestAnimationFrame(loop) : 0; };
+    const move = (e) => { tx = e.clientX / innerWidth; ty = e.clientY / innerHeight; if (!raf) raf = requestAnimationFrame(loop); };
+    const click = (e) => {
+      if (e.target.closest('a, button, input, .lx-cookie')) return;
+      const r = document.createElement('span'); r.className = 'lx-ripple';
+      r.style.left = `${e.clientX}px`; r.style.top = `${e.clientY}px`;
+      root.appendChild(r); setTimeout(() => r.remove(), 1500);
+    };
+    window.addEventListener('pointermove', move, { passive: true });
+    window.addEventListener('pointerdown', click);
+    disposers.push(() => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerdown', click); cancelAnimationFrame(raf); });
+  }
+
+  // Ask once about browser storage (there are no tracking cookies).
+  let choice = null; try { choice = localStorage.getItem('checkit:consent'); } catch { /* private mode */ }
+  if (!choice) {
+    const c = document.createElement('div');
+    c.className = 'lx-cookie'; c.setAttribute('role', 'dialog'); c.setAttribute('aria-label', 'Cookies');
+    c.innerHTML = `<span class="lx-cookie-ic">${icon('info', 18)}</span><p><b>Cookies?</b> We only save your settings in this browser. No tracking. <a href="#/cookies">Details</a></p><div class="lx-cookie-btns"><button class="btn pill small ghost" data-c="essential">Only essential</button><button class="btn pill small" data-c="all">Allow</button></div>`;
+    root.appendChild(c);
+    requestAnimationFrame(() => c.classList.add('on'));
+    $$('[data-c]', c).forEach((b) => (b.onclick = () => {
+      try { localStorage.setItem('checkit:consent', b.dataset.c); } catch { /* ignore */ }
+      c.classList.remove('on'); setTimeout(() => c.remove(), 450);
+    }));
+  }
 }
 
 // ------------------------------------------------------------------ privacy & terms
