@@ -44,7 +44,7 @@ Small daily things are the easiest to skip , brushing teeth twice, interdental b
 
 A short, minimal page on a slowly moving blue-black background (light blue in light mode). The navigation turns into a white floating bar once you scroll. Under the headline a live copy of the dashboard plays on its own: a cursor ticks off tasks, types a new one, writes in a channel and opens the calendar. The demo tilts upright in 3D as it scrolls into view, and a large week card, leaning in perspective and following the pointer, fills its rings one day at a time.
 
-Further down, **Why writing it down works** lists three research results with links to the sources, and a privacy section states the plain facts (no servers, no trackers). There are no made-up user numbers. The footer has a newsletter field (there is no server yet, so it says so and points to GitHub releases), links to the **Terms**, **Privacy Policy** and **Cookies** pages (`#/terms`, `#/privacy`, `#/cookies`), the repository and social profiles.
+Further down: **A week you can see** (a big tilting week card and an *Open the dashboard* button), **Know how you’re doing** (an animated donut of completed, still open and forgotten tasks) and **A recap every Monday** (a wide band with a 3D recap card). The live demo has a moving light around it, a back-to-top button appears once you scroll, and the footer has a newsletter field, links to the **Terms**, **Privacy Policy** and **Cookies** pages (`#/terms`, `#/privacy`, `#/cookies`), the repository and social profiles.
 
 <img src="docs/screens/02-landing-research.png" alt="Research section">
 

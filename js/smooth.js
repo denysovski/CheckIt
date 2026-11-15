@@ -3,7 +3,7 @@
 import { reducedMotion } from './ui.js';
 
 let lenis = null;
-const NATIVE = '.sheet-wrap, .palette, .pal, .popover, .menu, [data-lenis-prevent], .sb-mid, .pl-week, .pl-lib-list, .pl-pick, .icon-grid, .tp-col, .lx-tilt';
+const NATIVE = '.sheet-wrap, .palette, .pal, .popover, .menu, [data-lenis-prevent], .sb-mid, .pl-week, .pl-lib-list, .pl-pick, .icon-grid, .tp-col';
 
 export function initSmooth() {
   if (lenis || !window.Lenis) return;

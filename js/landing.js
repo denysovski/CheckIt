@@ -207,6 +207,38 @@ function ownStats() {
   } catch { return null; }
 }
 
+// Analytics donut: three arcs with leader lines and labels.
+function donutHTML() {
+  const R = 120; const C = 2 * Math.PI * R;
+  const segs = [[69, 'Completed', '#12AAD4'], [30, 'Still open', '#7FDDF5'], [1, 'Forgotten', '#FF9C8F']];
+  let off = 0;
+  const arcs = segs.map(([p, , c], i) => { const len = (p / 100) * C; const a = `<circle class="dn-arc" style="--d:${i * 0.25}s" cx="160" cy="160" r="${R}" fill="none" stroke="${c}" stroke-width="34" stroke-dasharray="${Math.max(len - 4, 2)} ${C}" stroke-dashoffset="${-off}" transform="rotate(-90 160 160)"/>`; off += len; return a; }).join('');
+  return `
+    <div class="lx-donut">
+      <svg viewBox="0 0 320 320"><circle cx="160" cy="160" r="${R}" fill="none" stroke="rgba(255,255,255,.07)" stroke-width="34"/>${arcs}</svg>
+      <div class="dn-center"><b>69%</b><span>this week</span></div>
+      <div class="dn-label l1"><i style="background:#12AAD4"></i><b>69%</b><span>Completed</span></div>
+      <div class="dn-label l2"><i style="background:#7FDDF5"></i><b>30%</b><span>Still open</span></div>
+      <div class="dn-label l3"><i style="background:#FF9C8F"></i><b>1%</b><span>Forgotten</span></div>
+    </div>`;
+}
+
+// Weekly recap card (3D, follows the pointer like the week card).
+function recapCardHTML() {
+  return `
+    <div class="rc3" aria-hidden="true">
+      <div class="rc3-top"><span>Week 45 recap</span><em>2 – 8 Nov</em></div>
+      <div class="rc3-hero"><b>86<small>%</small></b><span>of planned tasks done</span></div>
+      <div class="rc3-grid">
+        <div><span>Best day</span><b>Thursday</b></div>
+        <div><span>Earliest finish</span><b>06:48</b></div>
+        <div class="good"><span>Went well</span><b>Brush teeth, 14 of 14</b></div>
+        <div class="bad"><span>Slipped</span><b>Gym, 1 of 3</b></div>
+      </div>
+      <p class="rc3-tip">Try next week: book gym for Tuesday at 17:00.</p>
+    </div>`;
+}
+
 export function legalLinks(cls = '') {
   return `<a class="${cls}" href="#/privacy">Privacy</a><a class="${cls}" href="#/terms">Terms</a><a class="${cls}" href="#/cookies">Cookies</a>`;
 }
@@ -237,7 +269,6 @@ function footerHTML() {
           <div><h4>Social</h4>${SOCIAL.map(([n, u]) => `<a href="${u}" target="_blank" rel="noopener noreferrer">${n}</a>`).join('')}</div>
         </nav>
       </div>
-      <div class="lx-wordmark" aria-hidden="true">Check It</div>
       <div class="lx-foot-bottom">
         <span>© 2026 Check It. Designed and built by <a href="https://github.com/denysovski" target="_blank" rel="noopener noreferrer">denysovski</a>.</span>
         <span>A personal school project, not a commercial product.</span>
@@ -263,18 +294,17 @@ export function renderLanding({ loggedIn = false } = {}) {
   document.documentElement.classList.add('is-landing');
   const app = $('#app');
   const cta = loggedIn ? ['#/home', 'Open dashboard'] : ['#/signup', 'Create free account'];
-  const own = ownStats();
   app.innerHTML = `
   <div class="landing lx">
     <div class="lx-bg" aria-hidden="true"><i></i><i></i><i></i></div>
     <header class="l-nav">
       <a class="brand" href="#/" aria-label="Check It home"><span class="brand-mark">${logoMark('plain')}</span><span class="brand-word">Check<b>It</b></span></a>
-      <nav class="l-links" aria-label="Sections"><a href="#how" data-scroll>Product</a><a href="#research" data-scroll>Research</a><a href="#privacy" data-scroll>Privacy</a></nav>
+      <nav class="l-links" aria-label="Sections"><a href="#how" data-scroll>Product</a><a href="#analytics" data-scroll>Analytics</a><a href="#recaps" data-scroll>Recaps</a></nav>
       <div class="l-nav-actions">${loggedIn ? `<a class="btn pill small" href="#/home">Open dashboard</a>` : `<a class="l-login" href="#/login">Log in</a><a class="btn pill small" href="#/signup">Sign up</a>`}</div>
     </header>
 
     <section class="lx-hero">
-      <h1 class="lx-title">Plan the day.<br><span>Check it off.</span></h1>
+      <h1 class="lx-title">Plan the day.</h1>
       <p class="lx-sub">A calm checklist for the things you repeat. Private, free, and it runs in your browser.</p>
       <div class="lx-cta">
         <a class="btn pill large" href="${cta[0]}">${cta[1]} ${icon('chevR', 16)}</a>
@@ -283,46 +313,44 @@ export function renderLanding({ loggedIn = false } = {}) {
     </section>
 
     <section class="lx-stage" id="how" aria-label="Live product demo">
-      ${demoHTML()}
-      <p class="lx-caption">The real app, running on its own. Nothing here is a mock-up.</p>
+      <div class="lx-demo-glow">${demoHTML()}</div>
+      <p class="lx-caption-big">The real app, running on its own.<br><span>Nothing here is a mock-up.</span></p>
     </section>
 
     <section class="lx-band">
       <div class="lx-split">
         <div class="lx-copy">
-          <h2 class="lx-h2">A week you can see.</h2>
+          <h2 class="lx-h2 big">A week you can see.</h2>
           <p>Every day you finish fills a ring. Close all seven and the week is checked.</p>
+          <a class="btn pill large lx-copy-btn" href="${loggedIn ? '#/home' : '#/signup'}">Open the dashboard ${icon('chevR', 16)}</a>
         </div>
         <div class="lx-tilt" id="lx-tilt">${checkCardHTML()}</div>
       </div>
     </section>
 
-    <section class="lx-research" id="research">
-      <h2 class="lx-h2">Why writing it down works.</h2>
-      <div class="lx-rows">
-        ${RESEARCH.map(([big, unit, text, cite, url]) => `
-          <div class="lx-row">
-            <div class="lx-num"><b>${big}</b><span>${unit}</span></div>
-            <p>${text}</p>
-            <a href="${url}" target="_blank" rel="noopener noreferrer" class="lx-cite">${cite} ${icon('external', 12)}</a>
-          </div>`).join('')}
+    <section class="lx-band lx-analytics" id="analytics">
+      <div class="lx-split rev">
+        <div class="lx-donut-wrap" aria-hidden="true">${donutHTML()}</div>
+        <div class="lx-copy">
+          <h2 class="lx-h2 big">Know how you’re doing.</h2>
+          <p>Check It counts what you finish, what is still open and what slipped. Streaks, best days and your usual finish time, all from your own history.</p>
+          <ul class="lx-points">
+            <li><b>Done vs. planned</b><span>for every day and week</span></li>
+            <li><b>Most skipped</b><span>so you can make a task smaller</span></li>
+            <li><b>Best day and time</b><span>to plan around what works</span></li>
+          </ul>
+        </div>
       </div>
     </section>
 
-    <section class="lx-privacy" id="privacy">
-      <h2 class="lx-h2">Your data stays with you.</h2>
-      <p>No servers, no tracking, no ads. Tasks, notes and history are saved in this browser. Export a backup any time.</p>
-      <div class="lx-facts">
-        <div><b>0</b><span>servers storing your data</span></div>
-        <div><b>0</b><span>trackers or ads</span></div>
-        ${own ? `<div><b>${own.done.toLocaleString('en-GB')}</b><span>tasks you checked off here</span></div>` : '<div><b>1</b><span>file to back it all up</span></div>'}
+    <section class="lx-band lx-recaps" id="recaps">
+      <div class="lx-recap-wide">
+        <div class="lx-copy">
+          <h2 class="lx-h2 big">A recap every Monday.</h2>
+          <p>When a week ends, Check It writes it up for you: what went well, what slipped and one thing to try next. Save it, download it, read it back months later.</p>
+        </div>
+        <div class="lx-tilt lx-tilt-b" id="lx-tilt-b">${recapCardHTML()}</div>
       </div>
-      <a class="lx-link" href="#/privacy">Read the privacy policy ${icon('chevR', 14)}</a>
-    </section>
-
-    <section class="lx-final">
-      <h2 class="lx-h2">Start with one task.</h2>
-      <a class="btn pill large" href="${cta[0]}">${cta[1]} ${icon('chevR', 16)}</a>
     </section>
 
     ${footerHTML()}
@@ -361,14 +389,32 @@ export function renderLanding({ loggedIn = false } = {}) {
   window.addEventListener('scroll', onScroll, { passive: true });
   disposers.push(() => window.removeEventListener('scroll', onScroll));
   paint();
-  if (tilt && !still) {
-    tilt.addEventListener('pointermove', (e) => {
-      const r = tilt.getBoundingClientRect();
+  // both 3D cards lean towards the pointer; wheel scrolling over them stays smooth (Lenis)
+  if (!still) $$('.lx-tilt', root).forEach((t) => {
+    t.addEventListener('pointermove', (e) => {
+      const r = t.getBoundingClientRect();
       const x = (e.clientX - r.left) / r.width - 0.5; const y = (e.clientY - r.top) / r.height - 0.5;
-      tilt.style.setProperty('--ry', `${-24 + x * 26}deg`); tilt.style.setProperty('--rx', `${8 - y * 22}deg`);
+      t.style.setProperty('--ry', `${-24 + x * 26}deg`); t.style.setProperty('--rx', `${8 - y * 22}deg`);
     });
-    tilt.addEventListener('pointerleave', () => { tilt.style.removeProperty('--ry'); tilt.style.removeProperty('--rx'); paint(); });
-  }
+    t.addEventListener('pointerleave', () => { t.style.removeProperty('--ry'); t.style.removeProperty('--rx'); paint(); });
+  });
+
+  // donut draws itself once it scrolls into view
+  const donut = $('.lx-donut', root);
+  if (donut && 'IntersectionObserver' in window) {
+    const io = new IntersectionObserver((es) => es.forEach((en) => { if (en.isIntersecting) { donut.classList.add('in'); io.disconnect(); } }), { threshold: 0.35 });
+    io.observe(donut); disposers.push(() => io.disconnect());
+  } else if (donut) donut.classList.add('in');
+
+  // back to top
+  const top = document.createElement('button');
+  top.className = 'lx-top'; top.setAttribute('aria-label', 'Back to top'); top.innerHTML = icon('arrowUp', 20);
+  root.appendChild(top);
+  top.onclick = () => (window.__lenis ? window.__lenis.scrollTo(0, { duration: 1.4 }) : window.scrollTo({ top: 0, behavior: 'smooth' }));
+  const showTop = () => top.classList.toggle('on', window.scrollY > innerHeight * 0.8);
+  window.addEventListener('scroll', showTop, { passive: true });
+  disposers.push(() => window.removeEventListener('scroll', showTop));
+  showTop();
   bindFooter(root);
 
   $$('.dm-side > *', root).forEach((el, i) => el.style.setProperty('--k', i));
